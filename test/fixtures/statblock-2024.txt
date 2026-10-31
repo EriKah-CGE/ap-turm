@@ -1,0 +1,24 @@
+Ember Cultist
+Medium Humanoid, Neutral Evil
+AC 13 Initiative +2 (12)
+HP 27 (5d8 + 5)
+Speed 30 ft.
+STR 11 +0 +0
+DEX 14 +2 +2
+CON 12 +1 +1
+INT 10 +0 +0
+WIS 13 +1 +3
+CHA 15 +2 +2
+Skills Deception +4, Religion +2
+Immunities Fire; Frightened
+Senses Passive Perception 11
+Languages Common, Ignan
+CR 1 (XP 200; PB +2)
+Traits
+Fire Blessing. The cultist has Advantage on saving throws against being Frightened.
+Actions
+Multiattack. The cultist makes two Flame Blade attacks.
+Flame Blade. Melee Attack Roll: +4, reach 5 ft. Hit: 5 (1d6 + 2) Slashing damage plus 3 (1d6) Fire damage.
+Fire Bolt. Ranged Attack Roll: +4, range 120 ft. Hit: 7 (2d6) Fire damage.
+Bonus Actions
+Ember Step. The cultist teleports up to 15 ft. to an unoccupied space it can see.

@@ -1,0 +1,33 @@
+<div class="apt-ovw-row {{#if current}}current{{/if}} {{#if downed}}downed{{/if}}" data-row="{{id}}" data-actor="{{actorUuid}}">
+  <img class="portrait" src="{{img}}" alt="" data-action="overviewPan" title="Select the token and pan to it">
+  <div class="main">
+    <div class="line top">
+      {{#if init}}<span class="init" title="Initiative">{{init}}</span>{{/if}}
+      <a class="nm" data-action="overviewSheet" title="Open the sheet">{{name}}</a>
+      <span class="ac" title="Armor Class"><i class="fa-solid fa-shield-halved"></i> {{ac}}</span>
+    </div>
+    <div class="line hpline">
+      <input type="text" class="hp" value="{{hp.value}}" size="4" title="New value, or +5 / -3 to change it">
+      <span class="max">/ {{hp.max}}</span>
+      {{#if hp.temp}}<span class="temp" title="Temporary hit points">+{{hp.temp}}</span>{{/if}}
+      <span class="bar"><span class="fill" style="width: {{pct}}%"></span></span>
+    </div>
+    {{#if chips.length}}
+    <div class="line chips">
+      {{#each chips}}<a class="chip" data-action="overviewCondition" data-id="{{id}}" title="{{name}}{{#if exhaustion}} {{level}} — click: one level down, right-click: one up{{else}} — click removes it{{/if}}"><img src="{{img}}" alt="{{name}}">{{#if exhaustion}}<b>{{level}}</b>{{/if}}</a>{{/each}}
+    </div>
+    {{/if}}
+    {{#if legendary.length}}
+    <div class="line leg">
+      {{#each legendary}}
+      <span class="leggrp" title="{{label}}"><small>{{#if (eq kind "resist")}}LR{{else}}LA{{/if}}</small>{{#each pips}}<a class="pip {{#if used}}used{{/if}}" data-action="overviewLegendary" data-kind="{{../kind}}" data-i="{{i}}"></a>{{/each}}</span>
+      {{/each}}
+    </div>
+    {{/if}}
+    {{#if recharges.length}}
+    <div class="line rc">
+      {{#each recharges}}<a class="rctag {{#if used}}used{{/if}}" data-action="overviewRecharge" data-index="{{index}}" title="{{name}} — click: toggle spent / ready">{{name}} <small>{{recharge}}</small></a>{{/each}}
+    </div>
+    {{/if}}
+  </div>
+</div>

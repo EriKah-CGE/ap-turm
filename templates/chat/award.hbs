@@ -1,0 +1,14 @@
+<div class="ap-turm-chat apt-card apt-award-card">
+  <header class="apt-card-h"><i class="fa-solid fa-star"></i> <b>{{headline}}</b></header>
+  {{#each entries}}
+  <div class="apt-award-entry">
+    <div class="apt-award-name"><b>{{name}}</b> <span class="apt-card-formula">{{apLabel}}</span></div>
+    {{#if lines.length}}
+    <ul class="apt-award-lines">{{#each lines}}<li>{{this}}</li>{{/each}}</ul>
+    {{else}}
+    <div class="apt-award-none">no progression change</div>
+    {{/if}}
+    {{#if clamped}}<div class="apt-card-warn">Stopped at 0 earned AP.</div>{{/if}}
+  </div>
+  {{/each}}
+</div>

@@ -1,0 +1,49 @@
+<section class="tab apt-tab {{tab.cssClass}}" data-tab="{{tab.id}}" data-group="{{tab.group}}">
+  <div class="apt-box">
+    <h3>Progress</h3>
+    <div class="apt-progress">
+      {{#each progress}}<div class="apt-coin"><label>{{label}}</label><span class="num big">{{value}}</span></div>{{/each}}
+    </div>
+    <p class="hint">Level: +1 per 10 AP · Proficiency Bonus &amp; Milestone: per 75 AP · Cantrip Tier: +1 per 100 AP. Enter "Earned" in the header above.</p>
+  </div>
+
+  <div class="apt-box">
+    <h3>Hit Points <small>Max {{hp.max}}</small></h3>
+    <p class="hint">Sum of rolls ({{d.hpSum}}) + Level × CON mod ({{d.level}} × {{d.mods.con}})</p>
+    <button type="button" class="apt-add" data-action="rollHp"><i class="fa-solid fa-dice"></i> Roll ({{hitDie}}, rerolls 1s)</button>
+    {{#if hpPendingLabel}}<p class="apt-hp-open"><i class="fa-solid fa-triangle-exclamation"></i> {{hpPendingLabel}}</p>{{/if}}
+    <div class="apt-hpcells">
+      {{#each hpCells}}
+      <div class="hp-cell {{#if extra}}extra{{/if}}{{#if pending}} pending{{/if}}"><label>Lvl {{level}}</label><input type="number" class="num" name="system.hp.rolls.{{index}}" value="{{value}}" min="0" max="{{../hdMax}}" step="1"></div>
+      {{/each}}
+    </div>
+    <p class="hint">Editable per level. Rolls above your current level are kept but do not count.</p>
+  </div>
+
+  <div class="apt-box">
+    <h3>Milestone Rewards</h3>
+    {{#each milestones}}
+    <div class="apt-msrow">
+      <span class="mtit"><b>#{{index}}</b> — {{#if chosen}}{{label}}{{else}}<span class="empty">Choose reward</span>{{/if}}</span>
+      <span class="mbtns">
+        {{#if chosen}}
+        <button type="button" class="msb red" data-action="milestoneReset" data-index="{{index}}">Reset</button>
+        {{else}}
+        <button type="button" class="msb" data-action="milestoneStats" data-index="{{index}}">+2 Stats</button>
+        <button type="button" class="msb" data-action="milestoneFeat" data-index="{{index}}">Feat</button>
+        {{/if}}
+      </span>
+    </div>
+    {{else}}<p class="empty">No milestones yet (one per 75 earned AP).</p>{{/each}}
+  </div>
+
+  <details class="apt-box apt-entries apt-history" {{#if historyOpen}}open{{/if}}>
+    <summary><h3>History <small>{{history.length}}</small></h3></summary>
+    <p class="hint">The log starts with this update: earlier AP awards and purchases are not listed. Keeps the last {{historyCap}} entries.</p>
+    <div class="apt-histlist">
+    {{#each history}}
+    <div class="apt-histrow {{kind}}"><span class="when">{{when}}</span><span class="what">{{text}}</span></div>
+    {{else}}<p class="empty">Nothing logged yet.</p>{{/each}}
+    </div>
+  </details>
+</section>

@@ -1,0 +1,24 @@
+Rusted Sentinel
+Medium construct, unaligned
+Armor Class 16 (natural armor)
+Hit Points 52 (7d8 + 21)
+Speed 25 ft.
+STR DEX CON INT WIS CHA
+18 (+4) 9 (−1) 16 (+3) 3 (−4) 11 (+0) 1 (−5)
+Saving Throws Con +5, Wis +2
+Damage Resistances bludgeoning, piercing, and slashing from nonmagical attacks
+Damage Immunities poison, psychic
+Condition Immunities charmed, exhaustion, frightened, paralyzed, poisoned
+Senses darkvision 60 ft., passive Perception 10
+Languages understands the languages of its creator but can't speak
+Challenge 3 (700 XP)
+Immutable Form. The sentinel is immune to any spell or effect that would
+alter its form.
+Magic Resistance. The sentinel has advantage on saving throws against
+spells and other magical effects.
+Actions
+Multiattack. The sentinel makes two slam attacks.
+Slam. Melee Weapon Attack: +6 to hit, reach 5 ft., one target. Hit: 11
+(2d6 + 4) bludgeoning damage.
+Rust Spray (Recharge 5–6). Ranged Weapon Attack: +1 to hit, range 30/60 ft., one
+target. Hit: 9 (2d8) acid damage plus 3 (1d6) poison damage.

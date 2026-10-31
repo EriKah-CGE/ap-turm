@@ -1,0 +1,129 @@
+<section class="tab apt-tab {{tab.cssClass}}" data-tab="{{tab.id}}" data-group="{{tab.group}}">
+  <div class="apt-cols">
+    <div class="apt-col">
+      <div class="apt-box">
+        <h3>Ability Scores</h3>
+        <table class="apt-table">
+          <thead><tr><th></th><th>Mod</th><th>Score</th><th>Save</th></tr></thead>
+          <tbody>
+          {{#each abilities}}
+            <tr>
+              <td><b>{{abbr}}</b> <small>{{label}}</small></td>
+              <td class="num"><a class="apt-roll modbig draggable" data-action="rollAbility" data-key="{{key}}" data-drag-roll="ability:{{key}}" title="Roll {{label}} check (Shift: advantage, Ctrl: disadvantage, right-click: dialog)">{{mod}}</a></td>
+              <td class="num score">{{value}}{{#if (ne value base)}} <small>({{base}})</small>{{/if}}</td>
+              <td class="num"><a class="apt-roll draggable" data-action="rollSave" data-key="{{key}}" data-drag-roll="save:{{key}}" title="Roll {{label}} save (Shift: advantage, Ctrl: disadvantage, right-click: dialog)"><span class="dot {{#if saveProf}}prof{{/if}}"></span> {{save}}</a></td>
+            </tr>
+          {{/each}}
+          </tbody>
+        </table>
+      </div>
+      <div class="apt-box">
+        <h3>Proficiencies &amp; Languages</h3>
+        <div class="apt-kv"><b>Armor</b><span>{{profs.armor}}</span></div>
+        <div class="apt-kv"><b>Weapons</b><span>{{profs.weapons}}</span></div>
+        <div class="apt-kv"><b>Languages/Tools</b><span>{{profs.custom}}</span></div>
+      </div>
+      <div class="apt-box">
+        <h3>Skills</h3>
+        <div class="apt-rowlist">
+        {{#each skills}}
+          <div class="r apt-roll draggable" data-action="rollSkill" data-key="{{key}}" data-drag-roll="skill:{{key}}" title="Roll {{label}} (Shift: advantage, Ctrl: disadvantage, right-click: dialog)"><span class="dot {{#if exp}}exp{{else if prof}}prof{{/if}}"></span><span class="val num">{{mod}}</span><span class="nm">{{label}} <small>{{abbr}}</small></span></div>
+        {{/each}}
+        </div>
+      </div>
+    </div>
+
+    <div class="apt-col wide">
+      <div class="apt-box">
+        <h3>Attacks</h3>
+        {{#if weapons.length}}
+        <table class="apt-table apt-atk">
+          <thead><tr><th class="weq"></th><th class="wname">Weapon</th><th class="wprof">Prof</th><th class="watk">Atk</th><th class="wdmg">Damage</th><th class="wed"></th></tr></thead>
+          <tbody>
+          {{#each weapons}}
+            <tr class="{{#if equipped}}eq{{/if}} draggable" data-item-id="{{id}}">
+              <td class="weq"><span class="eqdot {{#if equipped}}on{{/if}}" data-action="toggleEquipped" title="Equip / unequip"></span></td>
+              <td class="wname"><a class="apt-roll wn" data-action="rollAttack" title="{{name}} — attack roll (Shift: advantage, Ctrl: disadvantage, right-click: dialog)">{{name}}</a></td>
+              <td class="wprof"><span class="profchip {{#if prof}}on{{/if}}" data-action="toggleWeaponProf" title="Proficient?">{{#if prof}}✓{{else}}–{{/if}}</span> <span class="abchip" data-action="cycleWeaponAbility" title="Attack ability">{{abil}}</span></td>
+              <td class="num watk"><a class="apt-roll" data-action="rollAttack" title="Attack roll (Shift: advantage, Ctrl: disadvantage, right-click: dialog)">{{atk}}</a></td>
+              <td class="wdmg"><a class="apt-roll" data-action="rollDamage" title="Damage roll (right-click: crit / extra dice)">{{dmg}} <span class="dt" style="{{#if dtypeColor}}color:{{dtypeColor}}{{/if}}">{{dtype}}</span></a></td>
+              <td class="wed"><span class="apt-dice"><button type="button" class="dbtn atk" data-action="rollAttack" title="Attack roll (Shift: advantage, Ctrl: disadvantage, right-click: dialog)"><i class="fa-solid fa-dice-d20"></i></button><button type="button" class="dbtn dmg" data-action="rollDamage" title="Damage roll (right-click: crit / extra dice)"><i class="fa-solid fa-burst"></i></button></span><span class="apt-rowbtns"><a data-action="editItem" title="Edit"><i class="fa-solid fa-pen-to-square"></i></a><a data-action="deleteItem" title="Delete"><i class="fa-solid fa-trash"></i></a></span></td>
+            </tr>
+          {{/each}}
+          </tbody>
+        </table>
+        {{#each weapons}}{{#if notes}}<div class="apt-note"><b>{{name}}:</b> {{notes}}</div>{{/if}}{{/each}}
+        {{else}}<p class="empty">No weapons yet — add one below.</p>{{/if}}
+        {{#if eleRanks}}<div class="apt-note">Elemental +{{eleRanks}}d6: {{#if eleHint}}<span class="bad">Choose element</span> <small>(Shop: eleDmg-Kauf oder Element Swap)</small>{{else}}<span class="elchip" style="--el:{{eleColor}}"><span class="eldot"></span>{{eleLabel}}</span>{{/if}}</div>{{/if}}
+        <button type="button" class="apt-add" data-action="createItem" data-type="weapon">+ Add weapon</button>
+      </div>
+
+      <div class="apt-box">
+        <h3>Spellcasting</h3>
+        <div class="apt-kv"><b>Spell Save DC</b><span class="num">{{d.spellDC}}</span></div>
+        <div class="apt-kv"><b>Spell Atk Bonus</b><span class="num">{{spellAtk}}</span></div>
+        <div class="apt-kv"><b>Cantrip Tier</b><span class="num">{{d.cantripTier}}</span></div>
+      </div>
+
+      {{#if isTurm}}
+      <div class="apt-box">
+        <h3>Spell Points</h3>
+        <div class="apt-slotrow"><b>Points</b>
+          <span class="pipwrap">{{#if spPips}}{{#each spPips}}<span class="slotpip {{#if used}}used{{/if}}" data-action="spellPointPip" data-i="{{i}}"></span>{{else}}<span class="empty">—</span>{{/each}}{{else}}<span class="spctl"><button type="button" class="spbtn" data-action="spAdjust" data-delta="-1" title="spend">−</button><button type="button" class="spbtn" data-action="spAdjust" data-delta="1" title="restore">+</button><button type="button" class="spbtn wide" data-action="spAdjust" data-delta="-5">−5</button></span>{{/if}}</span>
+          <span class="slotn num">{{sp.value}}/{{sp.max}}</span></div>
+        <div class="apt-kv"><b>Max Rank</b><span class="num">{{#if d.spMaxRank}}{{d.spMaxRank}}{{else}}—{{/if}}</span></div>
+        {{#if spBreak}}<div class="apt-note">{{spBreak}}</div>{{/if}}
+        <div class="apt-note">Rank 1–5: unlimited (points only){{#if highRanks.length}} · Rank 6+: casts per rest, still cost points{{/if}}</div>
+        {{#each highRanks}}<div class="apt-slotrow"><b>Lvl {{L}}</b><span class="pipwrap">{{#each pips}}<span class="slotpip {{#if used}}used{{/if}}" data-action="slotPip" data-rank="{{../L}}" data-i="{{i}}"></span>{{else}}<span class="empty">—</span>{{/each}}</span><span class="slotn num">{{left}}/{{total}}</span></div>{{/each}}
+      </div>
+      {{else}}
+      <div class="apt-box">
+        <h3>Spell Slots</h3>
+        {{#each slots}}<div class="apt-slotrow"><b>Lvl {{L}}</b><span class="pipwrap">{{#each pips}}<span class="slotpip {{#if used}}used{{/if}}" data-action="slotPip" data-rank="{{../L}}" data-i="{{i}}"></span>{{else}}<span class="empty">—</span>{{/each}}</span><span class="slotn num">{{left}}/{{total}}</span></div>{{else}}<p class="empty">None.</p>{{/each}}
+      </div>
+      {{/if}}
+
+      <div class="apt-box">
+        <h3>Spells</h3>
+        {{#each spells}}
+          <div class="apt-sprow draggable" data-item-id="{{id}}"><span class="splvl">{{lvl}}</span><a class="apt-roll spname" data-action="castSpell" title="Cast {{name}} (deducts spell points / a slot)">{{name}}</a>{{#if concentration}}<span class="tag conc" title="Concentration">C</span>{{/if}}{{#if elem}}<span class="elchip" style="--el:{{elemColor}}"><span class="eldot"></span>{{elem}}</span>{{/if}}{{#if notes}}<small>{{notes}}</small>{{/if}}<span class="apt-rowbtns"><a data-action="castSpell" title="Cast"><i class="fa-solid fa-wand-sparkles"></i></a><a data-action="editItem" title="Edit"><i class="fa-solid fa-pen-to-square"></i></a><a data-action="deleteItem" title="Delete"><i class="fa-solid fa-trash"></i></a></span></div>
+        {{else}}<p class="empty">No spells yet.</p>{{/each}}
+        <div class="apt-addrow"><button type="button" class="apt-add" data-action="createItem" data-type="spell">+ Add spell</button><button type="button" class="apt-add" data-action="spellFromLibrary"><i class="fa-solid fa-book-open"></i> From library</button></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="apt-cols2">
+    <div class="apt-col">
+      <div class="apt-box">
+        <h3>Features &amp; Abilities</h3>
+        {{#if feats.length}}<div class="apt-cat">Feats &amp; Custom</div>{{/if}}
+        {{#each feats}}
+          <div class="apt-line" data-item-id="{{id}}"><span class="fnwrap"><input type="text" name="items.{{id}}.name" value="{{name}}" placeholder="Feat name">{{#if desc}}<small>{{desc}}</small>{{/if}}</span><span class="fright">{{#if bonus}}<span class="tag">{{bonus}}</span>{{/if}}{{#if src}}<span class="tag">{{src}}</span>{{/if}}<span class="apt-rowbtns"><a data-action="editItem" title="Edit"><i class="fa-solid fa-pen-to-square"></i></a><a data-action="deleteItem" title="Delete"><i class="fa-solid fa-trash"></i></a></span></span></div>
+        {{/each}}
+        {{#each purchases}}
+          <div class="apt-cat">{{cat}}</div>
+          {{#each lines}}<div class="apt-line"><span>{{name}}{{#if choices}} — {{choices}}{{/if}}{{#if text}}<small class="apt-custom-text">{{text}}</small>{{/if}}</span><span class="tag">×{{count}}</span></div>{{/each}}
+        {{/each}}
+        {{#if customAdv}}<div class="apt-line"><span>Advantage: {{customAdv}}</span></div>{{/if}}
+        {{#unless feats.length}}{{#unless purchases.length}}<p class="empty">Nothing yet — add a feat below.</p>{{/unless}}{{/unless}}
+        <button type="button" class="apt-add" data-action="createItem" data-type="feat">+ Add feat / feature</button>
+      </div>
+    </div>
+    <div class="apt-col">
+      {{#if isTurm}}
+      <div class="apt-box">
+        <h3>Turmwissen <small>Rank {{system.turmwissenRank}}</small></h3>
+        {{#each turmwissen}}
+          <div class="apt-twrow"><b>Rank {{rank}}</b><input type="text" name="system.turmwissen.{{index}}.trigger" value="{{trigger}}" placeholder="Trigger…">{{#if last}}<a class="twdel" data-action="removeTurmwissen" title="Remove the last rank"><i class="fa-solid fa-xmark"></i></a>{{/if}}</div>
+        {{else}}<p class="empty">No Turmwissen yet.</p>{{/each}}
+        <button type="button" class="apt-add" data-action="addTurmwissen">+ Rank</button>
+      </div>
+      {{/if}}
+      <div class="apt-box">
+        <h3>Notes</h3>
+        <div class="apt-notes">{{formInput fields.notes name="system.notes" value=system.notes enriched=notesEnriched toggled=true documentUUID=actor.uuid}}</div>
+      </div>
+    </div>
+  </div>
+</section>

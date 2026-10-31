@@ -1,0 +1,6 @@
+<div class="ap-turm-chat apt-card apt-entry-card">
+  <header class="apt-card-h"><i class="fa-solid fa-scroll"></i> <b>{{name}}</b> <span class="sub">{{section}}{{#if legendaryCost}} · costs {{legendaryCost}}{{/if}}{{#if recharge}} · Recharge {{recharge}}{{/if}}{{#if uses.max}} · {{uses.value}}/{{uses.max}} {{uses.per}}{{/if}}</span></header>
+  {{#if text}}<div class="apt-card-notes">{{text}}</div>{{/if}}
+  {{#if damage}}<div class="apt-card-formula">{{damage}} {{dtype}}</div>{{/if}}
+  <div class="apt-card-formula">{{{actorNameHtml}}}</div>
+</div>

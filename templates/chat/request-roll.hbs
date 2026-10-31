@@ -1,0 +1,22 @@
+<div class="ap-turm-chat apt-card apt-request-card">
+  <header class="apt-card-h"><i class="fa-solid fa-dice-d20"></i> <b>{{label}}</b> <span class="sub">{{#if hasDc}}DC {{dc}}{{else}}{{kindLabel}}{{/if}}</span></header>
+  {{#if consequence}}<div class="apt-card-cond apt-request-consequence">{{consequence}}</div>{{/if}}
+  <table class="apt-card-table apt-request-rows">
+    {{#each rows}}
+    <tr>
+      <td class="lbl">{{name}}</td>
+      <td class="num">
+        {{#if rolled}}
+        <b>{{totalText}}</b>{{#if verdict}} <span class="res {{#if success}}hit{{else}}miss{{/if}}">{{verdict}}</span>{{/if}}{{#if status}} <span class="apt-row-status">— {{status}}</span>{{/if}}
+        {{else}}
+        <button type="button" data-action="rollRequested" data-index="{{index}}" data-owner-uuid="{{actorUuid}}" title="Roll for {{name}} (Shift: advantage, Ctrl: disadvantage, right-click: dialog)"><i class="fa-solid fa-dice-d20"></i> Roll</button>
+        {{/if}}
+      </td>
+      <td class="act">
+        {{#if applied}}<span class="apt-row-done">applied</span>
+        {{else if amount}}<button type="button" data-action="applyRequestDamage" data-index="{{index}}" data-owner-uuid="{{actorUuid}}" title="Apply the damage to {{name}} (resistances count)"><i class="fa-solid fa-heart-crack"></i> {{amount}} {{../dtypeLabel}}</button>{{/if}}
+      </td>
+    </tr>
+    {{/each}}
+  </table>
+</div>

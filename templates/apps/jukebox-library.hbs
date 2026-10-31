@@ -1,0 +1,25 @@
+<div class="apt-jb-lib">
+  {{#each library}}
+  <div class="apt-jb-pl {{#if expanded}}open{{/if}} {{#if playing}}playing{{/if}}" data-playlist-id="{{id}}" data-name="{{name}}">
+    <div class="apt-jb-pl-head" title="Right-click for more; drop a track here to move it to the end">
+      <a class="tw" data-action="plToggle"><i class="fa-solid fa-caret-right"></i></a>
+      <span class="nm" data-action="plToggle">{{name}}</span>
+      <span class="cnt">{{count}}</span>
+      <button type="button" class="pp" data-action="plPlay" title="{{#if playing}}Pause{{else}}Play (crossfade){{/if}}"><i class="fa-solid {{#if playing}}fa-pause{{else}}fa-play{{/if}}"></i></button>
+      <a class="apt-jb-pl-menu" title="More"><i class="fa-solid fa-ellipsis-vertical"></i></a>
+    </div>
+    <ol class="apt-jb-tracks">
+      {{#each sounds}}
+      <li class="apt-jb-track {{#if playing}}playing{{/if}} {{#if paused}}paused{{/if}}" data-sound-id="{{id}}" data-name="{{name}}" data-path="{{path}}">
+        <button type="button" class="pp" data-action="trackPlay" title="{{#if playing}}Pause{{else}}Play this track (crossfade){{/if}}"><i class="fa-solid {{#if playing}}fa-pause{{else}}fa-play{{/if}}"></i></button>
+        <span class="nm" draggable="true" title="Drag to sort or onto another playlist">{{#if playing}}<i class="fa-solid fa-volume-high st"></i> {{/if}}{{name}}</span>
+        <span class="dur">{{duration}}</span>
+        <input class="apt-jb-tvol" type="range" min="0" max="1" step="0.01" value="{{volume}}" title="Track volume {{volumePct}} % (for everyone)">
+        <a class="apt-jb-tr-menu" title="More"><i class="fa-solid fa-ellipsis-vertical"></i></a>
+      </li>
+      {{else}}<li class="empty">No tracks yet. Right-click the playlist: "Add file…".</li>{{/each}}
+    </ol>
+  </div>
+  {{else}}<p class="empty">No playlists yet. Create one or import a folder.</p>{{/each}}
+  <p class="empty apt-jb-nohit" hidden>No playlist or track matches the search.</p>
+</div>

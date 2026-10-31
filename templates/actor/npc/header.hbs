@@ -1,0 +1,39 @@
+<header class="apt-npc-head">
+  <div class="apt-banner">
+    <img class="apt-portrait apt-actor-portrait" src="{{img}}" alt="{{name}}" data-action="portrait" data-edit="img" title="Click: show large · right-click: change image">
+    <div class="apt-namebox">
+      <input class="apt-name" type="text" name="name" value="{{name}}" title="{{name}}" placeholder="Enter name…">
+      <div class="apt-idgrid npc">
+        <div class="apt-fld wide2"><label title="What players see instead of the name: chat cards, combat tracker, token tooltip. Empty = the real name. The token's own nameplate follows Foundry's token setting.">Display name</label><input type="text" name="system.displayName" value="{{system.displayName}}" placeholder="— real name —"></div>
+        <div class="apt-fld wide2"><label>Type</label><input type="text" name="system.typeLine" value="{{system.typeLine}}" placeholder="Medium humanoid, neutral"></div>
+        <div class="apt-fld"><label>CR</label><input type="text" name="system.cr" value="{{system.cr}}" placeholder="—"></div>
+        <div class="apt-fld"><label>Prof Bonus</label><input type="number" name="system.pb" value="{{system.pb}}" min="0" step="1"></div>
+        <div class="apt-fld"><label>Save DC</label><input type="number" name="system.dc" value="{{system.dc}}" min="0" step="1" placeholder="0"></div>
+        <div class="apt-fld"><label>System</label><select name="system.mode">{{#each modeOptions}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}</select></div>
+        {{#if isTurm}}<div class="apt-fld"><label>Element</label><select name="system.element" style="{{#if elementColor}}color:{{elementColor}}{{/if}}">{{#each elementOptions}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}</select></div>{{/if}}
+        <div class="apt-fld"><label>Passive Perception</label><span>{{passivePerception}}</span></div>
+        <div class="apt-fld wide2"><label>Skills</label><input type="text" name="skillsText" value="{{skillsText}}" placeholder="Perception +5, Stealth +6"></div>
+        <div class="apt-fld wide2"><label>Senses</label><input type="text" name="system.senses" value="{{system.senses}}" placeholder="darkvision 60 ft."></div>
+        <div class="apt-fld wide2"><label>Languages</label><input type="text" name="system.languages" value="{{system.languages}}" placeholder="—"></div>
+        <div class="apt-fld wide2"><label>Condition Immunities</label><input type="text" name="system.conditionImmunities" value="{{system.conditionImmunities}}" placeholder="—"></div>
+        {{#if system.headerNotes}}<div class="apt-fld note"><label>Gear / Habitat / Treasure</label><span>{{system.headerNotes}}</span></div>{{/if}}
+        <div class="apt-fld cond wide2"><label>Conditions</label>{{> "systems/ap-turm/templates/actor/conditions.hbs"}}</div>
+        {{#if unassigned}}<div class="apt-fld unassigned"><label>Turm mode</label><span title="Click a yellow tag on the Stats tab to choose an element">{{unassigned}} damage type{{#if (eq unassigned 1)}}{{else}}s{{/if}} not assigned</span></div>{{/if}}
+      </div>
+    </div>
+  </div>
+  <div class="apt-strip apt-strip-main npc">
+    <div class="apt-cbox big hp {{#if downed}}act{{/if}}"><label>HP</label>
+      <span class="cv hpline">
+        <button type="button" class="hpbtn" data-action="hpAdjust" data-delta="-1" title="−1 HP (Shift: −5)">−</button>
+        <input class="num" type="number" name="system.hp.value" value="{{hp.value}}" min="0" step="1"><small>/</small><input class="num max" type="number" name="system.hp.max" value="{{hp.max}}" min="0" step="1" title="Max HP">
+        <button type="button" class="hpbtn" data-action="hpAdjust" data-delta="1" title="+1 HP (Shift: +5)">+</button>
+      </span>
+      <span class="hpbar"><span class="fill" style="width:{{hpPct}}%"></span></span>
+      <span class="temp"><label>Temp</label><input class="num" type="number" name="system.hp.temp" value="{{hp.temp}}" min="0" step="1"></span>
+    </div>
+    <div class="apt-cbox big ac"><label>AC</label><span class="cv"><input class="num" type="number" name="system.ac" value="{{system.ac}}" min="0" step="1"></span>{{#if defenseChips.length}}<span class="apt-defline">{{#each defenseChips}}<span class="tag def {{#if unassigned}}unassigned{{/if}}" style="{{#if color}}--el:{{color}}{{/if}}" title="{{kindLabel}}"><small>{{abbr}}</small> {{label}}</span>{{/each}}</span>{{/if}}</div>
+    <div class="apt-cbox big speed"><label>Speed</label><span class="cv"><input class="num" type="number" name="system.speed" value="{{system.speed}}" min="0" step="5"><small>ft</small></span><input class="speeds" type="text" name="system.speeds" value="{{system.speeds}}" placeholder="Fly 80, Swim 40" title="Other movement modes">{{#if exhaustion}}<small class="bad">{{speedEff}} ft (exhaustion {{exhaustion}})</small>{{/if}}</div>
+    <div class="apt-cbox big apt-roll" data-action="rollInitiative" title="Roll initiative (Shift: advantage, Ctrl: disadvantage, right-click: dialog)"><label>Initiative</label><span class="cv">{{init}}</span><small><i class="fa-solid fa-dice-d20"></i> roll</small></div>
+  </div>
+</header>

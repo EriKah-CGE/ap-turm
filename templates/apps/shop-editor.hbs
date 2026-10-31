@@ -1,0 +1,21 @@
+<div class="apt-se">
+  <p class="hint">Your own point-buy entries for this world. They appear in the shop tab in their category and work like the built-in ones; they only exist in Foundry (the HTML app ignores them). Built-in entries cannot be changed here.</p>
+  <div class="apt-se-list">
+    {{#each list}}
+    <div class="apt-se-row {{#unless ok}}bad{{/unless}}" data-id="{{id}}">
+      <div class="main">
+        <b>{{name}}</b> <span class="cat">{{category}}</span>{{#unless ok}} <span class="err" title="Skipped: see the console for the reason">defective, not in the shop</span>{{/unless}}
+        <div class="sub">Costs {{costs}} · then ×{{mult}}{{#if maxRanks}} · max {{maxRanks}}{{/if}}</div>
+        <div class="sub">{{effects}}</div>
+        {{#if buyers}}<div class="sub buyers"><i class="fa-solid fa-user"></i> {{buyers}}</div>{{/if}}
+      </div>
+      <span class="apt-rowbtns"><a data-action="edit" title="Edit"><i class="fa-solid fa-pen-to-square"></i></a><a data-action="remove" title="Delete"><i class="fa-solid fa-trash"></i></a></span>
+    </div>
+    {{else}}<p class="empty">No custom entries yet.</p>{{/each}}
+  </div>
+  <div class="apt-addrow">
+    <button type="button" class="apt-add" data-action="add"><i class="fa-solid fa-plus"></i> New entry</button>
+    <button type="button" class="apt-add" data-action="exportList"><i class="fa-solid fa-file-export"></i> Export</button>
+    <button type="button" class="apt-add" data-action="importList"><i class="fa-solid fa-file-import"></i> Import</button>
+  </div>
+</div>

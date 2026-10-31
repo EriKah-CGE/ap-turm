@@ -1,0 +1,32 @@
+<div class="apt-jb-top">
+  <details class="apt-jb-sec apt-jb-moods" data-key="moodsOpen" {{#if moodsOpen}}open{{/if}}>
+    <summary><h3>Moods {{#if combatMusic}}<small title="Combat music is on"><i class="fa-solid fa-swords"></i> combat music on</small>{{/if}}</h3></summary>
+    <div class="apt-jb-grid">
+      {{#each moods}}
+      <div class="apt-jb-tile {{#if active}}active{{/if}} {{#if paused}}paused{{/if}} {{#if missing}}missing{{/if}}" draggable="true" data-tile-id="{{id}}" style="--tile:{{color}}" title="{{title}}">
+        <button type="button" class="play" data-action="tilePlay">
+          {{#if icon}}<i class="{{icon}}"></i>{{/if}}
+          <span class="lbl">{{label}}</span>
+          {{#if combat}}<i class="fa-solid fa-swords cmb" title="Combat"></i>{{/if}}
+          {{#if active}}<i class="fa-solid {{#if paused}}fa-pause{{else}}fa-volume-high{{/if}} st"></i>{{/if}}
+        </button>
+        <span class="tools"><a data-action="tileEdit" title="Edit"><i class="fa-solid fa-pen"></i></a><a data-action="tileDelete" title="Delete tile (the playlist stays)"><i class="fa-solid fa-xmark"></i></a></span>
+      </div>
+      {{else}}<p class="empty">No moods yet. "+ Add mood" links a playlist to a tile.</p>{{/each}}
+    </div>
+    <div class="apt-addrow">
+      <button type="button" class="apt-add" data-action="addMood">+ Add mood</button>
+    </div>
+  </details>
+
+  <details class="apt-jb-sec apt-jb-board" data-key="boardOpen" {{#if boardOpen}}open{{/if}}>
+    <summary><h3>Soundboard</h3></summary>
+    {{#if board}}
+      <div class="apt-jb-sounds">
+        {{#each board.sounds}}<button type="button" class="{{#if playing}}on{{/if}}" data-action="boardPlay" data-sound-id="{{id}}" title="Play once over the music">{{name}}</button>{{else}}<p class="empty">The playlist "{{board.name}}" has no sounds yet.</p>{{/each}}
+      </div>
+    {{else}}
+      <p class="hint">Create a playlist named 'Soundboard' for one-shot sounds.</p>
+    {{/if}}
+  </details>
+</div>

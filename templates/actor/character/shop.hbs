@@ -1,0 +1,23 @@
+<section class="tab apt-tab {{tab.cssClass}}" data-tab="{{tab.id}}" data-group="{{tab.group}}">
+  {{#if isGM}}<div class="apt-shop-gm"><button type="button" class="apt-add" data-action="openShopEditor" title="Create your own shop entries (GM)"><i class="fa-solid fa-screwdriver-wrench"></i> Shop editor</button></div>{{/if}}
+  <nav class="apt-shopnav">
+    {{#each shopNav}}<button type="button" class="snav {{#if active}}active{{/if}}" data-action="shopCategory" data-index="{{index}}">{{label}}</button>{{/each}}
+  </nav>
+  <div class="apt-shopgrid">
+    {{#each shopCards}}
+    <div class="scard {{#if locked}}locked{{/if}} {{#if canBuy}}afford{{/if}}">
+      <div class="info">
+        <div class="nm" {{#if desc}}title="{{desc}}"{{/if}}>{{name}}{{#if custom}} <i class="fa-solid fa-star apt-custom-mark" title="Custom entry (this world only)"></i>{{/if}}</div>
+        {{#if desc}}<div class="desc">{{desc}}</div>{{/if}}
+        <div class="rk">Rank {{count}}{{#if needs}} · needs {{needs}}{{/if}}</div>
+        {{#if chosen}}<div class="chosen">{{chosen}}</div>{{/if}}
+      </div>
+      <div class="cost {{costCls}}">{{#if locked}}<i class="fa-solid fa-lock"></i>{{else}}{{costStr}}{{/if}}</div>
+      <div class="acts">
+        <button type="button" class="ab sell" data-action="sell" data-id="{{id}}" {{#unless canSell}}disabled{{/unless}}>−</button>
+        <button type="button" class="ab buy" data-action="buy" data-id="{{id}}" {{#unless canBuy}}disabled{{/unless}}>+</button>
+      </div>
+    </div>
+    {{/each}}
+  </div>
+</section>

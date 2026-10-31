@@ -1,0 +1,35 @@
+<section class="apt-stash">
+  <header class="apt-stash-head">
+    <img src="{{actor.img}}" alt="" class="apt-stash-img">
+    <div class="apt-stash-title">
+      {{#if owner}}<input type="text" name="name" value="{{actor.name}}" class="apt-stash-name">{{else}}<h2>{{actor.name}}</h2>{{/if}}
+      <p class="hint">Shared by the whole group. Drag an item onto your own sheet or use Take. No carry limit here.</p>
+    </div>
+    {{#if isGM}}<label class="apt-stash-mode">Mode <select name="system.mode">{{#each modes}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}</select></label>{{/if}}
+  </header>
+
+  <div class="apt-box apt-stash-purse">
+    <h3>Currency</h3>
+    <div class="apt-stash-coins">
+      {{#each currency}}
+      <label title="{{title}}"><span>{{abbr}}</span><input type="number" name="system.currency.{{key}}" value="{{value}}" min="0" step="1" {{#unless @root.owner}}disabled{{/unless}}></label>
+      {{/each}}
+    </div>
+  </div>
+
+  <div class="apt-box apt-entries apt-npcitems apt-stash-items">
+    <h3>Items <small>{{items.length}}</small></h3>
+    {{#each items}}
+    <div class="apt-npcitem apt-stashitem draggable" data-item-id="{{id}}">
+      <span class="n">{{name}}{{#unless isGear}} <small class="typ">{{type}}</small>{{/unless}}</span>
+      <span class="q num">{{#if isGear}}×{{qty}}{{/if}}</span>
+      <span class="nt" title="{{notes}}">{{notes}}</span>
+      <span class="apt-rowbtns">{{#if (and isGear @root.canTake)}}<a class="apt-take" data-action="take" title="Take"><i class="fa-solid fa-hand-holding-hand"></i> Take</a>{{/if}}{{#if canSave}}<a data-action="saveToLibrary" title="Save to library"><i class="fa-solid fa-book-bookmark"></i></a>{{/if}}{{#if @root.owner}}<a data-action="editItem" title="Edit"><i class="fa-solid fa-pen-to-square"></i></a><a data-action="deleteItem" title="Delete"><i class="fa-solid fa-trash"></i></a>{{/if}}</span>
+    </div>
+    {{else}}<p class="empty">The stash is empty. Give items to it, drag them here or claim loot into it.</p>{{/each}}
+    <div class="apt-addrow">
+      {{#if owner}}<button type="button" class="apt-add" data-action="createItem">+ Add item</button>{{/if}}
+      {{#if isGM}}<button type="button" class="apt-add" data-action="fromLibrary"><i class="fa-solid fa-book-open"></i> From library</button>{{/if}}
+    </div>
+  </div>
+</section>

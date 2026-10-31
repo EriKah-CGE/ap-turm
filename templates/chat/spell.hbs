@@ -1,0 +1,7 @@
+<div class="ap-turm-chat apt-card apt-spell">
+  <header class="apt-card-h"><i class="fa-solid fa-wand-sparkles"></i> <b>{{name}}</b> <span class="sub">{{rank}}{{#if concentration}} · Concentration{{/if}}{{#if elem}} · <span class="elchip" style="--el:{{elemColor}}"><span class="eldot"></span>{{elem}}</span>{{/if}}</span></header>
+  {{#if descHead}}<div class="apt-spell-head5e">{{{descHead}}}</div>{{/if}}
+  {{#if descBody}}<details class="apt-spell-desc"><summary>Description</summary><div class="apt-spell-body">{{{descBody}}}</div></details>{{/if}}
+  {{#if notes}}<div class="apt-card-notes">{{notes}}</div>{{/if}}
+  <div class="apt-card-formula">{{actorName}} · {{cost}}</div>
+</div>

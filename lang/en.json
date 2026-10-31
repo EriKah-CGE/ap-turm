@@ -1,0 +1,60 @@
+{
+  "TYPES": {
+    "Actor": {
+      "character": "Character",
+      "npc": "NPC",
+      "stash": "Party Stash"
+    },
+    "Item": {
+      "weapon": "Weapon",
+      "spell": "Spell",
+      "feat": "Feat",
+      "gear": "Item"
+    }
+  },
+  "AP_TURM": {
+    "Sheet": {
+      "Character": "AP-Turm Character Sheet",
+      "Npc": "AP-Turm NPC Sheet",
+      "Item": "AP-Turm Item Sheet"
+    },
+    "Overview": {
+      "Title": "Combat Overview"
+    },
+    "Import": {
+      "Button": "Import character",
+      "Title": "Import character from AP app",
+      "Hint": "Select a JSON file exported from the AP character sheet app.",
+      "Confirm": "Import",
+      "NoFile": "No file selected.",
+      "Failed": "Could not read file: {error}",
+      "Done": "Imported {name} ({items} items).",
+      "SheetControl": "Import JSON",
+      "SheetTitle": "Import JSON into {name}",
+      "SheetHint": "Select a JSON file exported from the AP character sheet app. This replaces all data and items of {name}.",
+      "NpcControl": "Import NPC JSON"
+    },
+    "Export": {
+      "SheetControl": "Export JSON",
+      "Done": "Exported {name} as app JSON.",
+      "NpcControl": "Export NPC JSON",
+      "NpcDone": "Exported {name} as NPC JSON."
+    },
+    "Settings": {
+      "DefeatedTokens": {
+        "Name": "Defeated NPC tokens",
+        "Hint": "What happens to an NPC's token when \"Apply to target\" drops it to 0 HP. The actor in the Actors list is kept either way. Player characters are never affected.",
+        "Remove": "Remove (delete combatant and token after about 1 s)",
+        "Mark": "Mark only (status \"dead\", combatant defeated, token stays)"
+      },
+      "ConditionBar": {
+        "Name": "Show condition bar",
+        "Hint": "Narrow bar above the hotbar: a click sets a condition on every selected token, or on the current targets when nothing is selected. Drag it by the grip on the left."
+      },
+      "ConditionBarGm": {
+        "Name": "Condition bar for the GM only",
+        "Hint": "Hides the condition bar from all players. The GM can still toggle it from the scene tool bar."
+      }
+    }
+  }
+}

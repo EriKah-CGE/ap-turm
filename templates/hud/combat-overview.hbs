@@ -1,0 +1,7 @@
+<div class="apt-ovw">
+  <div class="apt-ovw-head"><span class="sub">{{subtitle}}</span></div>
+  <div class="apt-ovw-rows">
+    {{#each rows}}{{> "systems/ap-turm/templates/hud/combat-overview-row.hbs" this}}{{/each}}
+  </div>
+  {{#unless rows.length}}<p class="apt-ovw-empty">Nothing to show: no combat is running and the current scene has no tokens.</p>{{/unless}}
+</div>

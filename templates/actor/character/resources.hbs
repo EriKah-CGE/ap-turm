@@ -1,0 +1,23 @@
+<div class="apt-resources">
+  <div class="apt-res hd"><b>Hit Dice</b>
+    <span class="pipwrap">{{#each hitDicePips}}<span class="slotpip apt-roll {{#if used}}used{{/if}}" data-action="hitDiePip" data-i="{{i}}" title="{{#if used}}Right-click: restore{{else}}Roll hit die + CON and heal (right-click: mark spent){{/if}}"></span>{{/each}}</span>
+    <span class="slotn num">{{hitDice.value}}/{{hitDice.max}} {{hitDie}}</span>
+    <button type="button" class="apt-add apt-roll" data-action="rollHitDie" title="Roll one hit die and add it to HP"><i class="fa-solid fa-dice"></i> Spend</button>
+  </div>
+  {{#if lay.active}}
+  <div class="apt-res lay"><b>Lay Hands</b>
+    <span class="spctl"><button type="button" class="spbtn" data-action="layAdjust" data-delta="-1" title="Heal 1 HP">−</button><button type="button" class="spbtn wide" data-action="layAdjust" data-delta="-5">−5</button><button type="button" class="spbtn" data-action="layAdjust" data-delta="1" title="Undo">+</button></span>
+    <span class="slotn num">{{lay.value}}/{{lay.max}}</span>
+  </div>
+  {{/if}}
+  {{#each pools}}
+  <div class="apt-res pool" title="Custom pool · refills on a {{reset}} rest"><b>{{name}}</b>
+    <span class="spctl"><button type="button" class="spbtn" data-action="poolAdjust" data-key="{{key}}" data-delta="-1" title="Spend 1">−</button><button type="button" class="spbtn" data-action="poolAdjust" data-key="{{key}}" data-delta="1" title="Give 1 back">+</button></span>
+    <span class="slotn num">{{value}}/{{max}}</span>
+  </div>
+  {{/each}}
+  <div class="apt-res rest">
+    <button type="button" class="apt-add" data-action="shortRest"><i class="fa-solid fa-sun"></i> Short rest</button>
+    <button type="button" class="apt-add" data-action="longRest"><i class="fa-solid fa-moon"></i> Long rest</button>
+  </div>
+</div>

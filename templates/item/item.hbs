@@ -1,0 +1,47 @@
+<div class="apt-sheet apt-item">
+  <header class="apt-banner">
+    <img class="apt-portrait" src="{{img}}" alt="{{name}}" data-action="editImage" data-edit="img">
+    <div class="apt-namebox">
+      <input class="apt-name" type="text" name="name" value="{{name}}" placeholder="Name">
+      <div class="apt-idgrid"><div class="apt-fld"><label>Type</label><span>{{typeLabel}}</span></div></div>
+    </div>
+  </header>
+  <div class="apt-box apt-form">
+  {{#if isWeapon}}
+    <div class="form-group"><label>Damage dice</label><div class="form-fields"><input type="text" name="system.dice" value="{{system.dice}}" placeholder="1d8 / 2d6 / 1d10"></div></div>
+    <div class="form-group"><label>Damage type</label><div class="form-fields"><select name="system.dtype">{{#each dtypeOptions}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}</select></div></div>
+    <div class="form-group"><label>Attack ability</label><div class="form-fields"><select name="system.abil">{{#each abilOptions}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}</select></div></div>
+    <div class="form-group"><label>Magic bonus (+X)</label><div class="form-fields"><input type="number" name="system.bonus" value="{{system.bonus}}" step="1"></div></div>
+    <div class="form-group"><label>Proficient (adds +{{pb}})</label><div class="form-fields"><input type="checkbox" name="system.prof" {{checked system.prof}}></div></div>
+    <div class="form-group"><label>Reach (ft)</label><div class="form-fields"><input type="number" name="system.reach" value="{{system.reach}}" min="0" step="5"></div></div>
+    <div class="form-group"><label>Equipped</label><div class="form-fields"><input type="checkbox" name="system.equipped" {{checked system.equipped}}></div></div>
+    <div class="form-group stacked"><label>Notes / special effects</label><div class="form-fields"><textarea name="system.notes" rows="3" placeholder="e.g. on a crit: the target burns…">{{system.notes}}</textarea></div></div>
+  {{/if}}
+  {{#if isSpell}}
+    <div class="form-group"><label>Level</label><div class="form-fields"><select name="system.lvl">{{#each lvlOptions}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}</select></div></div>
+    <div class="form-group"><label>{{#if isTurm}}Element{{else}}Damage type{{/if}}</label><div class="form-fields"><select name="system.elem">{{#each elemOptions}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}</select></div></div>
+    <div class="form-group"><label>Prepared</label><div class="form-fields"><input type="checkbox" name="system.prepared" {{checked system.prepared}}></div></div>
+    <div class="form-group"><label>Concentration</label><div class="form-fields"><input type="checkbox" name="system.concentration" {{checked system.concentration}}></div></div>
+    <div class="form-group stacked"><label>Notes (range, duration, damage…)</label><div class="form-fields"><input type="text" name="system.notes" value="{{system.notes}}" placeholder="60ft, conc. 1min, 3d6 fire"></div></div>
+    <div class="form-group stacked apt-spell-description"><label>Description</label>
+      {{formInput descriptionField value=system.description enriched=descriptionHTML toggled=true}}</div>
+  {{/if}}
+  {{#if isFeat}}
+    <div class="form-group stacked"><label>Description</label><div class="form-fields"><input type="text" name="system.desc" value="{{system.desc}}" placeholder="What it does"></div></div>
+    <div class="form-group"><label>Source (optional)</label><div class="form-fields"><input type="text" name="system.src" value="{{system.src}}" placeholder="Milestone #2, Background…"></div></div>
+    <div class="form-group stacked"><label>Ability bonuses</label>
+      <div class="apt-bongrid">{{#each bonAbilities}}<div class="bcell"><span>{{label}}</span><input type="number" name="system.bon.{{key}}" value="{{value}}" step="1"></div>{{/each}}</div></div>
+    <div class="form-group stacked"><label>Other bonuses</label>
+      <div class="apt-bongrid">{{#each bonExtra}}<div class="bcell"><span>{{label}}</span><input type="number" name="system.bon.{{key}}" value="{{value}}" step="1"></div>{{/each}}</div></div>
+  {{/if}}
+  {{#if isGear}}
+    <div class="form-group"><label>Quantity</label><div class="form-fields"><input type="number" name="system.qty" value="{{system.qty}}" min="1" step="1"></div></div>
+    <div class="form-group stacked"><label>Notes</label><div class="form-fields"><input type="text" name="system.notes" value="{{system.notes}}" placeholder="weight, effect, where stored…"></div></div>
+    {{#if isTurm}}<div class="form-group"><label>Origin</label><div class="form-fields"><select name="system.origin">{{#each originOptions}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}</select></div></div>{{/if}}
+    <div class="form-group"><label>Charges (0 = none)</label><div class="form-fields"><input type="number" name="system.charges" value="{{system.charges}}" min="0" max="20" step="1"></div></div>
+    <div class="form-group"><label>Used</label><div class="form-fields"><input type="number" name="system.used" value="{{system.used}}" min="0" step="1"></div></div>
+    <div class="form-group"><label>Recharges on</label><div class="form-fields"><select name="system.recharge">{{#each rechargeOptions}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}</select></div></div>
+    <div class="form-group"><label>Attuned magic item</label><div class="form-fields"><input type="checkbox" name="system.attuned" {{checked system.attuned}}></div></div>
+  {{/if}}
+  </div>
+</div>

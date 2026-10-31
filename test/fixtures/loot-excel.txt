@@ -1,0 +1,7 @@
+d100	Loot
+01–05	50 Goldmünzen
+06–20	Heiltrank
+21–60	Nichts
+61–90	Waffe +1
+91–96	Kristall (Eis)
+97+	Artefakt

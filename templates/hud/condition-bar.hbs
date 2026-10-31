@@ -1,0 +1,10 @@
+<div class="apt-condbar-inner">
+  <span class="apt-condbar-grip" title="{{#if token}}{{token}}{{else}}No token selected{{/if}} — drag to move"><i class="fa-solid fa-grip-vertical"></i></span>
+  {{#each chips}}
+  <a class="apt-cond-icon {{#if active}}on{{/if}} {{#if exhaustion}}exh{{/if}}" data-action="toggleCondition" data-id="{{id}}" data-tooltip="{{tooltip}}" aria-label="{{name}}">
+    <img src="{{img}}" alt="{{name}}">
+    {{#if exhaustion}}{{#if level}}<span class="lvl">{{level}}</span>{{/if}}{{/if}}
+  </a>
+  {{/each}}
+  <a class="apt-condbar-close" data-action="closeBar" data-tooltip="Hide bar"><i class="fa-solid fa-xmark"></i></a>
+</div>

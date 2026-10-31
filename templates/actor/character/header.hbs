@@ -1,0 +1,23 @@
+<header class="apt-banner">
+  <img class="apt-portrait apt-actor-portrait" src="{{img}}" alt="{{name}}" data-action="portrait" data-edit="img" title="Click: show large · right-click: change image">
+  <div class="apt-namebox">
+    <input class="apt-name" type="text" name="name" value="{{name}}" title="{{name}}" placeholder="Enter name…">
+    <div class="apt-idgrid">
+      <div class="apt-fld"><label>Class &amp; Subclass</label><input type="text" name="system.identity.klasse" value="{{identity.klasse}}" title="{{identity.klasse}}" placeholder="Weapon Bearer"></div>
+      <div class="apt-fld"><label>Species</label><input type="text" name="system.identity.species" value="{{identity.species}}" title="{{identity.species}}"></div>
+      <div class="apt-fld"><label>Level</label><span class="ro num">{{d.level}}</span></div>
+      <div class="apt-fld"><label>Background</label><input type="text" name="system.identity.background" value="{{identity.background}}" title="{{identity.background}}"></div>
+      <div class="apt-fld"><label>Alignment</label><input type="text" name="system.identity.alignment" value="{{identity.alignment}}" title="{{identity.alignment}}"></div>
+      <div class="apt-fld"><label>EXP</label><input type="text" name="system.identity.exp" value="{{identity.exp}}" title="{{identity.exp}}" placeholder="—"></div>
+    </div>
+  </div>
+  <div class="apt-treasury">
+    <div class="apt-led"><label>System</label>
+      <select name="system.mode">{{#each modeOptions}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}</select>
+    </div>
+    <div class="apt-led"><label>Start</label><input type="number" name="system.ap.start" value="{{ap.start}}" min="0" step="1"></div>
+    <div class="apt-led"><label>Earned</label><input type="number" name="system.ap.earned" value="{{ap.earned}}" min="0" step="1"></div>
+    <div class="apt-led"><label>Spent</label><span class="v num">{{ap.spent}}</span></div>
+    <div class="apt-led avail"><label>Available</label><span class="v num">{{ap.avail}}</span></div>
+  </div>
+</header>

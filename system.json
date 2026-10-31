@@ -1,0 +1,75 @@
+{
+  "id": "ap-turm",
+  "title": "AP-Turm",
+  "description": "Homebrew AP point-buy system based on D&D 5e. Progression from earned AP (level, proficiency bonus, milestones, cantrip rank), a shop paid from the AP budget, and the Turm campaign mode with spell points, 20 elements, crystal circlet, Turmwissen, hit-die ladder and its own currencies. Imports character sheets from the AP app and exports them back; NPCs with a statblock parser, loot table import and the 2024 exhaustion ladder.",
+  "version": "1.2.0",
+  "compatibility": {
+    "minimum": "13",
+    "verified": "13.351"
+  },
+  "authors": [
+    {
+      "name": "Eric"
+    }
+  ],
+  "esmodules": [
+    "module/ap-turm.mjs"
+  ],
+  "styles": [
+    "styles/ap-turm.css"
+  ],
+  "languages": [
+    {
+      "lang": "en",
+      "name": "English",
+      "path": "lang/en.json"
+    }
+  ],
+  "documentTypes": {
+    "Actor": {
+      "character": {
+        "htmlFields": [
+          "notes"
+        ]
+      },
+      "npc": {
+        "htmlFields": [
+          "notes"
+        ]
+      },
+      "stash": {}
+    },
+    "Item": {
+      "weapon": {},
+      "spell": {
+        "htmlFields": [
+          "description"
+        ]
+      },
+      "feat": {},
+      "gear": {}
+    }
+  },
+  "grid": {
+    "type": 1,
+    "distance": 5,
+    "units": "ft"
+  },
+  "primaryTokenAttribute": "hp",
+  "socket": true,
+  "license": "MIT",
+  "flags": {
+    "hotReload": {
+      "extensions": [
+        "css",
+        "hbs",
+        "json"
+      ],
+      "paths": [
+        "styles",
+        "templates",
+        "lang"
+      ]
+    }
+  }
+}

@@ -1,0 +1,8 @@
+<span class="apt-condchips">
+  {{#each conditionChips}}
+  <a class="apt-cond-icon on {{#if exhaustion}}exh{{/if}}" data-action="conditionChip" data-id="{{id}}" title="{{#if exhaustion}}Exhaustion {{level}} — click: -1, right-click: +1{{else}}{{name}} — click: remove{{/if}}">
+    <img src="{{img}}" alt="{{name}}">{{#if exhaustion}}<span class="lvl">{{level}}</span>{{/if}}
+  </a>
+  {{else}}<span class="empty">none</span>{{/each}}
+  <a class="apt-cond-add" data-action="conditionAdd" title="Add a condition"><i class="fa-solid fa-plus"></i></a>
+</span>

@@ -1,0 +1,24 @@
+<div class="apt-entry {{#if spent}}spent{{/if}} {{#if isTrait}}trait{{/if}} {{#if isChild}}child{{/if}}" data-index="{{index}}">
+  <div class="erow">
+    {{#if primary}}<a class="ename apt-roll" data-action="entryPrimary" title="{{#if (eq primary 'attack')}}Attack roll{{else if (eq primary 'save')}}Send save request to targets{{else}}Use{{/if}} (Shift: advantage, Ctrl: disadvantage, right-click: dialog)">{{name}}</a>{{else}}<span class="ename">{{name}}</span>{{/if}}
+    <span class="badges">
+      {{#if toHitLabel}}<span class="tag">{{toHitLabel}} to hit</span>{{/if}}
+      {{#if saveDc}}<span class="tag">DC {{saveDc}} {{saveAbility}}</span>{{/if}}
+      {{#if damage}}{{#if dmgUnassigned}}<a class="tag dmg unassigned" data-action="assignType" data-kind="entry" data-index="{{index}}" title="Imported D&D type, no element yet: click to choose one">{{damage}} {{dmgTypeLabel}} → assign element</a>{{else}}<span class="tag dmg" style="{{#if dmgColor}}--el:{{dmgColor}}{{/if}}">{{damage}} {{dmgTypeLabel}}</span>{{/if}}{{/if}}
+      {{#if range}}<span class="tag dim">{{range}}</span>{{/if}}
+      {{#if area}}<span class="tag dim">{{area.label}}</span>{{/if}}
+      {{#if recharge}}<a class="tag rc {{#if rechargeUsed}}used{{/if}}" data-action="entryRecharge" title="Click: toggle spent / available{{#if rechargeFrom}} (shared with {{rechargeFrom}}){{/if}}">Recharge {{recharge}}{{#if rechargeFrom}} · {{rechargeFrom}}{{/if}}{{#if rechargeUsed}} · verbraucht{{/if}}</a>{{/if}}
+      {{#if uses.max}}<span class="tag {{#unless uses.value}}used{{/unless}}">{{uses.value}}/{{uses.max}} {{uses.per}}</span>{{/if}}
+      {{#if legendaryCost}}<span class="tag">costs {{legendaryCost}}</span>{{/if}}
+    </span>
+    <span class="apt-dice">
+      {{#if usable}}<button type="button" class="dbtn use" data-action="entryUse" title="Use (pays legendary cost / recharge / uses, then rolls)"><i class="fa-solid fa-bolt"></i></button>{{/if}}
+      {{#if toHitLabel}}<button type="button" class="dbtn atk" data-action="entryAttack" title="Attack roll (Shift: advantage, Ctrl: disadvantage, right-click: dialog)"><i class="fa-solid fa-dice-d20"></i></button>{{/if}}
+      {{#if damage}}<button type="button" class="dbtn dmg" data-action="entryDamage" title="Damage roll (right-click: crit / extra dice)"><i class="fa-solid fa-burst"></i></button>{{/if}}
+      {{#if area}}<button type="button" class="dbtn tpl" data-action="entryTemplate" title="Place the {{area.label}} template, target what it covers{{#if saveDc}} and send the save request{{/if}}"><i class="fa-solid fa-draw-polygon"></i></button>{{/if}}
+      {{#if saveDc}}<button type="button" class="dbtn save" data-action="entrySave" title="Send the save request (DC {{saveDc}} {{saveAbility}}) to the targeted tokens"><i class="fa-solid fa-shield-halved"></i></button>{{/if}}
+    </span>
+    <span class="apt-rowbtns"><a data-action="entryEdit" title="Edit"><i class="fa-solid fa-pen-to-square"></i></a><a data-action="entryDelete" title="Delete"><i class="fa-solid fa-trash"></i></a></span>
+  </div>
+  {{#if text}}<div class="etext">{{text}}</div>{{/if}}
+</div>

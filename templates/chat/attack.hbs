@@ -1,0 +1,18 @@
+<div class="ap-turm-chat apt-card apt-attack {{#if crit}}crit{{/if}} {{#if miss}}miss{{/if}}">
+  <header class="apt-card-h"><i class="fa-solid fa-dice-d20"></i> <b>{{weapon}}</b> <span class="sub">Attack{{#if modeLabel}} · {{modeLabel}}{{/if}}</span></header>
+  <div class="apt-card-total">
+    <span class="tot">{{total}}</span>
+    <span class="d20">d20: {{#each dice}}<span class="die {{#if active}}kept{{else}}drop{{/if}}">{{result}}</span>{{#unless @last}} {{/unless}}{{else}}{{../d20}}{{/each}}</span>
+  </div>
+  <div class="apt-card-parts">{{#each parts}}<span class="prt">{{label}} {{value}}</span>{{/each}}</div>
+  <div class="apt-card-formula">{{formula}}{{#if range}} · {{range}}{{/if}}</div>
+  {{#if conditions}}<div class="apt-card-cond">{{conditions}}</div>{{/if}}
+  {{#if target}}
+    <div class="apt-card-target">vs. <b>{{{target.nameHtml}}}</b> (AC {{target.ac}}):
+      {{#if crit}}<span class="res crit">CRITICAL HIT</span>{{else if hit}}<span class="res hit">HIT</span>{{else if fumble}}<span class="res miss">MISS (natural 1)</span>{{else}}<span class="res miss">MISS</span>{{/if}}
+    </div>
+  {{else}}
+    {{#if crit}}<div class="apt-card-target"><span class="res crit">CRITICAL HIT</span> <small>(d20 ≥ {{critRange}})</small></div>{{else if fumble}}<div class="apt-card-target"><span class="res miss">Natural 1</span></div>{{/if}}
+  {{/if}}
+  <div class="apt-card-actions"><button type="button" data-action="rollDamage" data-crit="{{crit}}"><i class="fa-solid fa-burst"></i> Damage{{#if crit}} (crit){{/if}}</button></div>
+</div>

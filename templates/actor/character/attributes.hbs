@@ -1,0 +1,41 @@
+<section class="tab apt-tab {{tab.cssClass}}" data-tab="{{tab.id}}" data-group="{{tab.group}}">
+  <div class="apt-box">
+    <h3>Attributes · Point Buy <small class="{{#if counts.pbBad}}bad{{else}}ok{{/if}}">{{counts.pb}} / 72 free</small></h3>
+    {{#each abilityEditor}}
+    <div class="apt-abilrow">
+      <span class="lab">{{label}}</span>
+      <span class="stepper">
+        <button type="button" data-action="abilityStep" data-key="{{key}}" data-delta="-1" {{#if minusDisabled}}disabled{{/if}}>−</button>
+        <input type="number" class="num" data-ability-input="{{key}}" value="{{base}}" min="6" max="18" step="1">
+        <button type="button" data-action="abilityStep" data-key="{{key}}" data-delta="1" {{#if plusDisabled}}disabled{{/if}}>+</button>
+      </span>
+      <span class="final"><span class="fv num">{{fin}}</span><span class="fm">{{mod}}</span></span>
+      <span class="final">{{#if (gt bonus 0)}}<span class="fb">+{{bonus}} bonus</span>{{else}}<span class="fm dim">—</span>{{/if}}</span>
+    </div>
+    {{/each}}
+    <p class="hint">Total of all base scores max. 72, each score 6–18. Ability purchases &amp; milestones stack on top.</p>
+  </div>
+
+  <div class="apt-box">
+    <h3>Skills <small class="{{#if counts.skillsBad}}bad{{else}}ok{{/if}}">{{counts.skills}} / 6</small></h3>
+    <div class="apt-chkgrid">
+      {{#each skillEditor}}
+      <label class="chk {{#if on}}on{{/if}}"><input type="checkbox" data-action="toggleSkill" data-key="{{key}}" {{checked on}}> {{label}} <span class="sub">{{abbr}}</span></label>
+      {{/each}}
+    </div>
+  </div>
+
+  <div class="apt-box">
+    <h3>Proficiencies <small class="{{#if counts.profsBad}}bad{{else}}ok{{/if}}">{{counts.profs}} / 6</small></h3>
+    <div class="apt-chkgrid">
+      {{#each profEditor}}
+      <label class="chk {{#if on}}on{{/if}} {{#if locked}}locked{{/if}}"><input type="checkbox" data-action="toggleProf" data-key="{{key}}" {{checked on}} {{#if locked}}disabled{{/if}}> {{label}}</label>
+      {{/each}}
+    </div>
+    <p class="hint">Custom entries (languages, tools):</p>
+    {{#each customProfs}}
+    <div class="apt-customrow"><input type="text" value="{{value}}" readonly><a data-action="removeProf" data-index="{{index}}" title="Remove"><i class="fa-solid fa-trash"></i></a></div>
+    {{/each}}
+    <div class="apt-customrow"><input type="text" data-prof-input placeholder="New entry…"><a data-action="addProf" title="Add"><i class="fa-solid fa-plus"></i></a></div>
+  </div>
+</section>

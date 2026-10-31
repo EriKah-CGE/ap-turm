@@ -1,0 +1,79 @@
+<section class="tab apt-tab {{tab.cssClass}}" data-tab="{{tab.id}}" data-group="{{tab.group}}">
+  <div class="apt-cols npc">
+    <div class="apt-col">
+      <div class="apt-box">
+        <h3>Abilities</h3>
+        <table class="apt-table apt-npcabil">
+          <thead><tr><th></th><th>Score</th><th>Mod</th><th>Save</th></tr></thead>
+          <tbody>
+          {{#each abilities}}
+            <tr>
+              <td><b>{{abbr}}</b></td>
+              <td class="num"><input class="num" type="number" name="system.abilities.{{key}}" value="{{value}}" min="1" max="30" step="1"></td>
+              <td class="num"><a class="apt-roll modbig" data-action="rollAbility" data-key="{{key}}" title="Roll {{label}} check (Shift: advantage, Ctrl: disadvantage, right-click: dialog)">{{mod}}</a></td>
+              <td class="num savecell"><input class="num" type="number" name="system.saves.{{key}}" value="{{save}}" placeholder="{{placeholder}}" step="1" title="Save bonus as printed (empty = ability modifier)"><a class="apt-roll" data-action="rollSave" data-key="{{key}}" title="Roll {{label}} save (Shift: advantage, Ctrl: disadvantage, right-click: dialog)"><span class="dot {{#if saveProf}}prof{{/if}}"></span> {{saveMod}}</a></td>
+            </tr>
+          {{/each}}
+          </tbody>
+        </table>
+      </div>
+      <div class="apt-box">
+        <h3>Combat modifiers</h3>
+        <div class="apt-advrow">
+          <label title="Pack Tactics and the like: every attack roll of this NPC gets advantage (Ctrl cancels it for one roll)"><input type="checkbox" name="system.adv.attacks" {{checked system.adv.attacks}}> Advantage on attacks</label>
+          <label title="Magic Resistance and the like: every saving throw of this NPC gets advantage (Ctrl cancels it for one roll)"><input type="checkbox" name="system.adv.spellSaves" {{checked system.adv.spellSaves}}> Advantage on spell saves</label>
+        </div>
+      </div>
+      <div class="apt-box">
+        <h3>Legendary</h3>
+        {{#each legendary}}
+        <div class="apt-slotrow legrow"><b>{{label}}</b>
+          <span class="pipwrap">{{#each pips}}<span class="slotpip {{#if used}}used{{/if}}" data-action="legendaryPip" data-kind="{{../kind}}" data-i="{{i}}" title="{{#if used}}restore{{else}}spend{{/if}}"></span>{{else}}<span class="empty">—</span>{{/each}}</span>
+          <span class="slotn num">{{value}}/<input class="num max" type="number" name="system.legendary.{{kind}}.max" value="{{max}}" min="0" step="1" title="Maximum"></span>
+          <a class="legreset" data-action="legendaryReset" data-kind="{{kind}}" title="Reset to maximum"><i class="fa-solid fa-rotate-left"></i></a>
+        </div>
+        {{/each}}
+        <div class="apt-restrow"><button type="button" class="apt-add" data-action="longRest" title="HP, uses, recharge abilities and legendary counters"><i class="fa-solid fa-moon"></i> Long rest</button></div>
+      </div>
+      <div class="apt-box">
+        <h3>Damage</h3>
+        {{#each defenses}}
+        <div class="apt-defrow" data-defense="{{kind}}">
+          <b title="{{label}}">{{abbr}}</b>
+          <span class="addrow"><select data-defense-select="{{kind}}" title="Add {{label}}"><option value="">— choose —</option>{{#each options}}<option value="{{value}}">{{label}}</option>{{/each}}</select><input type="text" placeholder="custom…"><a data-action="addDefense" data-kind="{{kind}}" title="Add the custom entry"><i class="fa-solid fa-plus"></i></a></span>
+          <span class="chips">{{#each entries}}<span class="tag def {{#if unassigned}}unassigned{{/if}}" style="{{#if color}}--el:{{color}}{{/if}}">{{#if unassigned}}<a data-action="assignType" data-kind="{{../kind}}" data-index="{{index}}" title="Imported D&D type, no element yet: click to choose one">{{label}} → assign element</a>{{else}}{{label}}{{/if}}<a class="x" data-action="removeDefense" data-kind="{{../kind}}" data-index="{{index}}" title="Remove"><i class="fa-solid fa-xmark"></i></a></span>{{else}}<span class="none">—</span>{{/each}}</span>
+        </div>
+        {{/each}}
+        {{#if system.defenseNote}}<div class="apt-defnote">{{system.defenseNote}}</div>{{/if}}
+      </div>
+    </div>
+
+    <div class="apt-col wide">
+      {{#each sections}}
+      <details class="apt-box apt-entries" data-section="{{key}}" {{#if open}}open{{/if}}>
+        <summary><h3>{{label}} <small>{{count}}</small></h3></summary>
+        {{#each entries}}
+        {{> "systems/ap-turm/templates/actor/npc/entry.hbs" this}}
+        {{#each children}}{{> "systems/ap-turm/templates/actor/npc/entry.hbs" this}}{{/each}}
+        {{else}}<p class="empty">None.</p>{{/each}}
+        <button type="button" class="apt-add" data-action="entryAdd" data-section="{{key}}">+ Add</button>
+      </details>
+      {{/each}}
+      <details class="apt-box apt-entries apt-npcitems" {{#if itemsOpen}}open{{/if}}>
+        <summary><h3>Items <small>{{items.length}}</small></h3></summary>
+        {{#each items}}
+        <div class="apt-npcitem" data-item-id="{{id}}">
+          <span class="n">{{name}}{{#unless isGear}} <small class="typ">{{type}}</small>{{/unless}}</span>
+          <span class="q num">{{#if isGear}}×{{qty}}{{/if}}</span>
+          <span class="nt" title="{{notes}}">{{notes}}</span>
+          <span class="apt-rowbtns">{{#if canSave}}<a data-action="saveToLibrary" title="Save to library"><i class="fa-solid fa-book-bookmark"></i></a>{{/if}}<a data-action="editItem" title="Edit"><i class="fa-solid fa-pen-to-square"></i></a><a data-action="deleteItem" title="Delete"><i class="fa-solid fa-trash"></i></a></span>
+        </div>
+        {{else}}<p class="empty">No items.</p>{{/each}}
+        <div class="apt-addrow">
+          <button type="button" class="apt-add" data-action="createItem">+ Add item</button>
+          <button type="button" class="apt-add" data-action="fromLibrary"><i class="fa-solid fa-book-open"></i> From library</button>
+        </div>
+      </details>
+    </div>
+  </div>
+</section>

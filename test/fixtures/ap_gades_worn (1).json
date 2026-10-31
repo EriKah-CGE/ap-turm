@@ -1,0 +1,340 @@
+{
+  "v": 4,
+  "theme": "parchment",
+  "mode": "turm",
+  "name": "Gades Worn",
+  "startAp": 50,
+  "earnedAp": 150,
+  "spUsed": 0,
+  "layUsed": 28,
+  "crystals": [
+    {
+      "name": "",
+      "elem": "ordnung"
+    },
+    {
+      "name": "",
+      "elem": ""
+    },
+    {
+      "name": "",
+      "elem": ""
+    },
+    {
+      "name": "",
+      "elem": "erz"
+    },
+    {
+      "name": "",
+      "elem": "arch"
+    }
+  ],
+  "turmwissen": [
+    {
+      "trigger": "Es gibt oben und unten"
+    },
+    {
+      "trigger": "Wer im Turm stirbt, gehört dem Turm"
+    }
+  ],
+  "abilities": {
+    "str": 17,
+    "dex": 10,
+    "con": 16,
+    "int": 8,
+    "wis": 11,
+    "cha": 10
+  },
+  "bought": {
+    "extraAttack": 3,
+    "eleDmg": 1,
+    "critBoost": 1,
+    "critMax": 1,
+    "wepPlus1": 1,
+    "fightStyle": 1,
+    "healCon": 1,
+    "layHands": 1,
+    "saveProf": 2,
+    "asi": 2,
+    "hitDie": 1,
+    "critTemp": 1
+  },
+  "choices": {
+    "fightStyle": [
+      "defense"
+    ],
+    "saveProf": [
+      "con",
+      "wis"
+    ],
+    "asi": [
+      "str",
+      "con"
+    ]
+  },
+  "selectedSkills": [
+    "ath",
+    "prc",
+    "ins",
+    "inv",
+    "sur",
+    "his"
+  ],
+  "selectedProfs": [
+    "lgt",
+    "med",
+    "hvy",
+    "sim",
+    "mar"
+  ],
+  "customProfs": [
+    "Mason Tools"
+  ],
+  "hpRolls": [
+    4,
+    6,
+    3,
+    3,
+    3,
+    6,
+    4,
+    9,
+    2,
+    7,
+    10,
+    4,
+    4,
+    6,
+    8,
+    8
+  ],
+  "milestones": {
+    "1": {
+      "type": "feat",
+      "name": "Great Weapon Master"
+    },
+    "2": {
+      "type": "asi",
+      "stats": {
+        "str": 1,
+        "con": 1
+      }
+    }
+  },
+  "identity": {
+    "species": "Human",
+    "klasse": "Bruiser",
+    "background": "Imperialer Agent",
+    "alignment": "",
+    "exp": ""
+  },
+  "play": {
+    "hpCurrent": 26,
+    "tempHp": 0,
+    "spentHitDice": 0,
+    "deathSucc": 0,
+    "deathFail": 0,
+    "inspiration": 0,
+    "inspMax": 5,
+    "exhaustion": 0
+  },
+  "currency": {
+    "cp": 32,
+    "sp": 0,
+    "ep": 32,
+    "gp": 24,
+    "pp": 0,
+    "go": 24,
+    "br": 18,
+    "ku": 36,
+    "ed": 8,
+    "si": 90
+  },
+  "equipment": "",
+  "notes": "",
+  "weapons": [
+    {
+      "id": "wmtnc4m9hq4hf",
+      "name": "Zweihänder",
+      "abil": "str",
+      "dice": "2d6+4",
+      "dtype": "slashing",
+      "bonus": 1,
+      "prof": true,
+      "equipped": false,
+      "notes": ""
+    },
+    {
+      "id": "wmtohhex54zdh",
+      "name": "Obsidianspeer",
+      "abil": "str",
+      "dice": "2d8+4",
+      "dtype": "erz",
+      "bonus": 1,
+      "prof": true,
+      "equipped": true,
+      "notes": "Umgeht Erzimmunität und -resistenz\nDoppelter Schaden gegen Gaiakreaturen"
+    }
+  ],
+  "spells": [],
+  "slotsUsed": {},
+  "feats": [
+    {
+      "id": "fmtnc3qsuga3b",
+      "name": "Great Weapon Master",
+      "desc": "",
+      "src": "Milestone #1",
+      "bon": {
+        "str": 1
+      }
+    },
+    {
+      "id": "fmto2idkktu3y",
+      "name": "Titans Grip",
+      "desc": "Dual Wield 2 handed weapons",
+      "src": "",
+      "bon": {}
+    }
+  ],
+  "items": [
+    {
+      "id": "imto33pqe8ah1",
+      "name": "Shield",
+      "qty": 1,
+      "notes": "",
+      "attuned": false,
+      "charges": 0,
+      "used": 0,
+      "recharge": "long",
+      "origin": "tower"
+    },
+    {
+      "id": "imto7sa1h17pv",
+      "name": "Handschuhe des Attentäters",
+      "qty": 1,
+      "notes": "Erster Angriff auf surprised Target macht +1d10",
+      "attuned": false,
+      "charges": 0,
+      "used": 0,
+      "recharge": "long",
+      "origin": "tower"
+    },
+    {
+      "id": "imto8zb8bs85l",
+      "name": "Ei",
+      "qty": 1,
+      "notes": "Glibbrig",
+      "attuned": false,
+      "charges": 0,
+      "used": 0,
+      "recharge": "long",
+      "origin": "tower"
+    },
+    {
+      "id": "imto96kpowx7v",
+      "name": "Stiefel des Gauners",
+      "qty": 1,
+      "notes": "Advantage auf Intimidation und Persuasion bei Leuten, die Bad Boys mögen, halbes Movement",
+      "attuned": false,
+      "charges": 0,
+      "used": 0,
+      "recharge": "long",
+      "origin": "tower"
+    },
+    {
+      "id": "imto9q8gphm5f",
+      "name": "SM-Set für weibliche humanoide Kreaturen (Frauen)",
+      "qty": 1,
+      "notes": "",
+      "attuned": false,
+      "charges": 0,
+      "used": 0,
+      "recharge": "long",
+      "origin": "tower"
+    },
+    {
+      "id": "imto9v5mlbmvl",
+      "name": "Ei",
+      "qty": 1,
+      "notes": "",
+      "attuned": false,
+      "charges": 0,
+      "used": 0,
+      "recharge": "long",
+      "origin": "tower"
+    },
+    {
+      "id": "imtoct3xny02l",
+      "name": "Neutralkristall",
+      "qty": 1,
+      "notes": "",
+      "attuned": false,
+      "charges": 0,
+      "used": 0,
+      "recharge": "long",
+      "origin": "tower"
+    },
+    {
+      "id": "imtod5e5din1o",
+      "name": "Spitzhacke",
+      "qty": 1,
+      "notes": "",
+      "attuned": false,
+      "charges": 0,
+      "used": 0,
+      "recharge": "long",
+      "origin": "tower"
+    },
+    {
+      "id": "imtodezwbhjr0",
+      "name": "Ei",
+      "qty": 1,
+      "notes": "Eis",
+      "attuned": false,
+      "charges": 0,
+      "used": 0,
+      "recharge": "long",
+      "origin": "tower"
+    },
+    {
+      "id": "imtoe31fmwzfn",
+      "name": "Metallischer Sand",
+      "qty": 1,
+      "notes": "GIbt Rüstung Chance auf AC erhöhung",
+      "attuned": false,
+      "charges": 0,
+      "used": 0,
+      "recharge": "long",
+      "origin": "tower"
+    },
+    {
+      "id": "imtoevh0i5b6s",
+      "name": "Silberner Helm",
+      "qty": 1,
+      "notes": "Passive Perception = 10, Bonus Action Angriff Strength Modifier 1d6",
+      "attuned": false,
+      "charges": 0,
+      "used": 0,
+      "recharge": "long",
+      "origin": "tower"
+    },
+    {
+      "id": "imtoexqtgxemk",
+      "name": "Brustpanzer des begrenzten Schutzes",
+      "qty": 1,
+      "notes": "Crit reinbekommen 1d20 20= 0 DMG",
+      "attuned": false,
+      "charges": 0,
+      "used": 0,
+      "recharge": "long",
+      "origin": "tower"
+    }
+  ],
+  "armor": {
+    "id": "plate",
+    "shield": true
+  },
+  "_wepMigrated": true,
+  "_featMigrated": true,
+  "_itemMigrated": true
+}

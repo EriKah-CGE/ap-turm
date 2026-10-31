@@ -1,0 +1,48 @@
+<section class="tab apt-tab {{tab.cssClass}}" data-tab="{{tab.id}}" data-group="{{tab.group}}">
+  <div class="apt-cols2">
+    <div class="apt-col">
+      <div class="apt-box">
+        <h3>Equipment {{#if attuned}}<small>{{attuned}}/3 attuned</small>{{/if}}</h3>
+        <div class="apt-wornrow"><b>Worn</b>
+          <select name="system.armor.id">{{#each armorOptions}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}</select>
+          <label class="shlbl"><input type="checkbox" name="system.armor.shield" {{checked S.armor.shield}}> Shield +2</label>
+        </div>
+        {{#if d.arm.sd}}<div class="apt-note">Stealth: disadvantage</div>{{/if}}
+        {{#if d.armStrLack}}<div class="apt-note">needs STR {{d.arm.str}} — Speed −10ft</div>{{/if}}
+
+        {{#if isTurm}}
+          <div class="apt-cat">Carried in</div>
+          {{#each gearCity}}{{> "systems/ap-turm/templates/actor/character/gear-row.hbs"}}{{else}}<p class="empty">Nothing carried in.</p>{{/each}}
+          <div class="apt-cat">Found in tower <span class="apt-carry {{#if (gt carried carryLimit)}}hint{{/if}}" title="Inside the tower: unlimited. Only {{carryLimit}} tower finds may be carried back in on re-entry (circlet crystals exempt).">{{carried}}/{{carryLimit}}</span></div>
+          {{#each gearTower}}{{> "systems/ap-turm/templates/actor/character/gear-row.hbs"}}{{else}}<p class="empty">Nothing found yet.</p>{{/each}}
+        {{else}}
+          {{#each gearAll}}{{> "systems/ap-turm/templates/actor/character/gear-row.hbs"}}{{else}}<p class="empty">No items yet.</p>{{/each}}
+        {{/if}}
+        <div class="apt-addrow">
+          <button type="button" class="apt-add" data-action="createItem" data-type="gear">+ Add item</button>
+          <button type="button" class="apt-add" data-action="fromLibrary"><i class="fa-solid fa-book-open"></i> From library</button>
+        </div>
+      </div>
+    </div>
+    <div class="apt-col">
+      {{#if isTurm}}
+      <div class="apt-box">
+        <h3>Crystal Circlet <small>{{system.crystalsSet}}/{{crystalLimit}} · exempt from carry limit</small></h3>
+        {{#each crystals}}
+        <div class="apt-cryrow">
+          <span class="crygem {{#if set}}on{{/if}}" style="{{#if color}}--el:{{color}}{{/if}}"></span>
+          <input type="text" name="system.crystals.{{index}}.name" value="{{name}}" placeholder="{{placeholder}}">
+          <select name="system.crystals.{{index}}.elem">{{#each options}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}</select>
+        </div>
+        {{/each}}
+      </div>
+      {{/if}}
+      <div class="apt-box">
+        <h3>Currency{{#if isTurm}} <small title="Conversion: 100 KU = 1 BR, 100 BR = 1 SI, 100 SI = 1 GO, 10 GO = 1 ED">×100 · GO→ED ×10</small>{{/if}}</h3>
+        <div class="apt-coins">
+          {{#each currency}}<div class="apt-coin" title="{{title}}"><label>{{label}}</label><input type="number" class="num" name="system.currency.{{key}}" value="{{value}}" step="1"></div>{{/each}}
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

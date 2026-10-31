@@ -1,0 +1,8 @@
+<section class="tab apt-tab {{tab.cssClass}}" data-tab="{{tab.id}}" data-group="{{tab.group}}">
+  <div class="apt-box">
+    <h3>Statblock import</h3>
+    <p class="hint">Paste a 5e statblock (book, web or 2024 layout). Parsing fills AC, HP, speed, abilities, saves, resistances / immunities / vulnerabilities, CR, legendary counters and the attack list; everything else lands in Traits and Actions as text. Nothing is discarded — adjust the fields afterwards.</p>
+    <textarea class="apt-text mono" name="system.statblock" rows="18" placeholder="Gnoll&#10;Medium humanoid (gnoll), chaotic evil&#10;Armor Class 15 (hide armor, shield)&#10;Hit Points 22 (5d8)&#10;…">{{system.statblock}}</textarea>
+    <div class="apt-restrow"><button type="button" class="apt-add" data-action="parseStatblock"><i class="fa-solid fa-wand-magic-sparkles"></i> Parse statblock into fields</button></div>
+  </div>
+</section>

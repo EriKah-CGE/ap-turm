@@ -1,0 +1,15 @@
+<div class="ap-turm-chat apt-card apt-save-request">
+  <header class="apt-card-h"><i class="fa-solid fa-shield-halved"></i> <b>{{name}}</b> <span class="sub">{{{actorNameHtml}}}</span></header>
+  <div class="apt-card-total"><span class="tot">DC {{dc}}</span><span class="d20">{{abilityLabel}} saving throw</span></div>
+  {{#if hasDamage}}
+  <div class="apt-card-target"><b>{{total}}</b> <span class="dt" style="{{#if dtypeColor}}color:{{dtypeColor}}{{/if}}">{{dtype}}</span> · half on success: <b>{{half}}</b></div>
+  <table class="apt-card-table">{{#each parts}}<tr><td class="lbl">{{label}}</td><td class="f">{{formula}}</td><td class="num">{{sum}}</td></tr>{{/each}}</table>
+  {{#each warnings}}<div class="apt-card-warn">{{this}}</div>{{/each}}
+  {{/if}}
+  {{#if text}}<div class="apt-card-notes">{{text}}</div>{{/if}}
+  {{#if targets.length}}
+  <div class="apt-card-actions apt-save-targets">
+    {{#each targets}}<button type="button" data-action="rollRequestedSave" data-token-uuid="{{uuid}}" title="Roll the save for {{name}} (Shift: advantage, Ctrl: disadvantage, right-click: dialog)"><i class="fa-solid fa-dice-d20"></i> {{{nameHtml}}}</button>{{/each}}
+  </div>
+  {{else}}<div class="apt-card-warn">No targets were selected when this card was sent. Target tokens and use the entry again.</div>{{/if}}
+</div>

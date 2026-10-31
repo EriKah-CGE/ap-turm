@@ -1,0 +1,36 @@
+Marsh Stalker
+Large monstrosity, neutral evil
+Armor Class 14
+Hit Points 68 (8d10 + 24)
+Speed 40 ft., swim 40 ft.
+STR
+17 (+3)
+DEX
+14 (+2)
+CON
+16 (+3)
+INT
+6 (-2)
+WIS
+12 (+1)
+CHA
+7 (-2)
+Saving Throws DEX +4, WIS +3
+Skills Perception +5, Stealth +6
+Damage Resistances cold
+Damage Vulnerabilities fire
+Senses darkvision 60 ft., passive Perception 15
+Languages —
+Challenge 4 (1,100 XP)
+Proficiency Bonus +2
+Amphibious. The stalker can breathe air and water.
+Legendary Resistance (2/Day). If the stalker fails a saving throw, it can choose to succeed instead.
+Actions
+Multiattack. The stalker makes one Bite attack and one Tail attack.
+Bite. Melee Weapon Attack: +5 to hit, reach 5 ft., one target. Hit: 12 (2d8 + 3) piercing damage.
+Tail. Melee Weapon Attack: +5 to hit, reach 10 ft., one target. Hit: 8 (1d10 + 3) bludgeoning damage.
+Spit. Ranged Weapon Attack: +4 to hit, range 30/90 ft., one target. Hit: 10 (3d6) acid damage.
+Legendary Actions
+The stalker can take 2 legendary actions, choosing from the options below. Only one legendary action option can be used at a time and only at the end of another creature's turn. The stalker regains spent legendary actions at the start of its turn.
+Move. The stalker moves up to its speed without provoking opportunity attacks.
+Tail (Costs 2 Actions). The stalker makes one Tail attack.

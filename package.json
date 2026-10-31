@@ -1,0 +1,12 @@
+{
+  "name": "ap-turm",
+  "version": "1.2.0",
+  "private": true,
+  "description": "AP-Turm game system for Foundry VTT v13",
+  "type": "module",
+  "scripts": {
+    "test": "node test/rules.test.mjs",
+    "package": "node scripts/package.mjs",
+    "handover": "node scripts/handover.mjs"
+  }
+}

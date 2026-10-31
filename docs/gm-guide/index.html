@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>AP-Turm – Anleitung für die Spielleitung</title>
+<style>
+  :root { --ink: #2a2114; --dim: #6a5a40; --gold: #9a6f22; --line: #d9ccb2; --box: #f6f0e3; --warn: #a3402a; }
+  @page { size: A4; margin: 16mm 15mm 16mm 15mm; }
+  @page :first { margin: 0; }
+  * { box-sizing: border-box; }
+  html { font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif; color: var(--ink); font-size: 10.5pt; line-height: 1.45; }
+  body { margin: 0; background: #fff; }
+  main { max-width: 180mm; margin: 0 auto; }
+  h1, h2, h3 { font-family: Georgia, "Times New Roman", serif; color: var(--ink); line-height: 1.2; }
+  h2 { font-size: 19pt; margin: 0 0 3mm; padding-bottom: 2mm; border-bottom: 2px solid var(--gold); break-before: page; }
+  h3 { font-size: 12.5pt; margin: 6mm 0 2mm; color: var(--gold); break-after: avoid; }
+  p { margin: 0 0 2.5mm; }
+  .purpose { font-style: italic; color: var(--dim); margin-bottom: 4mm; }
+  ol, ul { margin: 0 0 3mm; padding-left: 6mm; }
+  li { margin: 0 0 1.2mm; }
+  code, .path { font-family: Consolas, "Courier New", monospace; font-size: 9.5pt; background: var(--box); padding: 0 1.2mm; border-radius: 2px; }
+  .ui { font-weight: 600; white-space: nowrap; }
+  .key { display: inline-block; border: 1px solid #9c8c6c; border-bottom-width: 2px; border-radius: 3px; padding: 0 1.6mm; font-family: Consolas, monospace; font-size: 9pt; background: #fff; }
+  .box { background: var(--box); border: 1px solid var(--line); border-left: 4px solid var(--gold); padding: 3mm 4mm; margin: 3mm 0; break-inside: avoid; }
+  .box.warn { border-left-color: var(--warn); }
+  .box pre { margin: 1.5mm 0 0; font-family: Consolas, monospace; font-size: 9.5pt; white-space: pre-wrap; }
+  figure { margin: 3mm 0 4mm; text-align: center; break-inside: avoid; }
+  figure img { display: block; margin: 0 auto; border: 1px solid #b9ab8e; border-radius: 3px; max-width: 100%; }
+  figcaption { font-size: 9pt; color: var(--dim); margin-top: 1.5mm; }
+  figcaption b { color: var(--ink); }
+  .row { display: flex; gap: 5mm; align-items: flex-start; justify-content: center; break-inside: avoid; }
+  .row figure { margin-top: 0; }
+  table { border-collapse: collapse; width: 100%; margin: 2mm 0 4mm; font-size: 9.5pt; break-inside: auto; }
+  th, td { border: 1px solid var(--line); padding: 1.4mm 2mm; text-align: left; vertical-align: top; }
+  th { background: var(--box); }
+  tr { break-inside: avoid; }
+  /* cover */
+  .cover { height: 297mm; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; background: #231b12; color: #f1e3c2; padding: 20mm; }
+  .cover h1 { color: #f1e3c2; font-size: 34pt; margin: 0 0 4mm; }
+  .cover .sub { font-size: 14pt; color: #d9b874; margin-bottom: 14mm; }
+  .cover .meta { font-size: 10pt; color: #bba880; }
+  .cover img { border: 2px solid #7a5a2c; border-radius: 4px; width: 120mm; margin: 0 0 12mm; }
+  .toc { break-before: page; }
+  .toc + h2 { break-before: auto; margin-top: 10mm; }
+  @media print { .cover { width: 210mm; margin: 0; } main { max-width: none; } }
+  .toc h2 { break-before: avoid; }
+  .toc ol { font-size: 11pt; padding-left: 8mm; }
+  .toc li { margin-bottom: 2mm; }
+  .toc a { color: var(--ink); text-decoration: none; }
+  @media screen {
+    body { background: #e9e2d2; }
+    main { background: #fff; padding: 12mm 15mm; box-shadow: 0 0 8px rgba(0,0,0,.2); margin: 8mm auto; }
+    .cover { height: auto; min-height: 200mm; margin: -12mm -15mm 10mm; }
+    h2 { margin-top: 14mm; }
+  }
+</style>
+</head>
+<body>
+<main>
+
+<section class="cover">
+  <h1>AP-Turm</h1>
+  <div class="sub">Anleitung für die Spielleitung</div>
+  <img src="img/03-character-overview.png" alt="Charakterbogen im AP-Turm-System">
+  <div class="meta">Foundry VTT 13 · System-Version 1.1.0<br>Die Bedienelemente heißen in Foundry englisch; diese Anleitung übernimmt die Begriffe genau so.</div>
+</section>
+
+<section class="toc">
+  <h2>Inhalt</h2>
+  <ol>
+    <li><a href="#k1">Installation und Update</a></li>
+    <li><a href="#k2">Charaktere: Import, Bogen, Export, Backup</a></li>
+    <li><a href="#k3">NPCs: Statblock, Turm-Elemente, Anzeigename, Kopien</a></li>
+    <li><a href="#k4">Kampf: Angriff, Schaden, Zustände, Übersicht</a></li>
+    <li><a href="#k5">Würfe anfordern (Request Roll)</a></li>
+    <li><a href="#k6">AP und Turmwissen vergeben</a></li>
+    <li><a href="#k7">Loot, Party Stash, Übergabe, Item-Bibliothek</a></li>
+    <li><a href="#k8">Shop-Editor: eigene Point-Buy-Einträge</a></li>
+    <li><a href="#k9">Jukebox</a></li>
+    <li><a href="#k10">Nachschlagen und Einstellungen</a></li>
+    <li><a href="#k11">Bekannte Grenzen und wenn etwas klemmt</a></li>
+  </ol>
+  <div class="box">
+    <b>Wo ist das AP-Turm-Menü?</b> Fast alle Spielleiter-Werkzeuge liegen hinter dem Knopf
+    <span class="ui">AP-Turm</span> oben in der Seitenleiste <span class="ui">Actors</span> (Figuren-Symbol rechts).
+    Spieler sehen diesen Knopf nicht.
+  </div>
+</section>
+
+<!-- 1 -->
+<h2 id="k1">1 · Installation und Update</h2>
+<p class="purpose">Das System einmal in Foundry bringen, eine Welt damit anlegen und später Updates einspielen, ohne Daten zu verlieren.</p>
+<h3>Erstinstallation</h3>
+<ol>
+  <li>Die Datei <code>ap-turm-v1.1.0.zip</code> in den Systemordner von Foundry entpacken. Danach muss dort ein Ordner <code>ap-turm</code> liegen, in dem direkt die Datei <code>system.json</code> steht:
+    <div class="box"><b>Zielordner (Windows-Standard)</b><pre>%LOCALAPPDATA%\FoundryVTT\Data\systems\ap-turm\
+└─ system.json, module\, templates\, styles\ …</pre>
+    Auf anderen Rechnern: <span class="path">&lt;Foundry-Datenordner&gt;/Data/systems/ap-turm/</span></div></li>
+  <li>Foundry komplett beenden und neu starten. Im Setup erscheint unter <span class="ui">Game Systems</span> der Eintrag „AP-Turm“.</li>
+  <li><span class="ui">Worlds</span> → <span class="ui">Create World</span>, als <span class="ui">Game System</span> „AP-Turm“ wählen, Welt starten.</li>
+  <li>Kontrolle in der Welt: Seitenleiste <span class="ui">Game Settings</span> (Zahnräder) zeigt ganz oben „AP-Turm 1.1.0“.</li>
+</ol>
+<figure><img src="img/01-system-info.png" style="width:62mm" alt=""><figcaption><b>Abb. 1.1</b> Die Game-Settings-Seitenleiste zeigt das aktive System und seine Version.</figcaption></figure>
+<div class="box warn"><b>Foundry-Version:</b> AP-Turm braucht Foundry <b>13</b> (getestet mit 13.351). Foundry 12 und älter werden nicht unterstützt. Ein Foundry-Update innerhalb von Version 13 ist unkritisch.</div>
+<h3>Update auf eine neue System-Version</h3>
+<ol>
+  <li>Vorher die Welt sichern: im Foundry-Setup <span class="ui">Backups</span> oder den Ordner <code>Data/worlds/&lt;Weltname&gt;</code> kopieren.</li>
+  <li>Foundry beenden, den Ordner <code>Data/systems/ap-turm</code> <b>vollständig ersetzen</b> (alten Ordner löschen, neue Zip entpacken). Nicht darüber kopieren, sonst bleiben alte Dateien liegen.</li>
+  <li>Foundry starten, Welt öffnen. Beim ersten Start nach dem Update fragt das System nach dem Backup (Abb. 1.2). <span class="ui">Backup done, migrate</span> führt die Anpassungen aus; <span class="ui">Later</span> verschiebt sie auf den nächsten Start.</li>
+  <li>Bringt ein Update <b>neue Akteur-Typen</b> mit (z. B. den Party Stash), muss die Welt einmal über <span class="ui">Return to Setup</span> beendet und neu gestartet werden. Ein F5 im Browser reicht dafür nicht.</li>
+</ol>
+<figure><img src="img/00-migration-dialog.png" style="width:95mm" alt=""><figcaption><b>Abb. 1.2</b> Migrationsdialog nach einem Update: erst sichern, dann migrieren.</figcaption></figure>
+
+<!-- 2 -->
+<h2 id="k2">2 · Charaktere: Import, Bogen, Export, Backup</h2>
+<p class="purpose">Die Spieler bauen ihre Charaktere weiterhin in der AP-App. In Foundry werden sie importiert, gespielt und bei Bedarf zurück in die App exportiert.</p>
+<h3>Charakter aus der App importieren</h3>
+<ol>
+  <li>Spieler exportiert in der AP-App sein JSON (Datei <code>ap_&lt;name&gt;.json</code>) und schickt es der Spielleitung.</li>
+  <li>Seitenleiste <span class="ui">Actors</span> → <span class="ui">AP-Turm</span> → <span class="ui">Import character</span>, Datei wählen. Der Akteur wird mit allen Waffen, Zaubern, Feats und Gegenständen angelegt.</li>
+  <li>Akteur dem Spieler zuweisen: Rechtsklick auf den Akteur → <span class="ui">Configure Ownership</span> → Spieler auf <span class="ui">Owner</span>.</li>
+</ol>
+<div class="row">
+  <figure><img src="img/02-actors-menu.png" style="width:62mm" alt=""><figcaption><b>Abb. 2.1</b> Das AP-Turm-Menü: oben der Import, unten das Gesamt-Backup.</figcaption></figure>
+  <figure><img src="img/04-character-export.png" style="width:100mm" alt=""><figcaption><b>Abb. 2.2</b> Im Bogen über das Drei-Punkte-Menü: <span class="ui">Import JSON</span> (in diesen Bogen) und <span class="ui">Export JSON</span> (zurück zur App).</figcaption></figure>
+</div>
+<h3>Zurück zur App und Gesamt-Backup</h3>
+<ul>
+  <li><b>Einzelner Charakter:</b> <span class="ui">Export JSON</span> im Bogen-Menü (Abb. 2.2) erzeugt eine Datei, die die App wieder lädt.</li>
+  <li><b>Alle Charaktere:</b> <span class="ui">AP-Turm</span> → <span class="ui">Export all characters</span> lädt eine Zip <code>ap-turm-characters_&lt;datum&gt;.zip</code> mit je einer Datei <code>ap_&lt;name&gt;_&lt;datum&gt;.json</code> herunter. Die Spielleitung bekommt eine Flüsternachricht mit der Anzahl. Zurück geht jede Datei über den normalen Import.</li>
+</ul>
+<h3>Was der Bogen zeigt</h3>
+<p>Oben die Identität und das AP-Konto (<span class="ui">Start</span>, <span class="ui">Earned</span>, <span class="ui">Spent</span>, <span class="ui">Available</span>). Darunter die <b>Kampfleiste</b>: HP mit −/+-Knöpfen und Temp-HP, AC, Angriffe pro Aktion, Initiative, Übungsbonus, Tempo, Passive Wahrnehmung, Zauber-SG, Todesrettungswürfe, Inspiration, Zustände und Erschöpfung, Trefferwürfel, Lay on Hands und die Rast-Knöpfe. Die Reiter <span class="ui">Overview</span>, <span class="ui">Attributes &amp; Skills</span>, <span class="ui">Shop</span>, <span class="ui">Level &amp; Milestones</span> und <span class="ui">Inventory</span> entsprechen der App. Alle Werte rechnen genauso wie dort.</p>
+<figure><img src="img/03-character-overview.png" style="width:122mm" alt=""><figcaption><b>Abb. 2.3</b> Charakterbogen, Reiter Overview. Rot umrahmt: die Kampfleiste mit allem, was im Kampf gebraucht wird.</figcaption></figure>
+
+<!-- 3 -->
+<h2 id="k3">3 · NPCs: Statblock, Turm-Elemente, Anzeigename, Kopien</h2>
+<p class="purpose">Gegner nicht abtippen, sondern einen 5e-Statblock einfügen und vom System zerlegen lassen.</p>
+<h3>NPC aus einem Statblock</h3>
+<ol>
+  <li><span class="ui">Actors</span> → <span class="ui">Create Actor</span>, Typ <span class="ui">NPC</span>, Namen vergeben. Im Kopf <span class="ui">System</span> auf „Turm“ oder „Standard AP“ stellen.</li>
+  <li>Reiter <span class="ui">Statblock</span>: den Statblock aus Buch, PDF oder Webseite in das Textfeld einfügen.</li>
+  <li><span class="ui">Parse statblock into fields</span> klicken. AC, HP, Tempo, Attribute, Saves, Resistenzen, CR, Legendary-Zähler und alle Aktionen werden übernommen. Nichts geht verloren: Was nicht erkannt wird, landet als Text im Eintrag.</li>
+</ol>
+<figure><img src="img/05-npc-statblock.png" style="width:118mm" alt=""><figcaption><b>Abb. 3.1</b> Statblock einfügen (1) und parsen (2).</figcaption></figure>
+<h3>Was erkannt wird</h3>
+<ul>
+  <li><b>Angriffe</b> mit Trefferbonus, Schadenswürfeln und Reichweite: Würfel-Knopf für den Angriff, Stern-Knopf für den Schaden.</li>
+  <li><b>Rettungswurf-Effekte</b> (z. B. Frightful Presence, DC 18 WIS): Schild-Knopf fordert den Save bei den anvisierten Tokens an.</li>
+  <li><b>Recharge</b> (z. B. „Recharge 5-6“): Der Blitz-Knopf setzt die Fähigkeit ein und markiert sie als verbraucht. Zu Beginn des NPC-Zugs würfelt das System die Aufladung automatisch.</li>
+  <li><b>Flächen</b> (Kegel, Linie, Kreis): Polygon-Knopf setzt das Template auf die Karte (Kapitel 4).</li>
+  <li><b>Legendary Resistances / Actions</b> als Kreise zum Abhaken, <span class="ui">Long rest</span> füllt sie auf.</li>
+</ul>
+<figure><img src="img/06-npc-stats-top.png" style="width:118mm" alt=""><figcaption><b>Abb. 3.2</b> Nach dem Parsen: Werte, Legendary-Zähler (unten links) und die gelbe Markierung für einen noch nicht zugeordneten Schadenstyp.</figcaption></figure>
+<figure><img src="img/07-npc-actions.png" style="width:150mm" alt=""><figcaption><b>Abb. 3.3</b> Aktionsliste: Save anfordern, Recharge und Flächen-Template.</figcaption></figure>
+<h3>Schadenstypen im Turm-Modus zuordnen</h3>
+<p>Im Turm-Modus gibt es statt der D&amp;D-Schadensarten die 20 Elemente. Importierte D&amp;D-Typen (Piercing, Cold …) werden deshalb <b>nicht automatisch</b> umgedeutet, sondern gelb als „assign element“ markiert. Solange sie gelb sind, greifen dafür keine Resistenzen.</p>
+<ol>
+  <li>Auf den gelben Tag klicken.</li>
+  <li>Im Auswahlfeld das passende Element wählen. Der Tag nimmt Farbe und Namen des Elements an.</li>
+</ol>
+<figure><img src="img/08-npc-assign-type.png" style="width:110mm" alt=""><figcaption><b>Abb. 3.4</b> Ein gelber Tag wird zum Auswahlfeld für das Element.</figcaption></figure>
+<h3>Anzeigename für die Spieler</h3>
+<p>Im Feld <span class="ui">Display name</span> steht, was die Spieler statt des echten Namens sehen: Chat-Karten, Kampfliste, Token-Tooltip. Die Spielleitung sieht weiterhin den echten Namen. Leer = echter Name.</p>
+<figure><img src="img/09-npc-displayname.png" style="width:140mm" alt=""><figcaption><b>Abb. 3.5</b> Aus „Adult Silver Dragon“ wird für die Spieler „Silberne Gestalt“.</figcaption></figure>
+<h3>Mehrere Kopien setzen (Place copies)</h3>
+<ol>
+  <li>Rechtsklick auf den NPC in der Actors-Liste → <span class="ui">Place copies</span> (oder der gleichnamige Knopf im Drei-Punkte-Menü des NPC-Bogens).</li>
+  <li>Anzahl (1–20) wählen. <span class="ui">Number the tokens</span> nummeriert „Gnoll 1…N“; ein Anzeigename wird mitnummeriert.</li>
+  <li>Läuft ein Kampf, trägt <span class="ui">Add to combat</span> die Kopien gleich ein (ohne Initiative, siehe Kapitel 4).</li>
+</ol>
+<p>Die Tokens erscheinen in einem Raster um die Bildmitte, freie Felder zuerst. Jede Kopie hat eigene HP.</p>
+<div class="row">
+  <figure><img src="img/10-place-copies-menu.png" style="width:60mm" alt=""><figcaption><b>Abb. 3.6</b> Kontextmenü in der Actors-Liste.</figcaption></figure>
+  <figure><img src="img/11-place-copies-dialog.png" style="width:75mm" alt=""><figcaption><b>Abb. 3.7</b> Anzahl, Nummerierung, Kampf.</figcaption></figure>
+</div>
+
+<!-- 4 -->
+<h2 id="k4">4 · Kampf</h2>
+<p class="purpose">Angriffe, Schaden und Zustände laufen über Chat-Karten und echte Würfel. Die Spielleitung muss nichts nachrechnen.</p>
+<h3>Angriff → Schaden → auf das Ziel anwenden</h3>
+<ol>
+  <li>Ziel anvisieren: Token mit der Maus überfahren und <span class="key">T</span> drücken (oder Rechtsklick → Zielscheibe).</li>
+  <li>Im Bogen auf den Würfel-Knopf der Waffe klicken. <b>Klick</b> = normal, <b>Shift</b> = Vorteil, <b>Strg/Alt</b> = Nachteil, <b>Rechtsklick</b> = Dialog mit Situationsbonus (Abb. 4.1).</li>
+  <li>Die Angriffskarte vergleicht mit der AC des Ziels (HIT/MISS, Krit bei 20 bzw. 19–20 mit „Crit 19-20“).</li>
+  <li><span class="ui">Damage</span> auf der Karte würfelt den Schaden. Die Chips zeigen, was das Ziel abwehrt (<b>RES</b> halbiert, <b>IMM</b> hebt auf, <b>VUL</b> verdoppelt).</li>
+  <li><span class="ui">Apply to target</span> zieht den Schaden ab: zuerst Temp-HP, dann HP, Resistenzen bereits verrechnet.</li>
+  <li>Versehen? <span class="ui">Undo</span> auf der Ergebniskarte stellt HP und Zustände wieder her.</li>
+</ol>
+<div class="row">
+  <figure><img src="img/13-attack-damage.png" style="width:62mm" alt=""><figcaption><b>Abb. 4.2</b> Angriffs- und Schadenskarte. Rot: Resistenz-Chips und <span class="ui">Apply to target</span>.</figcaption></figure>
+  <div>
+    <figure><img src="img/12-attack-dialog.png" style="width:80mm" alt=""><figcaption><b>Abb. 4.1</b> Rechtsklick-Dialog: Vorteil/Nachteil und Situationsbonus.</figcaption></figure>
+    <figure><img src="img/14-applied-undo.png" style="width:62mm" alt=""><figcaption><b>Abb. 4.3</b> Angewendet: 25 Erz-Schaden, halbiert durch RES. <span class="ui">Undo</span> macht es rückgängig.</figcaption></figure>
+  </div>
+</div>
+<h3>Zustände und Erschöpfung</h3>
+<ul>
+  <li><b>Schnellleiste</b> über der Hotbar: ein Klick setzt oder entfernt den Zustand bei allen ausgewählten Tokens (oder den Zielen, wenn nichts ausgewählt ist). Ganz rechts die Erschöpfung: Linksklick +1, Rechtsklick −1.</li>
+  <li><b>Token-HUD</b> (Rechtsklick auf ein Token → Statussymbol): dieselben Zustände plus Erschöpfung 1–6.</li>
+  <li>Zustände wirken auf die Würfe, z. B. Prone gibt Nachteil beim Angriff, Poisoned Nachteil auf Proben. Erschöpfung gibt −2 je Stufe auf alle d20-Würfe und −5 ft Tempo; Stufe 6 ist der Tod.</li>
+</ul>
+<div class="row">
+  <figure><img src="img/15-condition-bar.png" style="width:85mm" alt=""><figcaption><b>Abb. 4.4</b> Schnellleiste mit aktivem „Prone“.</figcaption></figure>
+  <figure><img src="img/17-exhaustion.png" style="width:85mm" alt=""><figcaption><b>Abb. 4.5</b> Erschöpfung Stufe 2 (−4 auf d20, −10 ft).</figcaption></figure>
+</div>
+<figure><img src="img/16-token-hud.png" style="width:85mm" alt=""><figcaption><b>Abb. 4.6</b> Token-HUD mit der Statuspalette.</figcaption></figure>
+<h3>Combat Overview (Taste <span class="key">O</span>)</h3>
+<p>Alle Kampfteilnehmer auf einen Blick: Initiative, AC, HP direkt editierbar, Zustände, Legendary-Zähler und Recharge-Fähigkeiten. Öffnen mit <span class="key">O</span> oder dem Listen-Knopf im Combat Tracker. Mit dem Drachen-Knopf im Tracker würfelt die Spielleitung die Initiative aller NPCs, die noch keine haben.</p>
+<figure><img src="img/18-combat-overview.png" style="width:110mm" alt=""><figcaption><b>Abb. 4.7</b> Combat Overview während Runde 1.</figcaption></figure>
+<h3>Flächen: das Odem-Beispiel</h3>
+<ol>
+  <li>Im NPC-Bogen beim Eintrag (hier „Cold Breath“, 60-ft-Kegel) den Polygon-Knopf klicken.</li>
+  <li>Kegel und Linie starten am Token des NPC. Mit der Maus ausrichten, Klick setzt die Fläche.</li>
+  <li>Alle Tokens in der Fläche werden zu Zielen. Hat der Eintrag einen Save, erscheint sofort die Save-Karte mit einem Knopf pro Ziel.</li>
+</ol>
+<div class="row">
+  <figure><img src="img/19-breath-template.png" style="width:100mm" alt=""><figcaption><b>Abb. 4.8</b> Kegel des Odems: die beiden Gnolle stehen darin.</figcaption></figure>
+  <figure><img src="img/20-save-request-card.png" style="width:62mm" alt=""><figcaption><b>Abb. 4.9</b> Save-Karte mit einem Knopf je Ziel.</figcaption></figure>
+</div>
+<h3>Zugwechsel aus Spielersicht</h3>
+<p>Kommt ein Spieler dran, bekommt er einen Banner und einen kurzen Ton; wer als Nächstes dran ist, einen kleinen Hinweis. Die Spielleitung sieht die Banner nicht.</p>
+<div class="row">
+  <figure><img src="img/21-turn-banner.png" style="width:90mm" alt=""><figcaption><b>Abb. 4.10</b> „Your turn“ auf dem Bildschirm des Spielers.</figcaption></figure>
+  <figure><img src="img/21a-next-banner.png" style="width:55mm" alt=""><figcaption><b>Abb. 4.11</b> Vorwarnung einen Zug vorher.</figcaption></figure>
+</div>
+<h3>Todesrettungswürfe und besiegte NPCs</h3>
+<ul>
+  <li>Bei 0 HP würfelt der Spieler über die Kreise <span class="ui">Death Saves</span> in der Kampfleiste. Die Karte zählt Erfolge und Fehlschläge mit. Eine natürliche 20 bringt 1 HP zurück, eine natürliche 1 zählt doppelt. Erschöpfung zieht auch hier ab.</li>
+  <li>Fällt ein NPC durch <span class="ui">Apply to target</span> auf 0 HP, entfernt das System sein Token nach etwa einer Sekunde (der Akteur bleibt in der Liste). Die Welteinstellung <span class="ui">Defeated NPC tokens</span> kann stattdessen nur als „tot“ markieren.</li>
+</ul>
+<div class="row">
+  <figure><img src="img/22-death-save.png" style="width:62mm" alt=""><figcaption><b>Abb. 4.12</b> Todesrettungswurf.</figcaption></figure>
+  <figure><img src="img/23-setting-defeated.png" style="width:100mm" alt=""><figcaption><b>Abb. 4.13</b> Welteinstellung für besiegte NPCs.</figcaption></figure>
+</div>
+
+<!-- 5 -->
+<h2 id="k5">5 · Würfe anfordern (Request Roll)</h2>
+<p class="purpose">Eine Gruppe würfeln lassen: Rettungswurf, Attributs- oder Fertigkeitsprobe, auf Wunsch mit Folgen bei Misserfolg.</p>
+<ol>
+  <li><span class="ui">AP-Turm</span> → <span class="ui">Request Roll</span>.</li>
+  <li>Art (<span class="ui">Saving Throw</span>, <span class="ui">Ability Check</span>, <span class="ui">Skill Check</span>) und Attribut bzw. Fertigkeit wählen.</li>
+  <li>Einen <span class="ui">DC</span> eintragen. Erst dann erscheint der Bereich für die Folgen: Schaden (Formel und Typ, auf Wunsch halb bei Erfolg), ein Zustand oder eine Stufe Erschöpfung.</li>
+  <li>Empfänger anhaken, <span class="ui">Request</span>. Im Chat erscheint eine Gruppen-Karte.</li>
+</ol>
+<div class="row">
+  <figure><img src="img/24-request-dialog.png" style="width:95mm" alt=""><figcaption><b>Abb. 5.1</b> CON-Save gegen DC 14; bei Misserfolg 2d6 Eis (halb bei Erfolg) und Poisoned.</figcaption></figure>
+  <figure><img src="img/25-request-card.png" style="width:62mm" alt=""><figcaption><b>Abb. 5.2</b> Die Gruppen-Karte im Chat.</figcaption></figure>
+</div>
+<h3>So klicken die Spieler</h3>
+<p>Jeder Spieler sieht die Karte, kann aber nur den <span class="ui">Roll</span>-Knopf seines eigenen Charakters drücken; fremde Knöpfe sind ausgegraut. Das Ergebnis steht danach für alle in der Zeile. Bei Misserfolg wird der Zustand sofort gesetzt; der Schaden liegt als Knopf bereit.</p>
+<div class="row">
+  <figure><img src="img/26a-request-card-player.png" style="width:62mm" alt=""><figcaption><b>Abb. 5.3</b> Spielersicht: nur der eigene Knopf ist aktiv.</figcaption></figure>
+  <figure><img src="img/26-request-card-result.png" style="width:62mm" alt=""><figcaption><b>Abb. 5.4</b> Nach dem Wurf: Misserfolg, Poisoned gesetzt, 6 Eis-Schaden zum Anwenden.</figcaption></figure>
+</div>
+
+<!-- 6 -->
+<h2 id="k6">6 · AP und Turmwissen vergeben</h2>
+<p class="purpose">Verdiente AP gutschreiben (daraus folgen Level, Übungsbonus, Milestones) und Turmwissen als neuen Rang eintragen.</p>
+<h3>Award AP</h3>
+<ol>
+  <li><span class="ui">AP-Turm</span> → <span class="ui">Award AP</span>.</li>
+  <li>Charaktere anhaken, Betrag und optional einen Grund eintragen, <span class="ui">Award</span>.</li>
+  <li>Die Chat-Karte sagt an, was daraus folgt: neues Level, höherer Übungsbonus, ein neuer Milestone, ein fälliger Trefferwurf.</li>
+  <li><b>Korrektur:</b> einen negativen Betrag vergeben. Verdiente AP fallen nie unter 0.</li>
+</ol>
+<div class="row">
+  <figure><img src="img/27-award-dialog.png" style="width:90mm" alt=""><figcaption><b>Abb. 6.1</b> 10 AP für die ganze Gruppe.</figcaption></figure>
+  <div>
+    <figure><img src="img/28-award-card.png" style="width:62mm" alt=""><figcaption><b>Abb. 6.2</b> Folgen-Ansage: beide steigen ein Level auf.</figcaption></figure>
+    <figure><img src="img/29-award-correction.png" style="width:62mm" alt=""><figcaption><b>Abb. 6.3</b> Negative Korrektur.</figcaption></figure>
+  </div>
+</div>
+<h3>Grant Turmwissen</h3>
+<p><span class="ui">AP-Turm</span> → <span class="ui">Grant Turmwissen</span>: Charakter anhaken, den Auslöser als Text eintragen, <span class="ui">Grant</span>. Jeder gewählte Charakter bekommt einen neuen Rang; die Karte geht nur an die Spielleitung und die betroffenen Spieler.</p>
+<figure><img src="img/30-turmwissen-dialog.png" style="width:90mm" alt=""><figcaption><b>Abb. 6.4</b> Turmwissen Rang 2 für Gades Worn.</figcaption></figure>
+
+<!-- 7 -->
+<h2 id="k7">7 · Loot, Party Stash, Übergabe, Item-Bibliothek</h2>
+<p class="purpose">Beutetabellen aus Word oder Excel übernehmen, Beute würfeln und verteilen, gemeinsame Beute im Party Stash lagern.</p>
+<h3>Tabelle importieren</h3>
+<ol>
+  <li>Seitenleiste <span class="ui">Rollable Tables</span> → <span class="ui">AP-Turm: Import table</span>.</li>
+  <li>Namen eintragen und den Text einfügen: eine Liste (jede Zeile ein Eintrag, ergibt 1dN) oder Zeilen mit Bereichen wie <code>1-5: Heiltrank</code>. Alternativ eine Datei laden: <code>.txt</code> oder <code>.json</code> (Foundry-Tabellen-Export, schlichte Liste oder AP-Turm-Export).</li>
+  <li>Die Vorschau zeigt Formel, Einträge sowie Lücken und Überschneidungen. <span class="ui">Import</span> legt die Tabelle an.</li>
+</ol>
+<div class="row">
+  <figure><img src="img/31a-tables-button.png" style="width:55mm" alt=""><figcaption><b>Abb. 7.1</b> Import-Knopf bei den Tabellen.</figcaption></figure>
+  <figure><img src="img/31-loot-import.png" style="width:105mm" alt=""><figcaption><b>Abb. 7.2</b> Eingefügte Liste mit Vorschau (1d5).</figcaption></figure>
+</div>
+<h3>Würfeln und Claim</h3>
+<ol>
+  <li>Tabelle würfeln (Tabelle öffnen → <span class="ui">Roll</span>). Jedes Ergebnis bekommt einen <span class="ui">Claim</span>-Knopf.</li>
+  <li><span class="ui">Claim</span> fragt nach dem Empfänger. An erster Stelle steht immer der <span class="ui">Party Stash</span>, darunter die Charaktere (Spieler sehen nur ihre eigenen).</li>
+  <li>Reine Geldbeträge in der Währung des Modus (z. B. „50 GO“) landen in der Kasse, alles andere wird ein Gegenstand, im Turm-Modus mit Herkunft „im Turm gefunden“.</li>
+</ol>
+<div class="row">
+  <figure><img src="img/32-draw-card.png" style="width:62mm" alt=""><figcaption><b>Abb. 7.3</b> Gezogenes Ergebnis mit <span class="ui">Claim</span>.</figcaption></figure>
+  <figure><img src="img/33-claim-dialog.png" style="width:80mm" alt=""><figcaption><b>Abb. 7.4</b> Empfänger: der Party Stash steht oben.</figcaption></figure>
+</div>
+<figure><img src="img/34-claimed-cards.png" style="width:46mm" alt=""><figcaption><b>Abb. 7.5</b> Drei Claims: 3 Heiltränke und 50 GO in den Stash, der Obsidiandolch an Gades Worn. Die Karten zeigen, wer was genommen hat.</figcaption></figure>
+<h3>Party Stash</h3>
+<p>Der Stash ist ein gemeinsamer Akteur, der allen Spielern gehört. Die Spielleitung legt ihn beim ersten Gebrauch automatisch an (oder über <span class="ui">AP-Turm</span> → <span class="ui">Party Stash</span>). Er hat eine Kasse in den Währungen des Modus und eine Gegenstandsliste <b>ohne Traglimit</b>. Gegenstände „aus dem Turm“ im Stash zählen bei niemandem auf die persönliche 5er-Grenze.</p>
+<ul>
+  <li><b>Hineinlegen:</b> im eigenen Inventar <span class="ui">Give to…</span> → Party Stash, oder den Gegenstand auf den Stash ziehen.</li>
+  <li><b>Herausnehmen:</b> <span class="ui">Take</span> an der Zeile oder den Gegenstand auf den <b>eigenen</b> Bogen ziehen. Bei Stapeln wird nach der Anzahl gefragt; der Chat meldet „Gades Worn takes 2× Heiltrank from the Party Stash.“</li>
+</ul>
+<div class="row">
+  <figure><img src="img/35-stash-sheet.png" style="width:70mm" alt=""><figcaption><b>Abb. 7.6</b> Stash aus Sicht der Spielleitung: Kasse, Gegenstände, <span class="ui">From library</span>.</figcaption></figure>
+  <figure><img src="img/36-stash-player.png" style="width:70mm" alt=""><figcaption><b>Abb. 7.7</b> Aus Spielersicht: <span class="ui">Take</span> an jeder Zeile.</figcaption></figure>
+</div>
+<div class="row">
+  <figure><img src="img/37-take-dialog.png" style="width:72mm" alt=""><figcaption><b>Abb. 7.8</b> Anzahl beim Nehmen.</figcaption></figure>
+  <figure><img src="img/38-take-chat.png" style="width:62mm" alt=""><figcaption><b>Abb. 7.9</b> Die Chat-Zeile dazu.</figcaption></figure>
+</div>
+<h3>Übergabe zwischen Charakteren</h3>
+<p>Im Inventar an der Zeile <span class="ui">Give to…</span> (Hand-Symbol): Empfänger und bei Stapeln die Anzahl wählen. Alternativ den Gegenstand auf den Bogen, das Token oder die Zeile in der Actors-Liste des Empfängers ziehen. Gehört der Empfänger dem Spieler nicht, erledigt die Spielleitung die Übergabe automatisch im Hintergrund.</p>
+<div class="row">
+  <figure><img src="img/39-inventory-row.png" style="width:100mm" alt=""><figcaption><b>Abb. 7.10</b> Knöpfe an einer Inventarzeile.</figcaption></figure>
+  <figure><img src="img/40-give-dialog.png" style="width:70mm" alt=""><figcaption><b>Abb. 7.11</b> <span class="ui">Give to…</span> mit dem Stash als erstem Ziel.</figcaption></figure>
+</div>
+<h3>Item-Bibliothek</h3>
+<div class="row" style="justify-content:space-between">
+  <p style="flex:1">Einmal angelegte Gegenstände wiederverwenden: <span class="ui">Save to library</span> (Buch-Symbol, nur Spielleitung) legt eine Kopie in das Welt-Kompendium „AP-Turm Library“. <span class="ui">From library</span> in NPC-Bogen oder Stash fügt sie wieder ein; die Suche filtert nach Namen.</p>
+  <figure style="margin:0"><img src="img/41-from-library.png" style="width:68mm" alt=""><figcaption><b>Abb. 7.12</b> Aus der Bibliothek in den Stash.</figcaption></figure>
+</div>
+
+<!-- 8 -->
+<h2 id="k8">8 · Shop-Editor: eigene Point-Buy-Einträge</h2>
+<p class="purpose">Hausregeln und Turm-Belohnungen als kaufbare Shop-Einträge, die wie die eingebauten rechnen.</p>
+<ol>
+  <li><span class="ui">AP-Turm</span> → <span class="ui">Shop Editor</span> (oder <span class="ui">Shop editor</span> oben im Shop-Reiter eines Bogens) → <span class="ui">New entry</span>.</li>
+  <li>Name, Kategorie (bestehende oder neue), Beschreibung, Kostenleiter (<code>10, 20, 40</code>), Multiplikator für weitere Ränge, Max-Ränge, Voraussetzungen und eine eventuelle Wahl beim Kauf eintragen.</li>
+  <li>Unter <span class="ui">Effects</span> die Wirkungen zusammenstellen (Werte gelten pro Rang): Boni auf Attribut, Save, Skill, AC, Initiative, Tempo, HP-Max; Vorteil; Übung; Ressourcen-Pool mit Formel; Zauberpunkte; Wirkungen der Ränge 6–9; Elementschaden; reiner Text.</li>
+  <li><span class="ui">Create</span>. Der Eintrag erscheint sofort in allen Bögen (mit ★) und im Regel-Journal.</li>
+</ol>
+<div class="row">
+  <figure><img src="img/43a-shop-entry-top.png" style="width:72mm" alt=""><figcaption><b>Abb. 8.1</b> Beispiel „Eisenherz“: Kategorie „Turmgaben“, 10/20/40 AP, höchstens 3 Ränge.</figcaption></figure>
+  <figure><img src="img/43-shop-entry-effects.png" style="width:72mm" alt=""><figcaption><b>Abb. 8.2</b> Wirkungs-Baukasten: +1 CON, +5 HP max und eine reine Text-Wirkung.</figcaption></figure>
+</div>
+<div class="row" style="align-items:center">
+<div class="box" style="flex:1 1 auto;margin:0"><b>Grenze:</b> Der Baukasten deckt Zahlenwerte ab. Sonderregeln, die nicht in ein Feld passen („einmal pro Tag darf…“), als <b>Text-Wirkung</b> anlegen. Sie steht dann unter Features &amp; Abilities im Bogen, rechnet aber nichts. Eingebaute Einträge lassen sich im Editor nicht ändern. Eigene Einträge gibt es nur in Foundry; die HTML-App ignoriert sie beim Import.</div>
+<figure style="margin:0;width:88mm;flex:0 0 88mm"><img src="img/42-shop-editor.png" style="width:88mm" alt=""><figcaption><b>Abb. 8.3</b> Der Editor mit dem neuen Eintrag. Unten: <span class="ui">New entry</span>, <span class="ui">Export</span> und <span class="ui">Import</span> der Liste als JSON-Datei (für andere Welten).</figcaption></figure>
+</div>
+<figure><img src="img/44-shop-tab-custom.png" style="width:140mm" alt=""><figcaption><b>Abb. 8.4</b> Im Charakterbogen: eigener Reiter „Turmgaben“, der Eintrag ist mit ★ markiert.</figcaption></figure>
+
+<!-- 9 -->
+<h2 id="k9">9 · Jukebox</h2>
+<p class="purpose">Musik und Geräusche ohne die Playlist-Seitenleiste: Stimmungen per Klick überblenden, Soundboard, Musik vom eigenen PC.</p>
+<ol>
+  <li>Öffnen über das Schallplatten-Symbol unten in der linken Werkzeugleiste oder mit <span class="key">J</span>.</li>
+  <li><b>Musik vom PC:</b> <span class="ui">Import from computer</span> (oder Ordner/Dateien auf das Fenster ziehen). Die Dateien werden nach <code>Data/music/&lt;Playlist&gt;</code> hochgeladen, damit alle Spieler sie hören, und als Playlist angelegt. Musik, die schon in Foundrys Datenordner liegt: <span class="ui">Import folder as playlist</span>.</li>
+  <li><b>Moods:</b> <span class="ui">+ Add mood</span> verbindet eine Playlist mit einer farbigen Kachel. Klick auf eine Kachel blendet von der laufenden Musik über; ein zweiter Klick pausiert.</li>
+  <li><b>Combat music:</b> Eine Kachel mit Haken <span class="ui">Combat</span> übernimmt bei Kampfbeginn, nach dem Kampf geht es zurück. Einschalten in den Welteinstellungen (Abb. 9.5).</li>
+  <li><b>Soundboard:</b> Eine Playlist mit dem Namen „Soundboard“ erscheint als Knopfleiste für Einzelgeräusche (Tür, Donner …) über der Musik.</li>
+  <li><b>Bibliothek:</b> alle Playlists zum Aufklappen. Play-Knopf spielt genau diesen Track, ein Klick in den Fortschrittsbalken spult (bei allen Spielern), Tracks lassen sich per Ziehen sortieren oder in eine andere Playlist verschieben. Rechtsklick oder ⋮ öffnet <span class="ui">Rename</span>, <span class="ui">Add file…</span>, <span class="ui">Create mood tile</span>, <span class="ui">Delete</span>.</li>
+</ol>
+<div class="row">
+  <figure><img src="img/46-jukebox-window.png" style="width:95mm" alt=""><figcaption><b>Abb. 9.1</b> Jukebox: oben Transport mit Fortschrittsbalken (klicken = spulen), Moods mit der Kampf-Kachel, Soundboard, darunter die Bibliothek.</figcaption></figure>
+  <div>
+    <figure><img src="img/45-jukebox-button.png" style="width:55mm" alt=""><figcaption><b>Abb. 9.2</b> Das Schallplatten-Symbol.</figcaption></figure>
+    <figure><img src="img/48-jukebox-import.png" style="width:72mm" alt=""><figcaption><b>Abb. 9.3</b> Import vom PC: Ordner oder einzelne Dateien.</figcaption></figure>
+  </div>
+</div>
+<figure><img src="img/47-jukebox-context.png" style="width:120mm" alt=""><figcaption><b>Abb. 9.4</b> Kontextmenü einer Playlist in der Bibliothek.</figcaption></figure>
+<figure><img src="img/49-setting-combat-music.png" style="width:100mm" alt=""><figcaption><b>Abb. 9.5</b> Welteinstellung <span class="ui">Combat music</span> (Standard: aus).</figcaption></figure>
+<p>Die Lautstärke oben gilt für alle Spieler. Die persönliche Lautstärke stellt jeder in Foundrys eigenen Audio-Einstellungen ein.</p>
+
+<!-- 10 -->
+<h2 id="k10">10 · Nachschlagen und Einstellungen</h2>
+<h3>Regel-Journal „AP-Turm Rules“</h3>
+<p>Das System legt beim ersten Weltstart ein Journal mit den Regeln an: Progression, Shop, Elemente &amp; Schaden, Zustände, Kampf &amp; Rast. Alle Zahlen darin kommen direkt aus den Regeltabellen des Systems, auch eigene Shop-Einträge. Spieler können es lesen. Es wird bei Updates und Shop-Änderungen automatisch neu erzeugt, auf Wunsch über <span class="ui">AP-Turm</span> → <span class="ui">Rebuild rules journal</span>. Handänderungen daran werden dabei überschrieben.</p>
+<figure><img src="img/50-rules-journal.png" style="width:140mm" alt=""><figcaption><b>Abb. 10.1</b> Das Regel-Journal, Seite Progression.</figcaption></figure>
+<h3>Tastenkürzel</h3>
+<p>Einstellbar unter <span class="ui">Game Settings</span> → <span class="ui">Configure Controls</span> → <span class="ui">AP-Turm</span>. In Textfeldern greifen sie nie. Spielleiter-Kürzel sind für Spieler unsichtbar und tun bei ihnen nichts.</p>
+<table>
+  <tr><th>Aktion</th><th>Standard</th><th>Wer</th></tr>
+  <tr><td>Combat Overview öffnen/schließen</td><td><span class="key">O</span></td><td>Spielleitung</td></tr>
+  <tr><td>Jukebox öffnen/schließen</td><td><span class="key">J</span></td><td>Spielleitung</td></tr>
+  <tr><td>Zustandsleiste ein/aus</td><td>—</td><td>alle (außer die Leiste ist auf die Spielleitung beschränkt)</td></tr>
+  <tr><td>Award AP</td><td>—</td><td>Spielleitung</td></tr>
+  <tr><td>Request Roll</td><td>—</td><td>Spielleitung</td></tr>
+</table>
+<figure><img src="img/52-keybindings.png" style="width:92mm" alt=""><figcaption><b>Abb. 10.2</b> Configure Controls, Bereich AP-Turm.</figcaption></figure>
+<h3>Animationen (optional)</h3>
+<p>Für Angriffs- und Zauberanimationen die Module <b>JB2A</b> (die kostenlose Fassung reicht) und <b>Sequencer</b> installieren: Foundry-Setup → <span class="ui">Add-on Modules</span> → <span class="ui">Install Module</span>, danach in der Welt unter <span class="ui">Manage Modules</span> aktivieren. Ohne diese Module läuft alles genauso, nur ohne Animation.</p>
+<h3>Einstellungen des Systems</h3>
+<p>Unter <span class="ui">Game Settings</span> → <span class="ui">Configure Settings</span> → Reiter <span class="ui">AP-Turm</span>. Welt-Einstellungen gelten für alle, Client-Einstellungen pro Browser.</p>
+<table>
+  <tr><th>Name</th><th>Wirkung</th><th>Standard</th></tr>
+  <tr><td>Defeated NPC tokens <small>(Welt)</small></td><td>Was mit dem Token eines NPC passiert, den „Apply to target“ auf 0 HP bringt: entfernen oder nur als tot markieren. Der Akteur bleibt immer erhalten; Spielercharaktere sind nie betroffen.</td><td>Remove</td></tr>
+  <tr><td>Show hit feedback <small>(Welt)</small></td><td>Schwebende Schadens- und Heilzahlen über dem Token plus kurzes Aufblitzen, für alle sichtbar.</td><td>an</td></tr>
+  <tr><td>Attack animations (JB2A) <small>(Welt)</small></td><td>Angriffs-, Geschoss- und Zauberanimationen; nur mit den Modulen JB2A und Sequencer.</td><td>an</td></tr>
+  <tr><td>Concentration automation <small>(Welt)</small></td><td>Ein Konzentrationszauber setzt „Concentrating“; Schaden verlangt dann einen CON-Save (SG = max(10, halber Schaden)).</td><td>an</td></tr>
+  <tr><td>Turn sound <small>(Welt)</small></td><td>Kurzer Ton für den Spieler, der am Zug ist (zusammen mit dem Banner).</td><td>an</td></tr>
+  <tr><td>Token tooltips <small>(Welt)</small></td><td>Beim Überfahren eines Tokens eine kleine Karte; Spieler sehen Werte nur bei Tokens, die sie beobachten dürfen.</td><td>an</td></tr>
+  <tr><td>Combat music <small>(Welt)</small></td><td>Bei Kampfbeginn zur Kampf-Kachel der Jukebox überblenden und danach zurück.</td><td>aus</td></tr>
+  <tr><td>Condition bar for the GM only <small>(Welt)</small></td><td>Blendet die Zustandsleiste für alle Spieler aus.</td><td>aus</td></tr>
+  <tr><td>Show condition bar <small>(Client)</small></td><td>Die Zustandsleiste über der Hotbar anzeigen.</td><td>an</td></tr>
+  <tr><td>Show reach ring <small>(Client)</small></td><td>Ring um das ausgewählte Token in Reichweite der ausgerüsteten Waffe (NPC: längste Nahkampfreichweite).</td><td>an</td></tr>
+</table>
+
+<!-- 11 -->
+<h2 id="k11">11 · Bekannte Grenzen und wenn etwas klemmt</h2>
+<h3>Bekannte Grenzen</h3>
+<ul>
+  <li>Keine System-Kompendien: Ausrüstung, Zauber und Gegner werden importiert oder von Hand angelegt; nur die Item-Bibliothek ist ein (Welt-)Kompendium. Der Shop ist eine Code-Tabelle.</li>
+  <li>Fernkampf erkennt die Animation am Waffennamen, am Reichweitentext von NPC-Aktionen oder an DEX als Waffenattribut. Eine ungewöhnlich benannte Fernkampfwaffe mit STR zeigt einen Nahkampf-Hieb.</li>
+  <li>Der Statblock-Parser deckt die üblichen Layouts ab, aber nicht jede Formatierung. Was er nicht erkennt, bleibt als Text im Eintrag stehen und lässt sich im Bogen nachtragen.</li>
+  <li>Im Turm-Modus bleiben importierte D&amp;D-Schadenstypen bis zur Zuweisung durch die Spielleitung ohne Wirkung auf Resistenzen. Das ist Absicht.</li>
+  <li>Active Effects werden nicht ausgewertet: Feat-Boni werden wie in der App summiert, nicht als Effekte verteilt.</li>
+  <li>Die Migration schreibt alte Feldformen nur bei Akteuren und Items der Welt zurück. Nicht verknüpfte Tokens auf Szenen behalten ihre Kopie; sie funktionieren weiter, werden im Migrationsbericht aber nur gezählt.</li>
+  <li>Der System-Socket vertraut dem eigenen Spieltisch: Eine Schadensanfrage eines Spielers wird auf Plausibilität geprüft, nicht gegen manipulierte Clients abgesichert.</li>
+  <li>Getestet mit Foundry 13.351. Ältere Builds von Version 13 sollten laufen, sind aber nicht geprüft; Version 12 und früher nicht.</li>
+</ul>
+<h3>Wenn etwas klemmt</h3>
+<table>
+  <tr><th>Symptom</th><th>Abhilfe</th></tr>
+  <tr><td>Knopf reagiert nicht, Fenster sieht veraltet aus</td><td><span class="key">F5</span> lädt die Seite neu. Das ist gefahrlos, alle Daten liegen auf dem Server.</td></tr>
+  <tr><td>Etwas schlägt fehl, eine Meldung sagt „see the console“</td><td><span class="key">F12</span> öffnet die Entwicklerkonsole; rot markierte Zeilen mit „ap-turm“ abfotografieren oder kopieren und weitergeben.</td></tr>
+  <tr><td>Nach einem Update fehlt ein neuer Akteur-Typ (z. B. Party Stash lässt sich nicht anlegen)</td><td>Welt über <span class="ui">Return to Setup</span> beenden und neu starten. Neue Akteur-Typen liest der Server nur beim Weltstart ein.</td></tr>
+  <tr><td>Ein Spieler kann Schaden nicht anwenden oder einen Gegenstand nicht übergeben</td><td>Diese Aktionen erledigt im Hintergrund der aktive Spielleiter. Ist keiner eingeloggt, bekommt der Spieler eine Meldung und es passiert nichts.</td></tr>
+  <tr><td>Zwei Browserfenster als Spielleitung offen</td><td>Nur eines benutzen und das andere schließen. Ein Fenster mit älterem Stand kann Automatik doppelt oder mit altem Code ausführen.</td></tr>
+</table>
+
+</main>
+</body>
+</html>

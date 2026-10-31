@@ -1,0 +1,23 @@
+<section class="apt-jb-now">
+  {{#if now}}
+    <div class="apt-jb-title"><i class="fa-solid fa-music"></i> <b>{{now.playlist}}</b>{{#if now.track}} <span class="trk">— {{now.track}}</span>{{/if}}{{#if now.paused}} <em>(paused)</em>{{/if}}</div>
+    <div class="apt-jb-progress" title="Click to jump to this position (for everyone)"><div class="bar" style="width:{{now.pct}}%"></div></div>
+    <div class="apt-jb-ctrl">
+      {{#if now.stepping}}<button type="button" data-action="prev" title="Previous track"><i class="fa-solid fa-backward-step"></i></button>{{/if}}
+      {{#if now.paused}}<button type="button" data-action="play" title="Resume"><i class="fa-solid fa-play"></i></button>
+      {{else}}<button type="button" data-action="pause" title="Pause"><i class="fa-solid fa-pause"></i></button>{{/if}}
+      {{#if now.stepping}}<button type="button" data-action="next" title="Next track"><i class="fa-solid fa-forward-step"></i></button>{{/if}}
+      <button type="button" data-action="stop" title="Stop"><i class="fa-solid fa-stop"></i></button>
+      <button type="button" data-action="fadeOut" title="Fade out (~2 s) and stop"><i class="fa-solid fa-volume-low"></i> Fade out</button>
+      {{#if now.stepping}}
+        <button type="button" class="tgl {{#if now.repeat}}on{{/if}}" data-action="toggleRepeat" title="Repeat: {{#if now.repeat}}on - starts again after the last track{{else}}off - stops after the last track{{/if}}"><i class="fa-solid fa-repeat"></i></button>
+        <button type="button" class="tgl {{#if now.shuffle}}on{{/if}}" data-action="toggleShuffle" title="Shuffle: {{#if now.shuffle}}on{{else}}off{{/if}}"><i class="fa-solid fa-shuffle"></i></button>
+      {{/if}}
+      <span class="apt-jb-time">{{now.time}}</span>
+      <label class="vol" title="All players hear these volumes. Personal volume is in Foundry's audio settings."><i class="fa-solid fa-volume-high"></i><input class="apt-jb-volume" type="range" min="0" max="1" step="0.01" value="{{now.volume}}"></label>
+    </div>
+    {{#if now.upNext}}<div class="apt-jb-next"><span>Up next:</span> {{now.upNext}}</div>{{/if}}
+  {{else}}
+    <p class="apt-jb-none"><i class="fa-solid fa-volume-xmark"></i> Nothing playing</p>
+  {{/if}}
+</section>

@@ -1,0 +1,22 @@
+# Build-Artefakte (Release-Zip, alte Handzips)
+*.zip
+
+# Abhängigkeiten
+node_modules/
+
+# Betriebssystem
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Lokale Editor-/Claude-Einstellungen
+.claude/settings.local.json
+.vscode/
+
+# Lokale Foundry-Caches (LevelDB-Laufzeitdateien in Kompendien, Logs)
+packs/**/LOCK
+packs/**/LOG
+packs/**/LOG.old
+packs/**/MANIFEST-*
+packs/**/CURRENT
+*.log

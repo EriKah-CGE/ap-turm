@@ -1,0 +1,80 @@
+{
+  "v": 4,
+  "theme": "celestial",
+  "mode": "turm",
+  "name": "Kriegsmeister",
+  "startAp": 50,
+  "earnedAp": 150,
+  "spUsed": 0,
+  "layUsed": 0,
+  "crystals": [
+    { "name": "Glutkern", "elem": "feuer" },
+    { "name": "", "elem": "" },
+    { "name": "", "elem": "" },
+    { "name": "", "elem": "" },
+    { "name": "", "elem": "" }
+  ],
+  "turmwissen": [
+    { "trigger": "Beim Betreten der ersten Ebene" }
+  ],
+  "abilities": { "str": 17, "dex": 10, "con": 16, "int": 8, "wis": 11, "cha": 10 },
+  "bought": {
+    "extraAttack": 3,
+    "eleDmg": 1,
+    "critBoost": 1,
+    "critMax": 1,
+    "hitDie": 1,
+    "wepPlus1": 1,
+    "fightStyle": 1,
+    "saveProf": 2,
+    "res": 1,
+    "healCon": 1,
+    "layHands": 1,
+    "asi": 2
+  },
+  "choices": {
+    "eleDmg": ["erz"],
+    "fightStyle": ["defense"],
+    "saveProf": ["con", "wis"],
+    "res": ["fire"],
+    "asi": ["str", "con"]
+  },
+  "selectedSkills": ["ath", "itm", "prc"],
+  "selectedProfs": ["lgt", "med", "hvy", "shl", "sim", "mar"],
+  "customProfs": [],
+  "hpRolls": [8, 7, 6, 8, 5, 9, 7, 6, 8, 7, 6, 5, 9, 8, 7, 6],
+  "milestones": {
+    "1": { "type": "asi", "stats": { "str": 1, "con": 1 } },
+    "2": { "type": "asi", "stats": { "str": 1, "wis": 1 } }
+  },
+  "identity": {
+    "species": "Mensch",
+    "klasse": "Weapon Bearer",
+    "background": "Soldat",
+    "alignment": "LN",
+    "exp": ""
+  },
+  "play": {
+    "hpCurrent": null,
+    "tempHp": 0,
+    "spentHitDice": 0,
+    "deathSucc": 0,
+    "deathFail": 0,
+    "inspiration": 0,
+    "inspMax": 5,
+    "exhaustion": 0
+  },
+  "currency": { "cp": 0, "sp": 0, "ep": 0, "gp": 0, "pp": 0, "ku": 0, "br": 0, "si": 0, "go": 12, "ed": 1 },
+  "equipment": "",
+  "notes": "Referenzcharakter fuer die Phase-1-Abnahme.",
+  "weapons": [
+    { "id": "w1", "name": "Zweihaender", "abil": "str", "dice": "2d6", "dtype": "erz", "bonus": 1, "prof": true, "equipped": true, "notes": "" }
+  ],
+  "spells": [],
+  "slotsUsed": {},
+  "feats": [],
+  "items": [
+    { "id": "i1", "name": "Heiltrank", "qty": 2, "notes": "2d4+2", "attuned": false, "charges": 0, "used": 0, "recharge": "long", "origin": "city" }
+  ],
+  "armor": { "id": "plate", "shield": false }
+}

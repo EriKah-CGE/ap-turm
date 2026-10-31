@@ -1,0 +1,21 @@
+<div class="ap-turm-chat apt-card apt-check {{resultClass}}">
+  <header class="apt-card-h"><i class="fa-solid fa-dice-d20"></i> <b>{{label}}</b> <span class="sub">{{#if prof}}proficient{{/if}}{{#if modeLabel}} · {{modeLabel}}{{/if}}</span></header>
+  {{#if rolled}}
+  <div class="apt-card-total">
+    <span class="tot">{{total}}</span>
+    <span class="d20">d20: {{#each dice}}<span class="die {{#if active}}kept{{else}}drop{{/if}}">{{result}}</span>{{#unless @last}} {{/unless}}{{/each}}</span>
+  </div>
+  <div class="apt-card-parts"><span class="prt">Mod {{mod}}</span>{{#if situational}}<span class="prt">Situational {{situational}}</span>{{/if}}</div>
+  <div class="apt-card-formula">{{formula}}</div>
+  {{/if}}
+  {{#if conditions}}<div class="apt-card-cond">{{conditions}}</div>{{/if}}
+  {{#if autoFail}}
+  <div class="apt-card-target"><span class="res miss">AUTOMATIC FAILURE</span> ({{autoFail}}, not rolled){{#if dc}} · DC {{dc}}{{/if}}</div>
+  {{else if hasDc}}
+  <div class="apt-card-target">vs. DC <b>{{dc}}</b>: {{#if success}}<span class="res hit">SUCCESS</span>{{else}}<span class="res miss">FAILURE</span>{{/if}}</div>
+  {{/if}}
+  {{#if note}}<div class="apt-card-target"><b>{{note}}</b></div>{{/if}}
+  {{#if consequence}}<div class="apt-card-target">{{consequence}}</div>{{/if}}
+  {{#if applyNote}}<div class="apt-card-target">{{applyNote}}</div>
+  <div class="apt-card-actions"><button type="button" data-action="applyDamage"><i class="fa-solid fa-heart-crack"></i> Apply to target ({{applyAmount}} {{applyType}})</button></div>{{/if}}
+</div>

@@ -1,0 +1,38 @@
+<section class="apt-combat">
+<div class="apt-strip apt-strip-main">
+  <div class="apt-cbox big hp {{#if downed}}act{{/if}}"><label>HP</label>
+    <span class="cv hpline">
+      <button type="button" class="hpbtn" data-action="hpAdjust" data-delta="-1" title="−1 HP (Shift: −5)">−</button>
+      <input class="num" type="number" name="system.hp.value" value="{{hp.source}}" placeholder="{{hp.max}}" min="0" step="1"><small>/ {{hp.max}}</small>
+      <button type="button" class="hpbtn" data-action="hpAdjust" data-delta="1" title="+1 HP (Shift: +5)">+</button>
+    </span>
+    <span class="temp"><label>Temp</label><input class="num" type="number" name="system.hp.temp" value="{{hp.temp}}" min="0" step="1"></span>
+  </div>
+  <div class="apt-cbox big"><label>AC</label><span class="cv">{{d.ac}}</span><small>{{d.acNote}}</small></div>
+  <div class="apt-cbox big"><label>Attacks</label><span class="cv">{{system.attacks}}</span><small>per action</small></div>
+  <div class="apt-cbox big apt-roll" data-action="rollInitiative" title="Roll initiative (Shift: advantage, Ctrl: disadvantage, right-click: dialog)"><label>Initiative</label><span class="cv">{{init}}</span><small><i class="fa-solid fa-dice-d20"></i> roll</small></div>
+  <div class="apt-cbox big"><label>Prof Bonus</label><span class="cv">{{pb}}</span></div>
+</div>
+<div class="apt-strip apt-strip-sub">
+  <div class="apt-cbox"><label>Speed</label><span class="cv sm">{{d.walk}}ft</span></div>
+  <div class="apt-cbox"><label>Passive Perc</label><span class="cv sm">{{d.passivePerc}}</span></div>
+  <div class="apt-cbox"><label>Spell DC</label><span class="cv sm">{{d.spellDC}}</span></div>
+  <div class="apt-cbox {{#if downed}}act{{/if}}"><label>Death Saves</label>
+    <div class="apt-death">
+      <div class="drow">{{#each deathSucc}}<span class="pip s {{#if on}}on{{/if}} apt-roll" data-action="deathSave" data-kind="succ" data-i="{{i}}" title="Roll death save (right-click: set success {{i}})"></span>{{/each}}</div>
+      <div class="drow">{{#each deathFail}}<span class="pip f {{#if on}}on{{/if}} apt-roll" data-action="deathSave" data-kind="fail" data-i="{{i}}" title="Roll death save (right-click: set failure {{i}})"></span>{{/each}}</div>
+    </div>
+  </div>
+  <div class="apt-cbox"><label>Inspiration</label>
+    <span class="apt-insp">{{#each inspiration}}<i class="fa-solid fa-star insp-star {{#if on}}on{{/if}}" data-action="inspiration" data-i="{{i}}"></i>{{/each}}<span class="num">{{inspN}}</span></span>
+  </div>
+  <div class="apt-cbox wide conds"><label>Conditions</label>
+    {{> "systems/ap-turm/templates/actor/conditions.hbs"}}
+  </div>
+  <div class="apt-cbox {{#if d.exh}}act{{/if}}"><label>Exhaustion{{#if exhPen}} <small>{{exhPen}}</small>{{/if}}</label>
+    <span class="apt-exh">{{#each exhaustion}}<span class="dia {{#if on}}on{{/if}}" data-action="exhaustion" data-i="{{i}}"></span>{{/each}}</span>
+    {{#if (gte d.exh 6)}}<small class="dead">DEAD</small>{{/if}}
+  </div>
+</div>
+{{> "systems/ap-turm/templates/actor/character/resources.hbs"}}
+</section>
