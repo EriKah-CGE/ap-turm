@@ -20,6 +20,8 @@ const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname.replace
 const ZIP_NAME = "ap-turm.zip";
 /** Top-level entries that go into the zip; everything else (test, tools, docs, scripts, CLAUDE.md, the app, zips) stays out. */
 const INCLUDE = ["system.json", "module", "templates", "styles", "lang", "icons", "README.md", "LICENSE"];
+/** Never in the Foundry zip: the character sheet web app served by GitHub Pages (app, entry page, PWA files, app icons). */
+const EXCLUDE = new Set(["ap-character-sheet.html", "index.html", "manifest.webmanifest", "sw.js", ".nojekyll", "icons/app-192.png", "icons/app-512.png"]);
 
 const fail = (msg) => { console.error(`release: ${msg}`); process.exit(1); };
 const run = (cmd, args, opts = {}) => execFileSync(cmd, args, { cwd: ROOT, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"], ...opts }).trim();
@@ -127,7 +129,7 @@ function writeZip(files, target) {
   fs.writeFileSync(target, Buffer.concat([...locals, ...centrals, end]));
 }
 
-const files = INCLUDE.flatMap(collect);
+const files = INCLUDE.flatMap(collect).filter(f => !EXCLUDE.has(f));
 const required = ["system.json", ...(manifest.esmodules ?? []), ...(manifest.styles ?? []), ...(manifest.languages ?? []).map(l => l.path)];
 const missing = required.filter(f => !files.includes(f));
 if (missing.length) {

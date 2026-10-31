@@ -14,6 +14,20 @@ Updates erscheinen danach im Setup unter **Game Systems** als Update-Knopf (oder
 **Wichtig:** Eine zuvor per Zip installierte Fassung vorher unter *Game Systems* deinstallieren. Die Welten bleiben
 dabei erhalten — sie liegen in `Data/worlds`, nicht im System-Ordner.
 
+## Charakterbogen-App
+
+Die Einzeldatei-App `ap-character-sheet.html` ist online erreichbar, ohne Dateien zu verschicken:
+
+**https://erikah-cge.github.io/ap-turm/**
+
+- **Am Handy:** Seite öffnen, im Browsermenü **„Zum Startbildschirm hinzufügen"**. Die App startet dann wie eine
+  eigene App und funktioniert nach dem ersten Aufruf auch offline. Die laufende Fassung steht oben in der Toolbar
+  neben *Load* (z. B. `v09-05o`).
+- **Einmalige Datenübernahme:** Die Daten liegen im Browser-Speicher (localStorage), und der ist an die Adresse
+  gebunden — unter der neuen Adresse ist der Bogen zunächst leer. In der alten Datei **Export JSON**, unter der
+  neuen Adresse **Load** und die exportierte Datei wählen. Das ist pro Gerät und Browser einmal nötig.
+- Die lokale Datei funktioniert weiterhin wie bisher.
+
 Eigenständiges Spielsystem für **Foundry VTT v13** (getestet mit Build 13.351). Es setzt das
 Homebrew-Regelwerk der Einzeldatei-App `ap-character-sheet.html` um: Progression aus verdienten AP,
 Shop als AP-Budget, Turm-Modus mit Zauberpunkten, 20 Elementen, Kristallreif, Turmwissen und

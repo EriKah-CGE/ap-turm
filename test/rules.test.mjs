@@ -3060,10 +3060,11 @@ await okAsync("library bundles: export zip and import from bundle file (names, c
   assert.deepEqual([single.bundles.length, single.images.length, single.problems.length], [1, 0, 0]);
 });
 
-await okAsync("release 1.2.0: manifest, package.json and migration by version comparison", async () => {
+await okAsync("release: manifest/package.json versions match, migration by version comparison", async () => {
   const sys = JSON.parse(fs.readFileSync(new URL("../system.json", import.meta.url), "utf8"));
   const pkg = JSON.parse(fs.readFileSync(new URL("../package.json", import.meta.url), "utf8"));
-  assert.equal(sys.version, "1.2.0");
+  assert.match(sys.version, /^\d+\.\d+\.\d+$/); // set by tools/release.mjs
+  assert.ok(sys.download.includes(`/releases/download/v${sys.version}/ap-turm.zip`));
   assert.equal(pkg.version, sys.version);
   assert.equal(migration.needsMigration("1.1.0", "1.2.0"), "migrate");
   assert.equal(migration.needsMigration("1.2.0", "1.2.0"), "none");

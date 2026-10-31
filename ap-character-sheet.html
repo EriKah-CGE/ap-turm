@@ -8,6 +8,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="AP Sheet">
 <meta name="theme-color" content="#101109">
+<link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <title>AP Character Sheet — Weapon Bearer</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1255,6 +1256,15 @@ document.getElementById("newProf").addEventListener("keydown",e=>{if(e.key==="En
 load();
 applyTheme(S.theme||"celestial");
 renderAll();
+</script>
+<script>
+// Service worker only when served over http(s) (GitHub Pages); file:// stays unchanged. Cache version = buildtag.
+if ((location.protocol === "https:" || location.protocol === "http:") && "serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    const build = (document.querySelector(".buildtag")?.textContent || "dev").trim();
+    navigator.serviceWorker.register("sw.js?v=" + encodeURIComponent(build)).catch(() => {});
+  });
+}
 </script>
 </body>
 </html>

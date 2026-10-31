@@ -144,7 +144,22 @@ Angriffsliste mit Wurf-Buttons, Freitext); Statblock-Text-Parser (Regex, 80 % re
   Kommunikation mit dem Nutzer: Deutsch, direkt, ohne Floskeln.
 - Lizenz: eigenes Regelwerk, keine SRD-Inhalte → keine Attribution nötig. `system.json` → `license: MIT`.
 
-## Release-Ablauf (Pflicht am Ende jeder Änderung)
+## HTML-App online (GitHub Pages)
+
+**Master der HTML-App ist ab jetzt dieses Repo** (`ap-character-sheet.html` an der Wurzel), nicht mehr die
+Dropbox-Kopie. GitHub Pages liefert sie aus Branch `main` aus: https://erikah-cge.github.io/ap-turm/
+(`index.html` leitet weiter; `manifest.webmanifest`, `sw.js`, `icons/app-192.png`/`app-512.png`, `.nojekyll`).
+
+- Jede Änderung an der App wird committet und auf `main` gepusht; Pages aktualisiert sich dann selbst.
+  Ein Foundry-Release ist dafür **nicht** nötig (die App-Dateien sind in `tools/release.mjs` per `EXCLUDE` aus dem
+  Foundry-Zip ausgeschlossen).
+- Bei jeder App-Änderung die Build-Kennung (`<span class="buildtag">`, Stil `v09-05x`) hochzählen: Sie ist die
+  sichtbare Fassung am Handy und der Cache-Name des Service Workers (`sw.js?v=<buildtag>`), alte Caches werden beim
+  Aktivieren gelöscht.
+- Dateiname `ap-character-sheet.html` nicht ändern (Tests und `test/gen-config.mjs` lesen ihn).
+- Die Service-Worker-Registrierung läuft nur unter http(s); bei `file://` bleibt die App unverändert.
+
+## Release-Ablauf (Pflicht am Ende jeder Änderung am Foundry-System)
 
 Der Spielleiter bekommt das System über die Manifest-URL
 `https://github.com/EriKah-CGE/ap-turm/releases/latest/download/system.json` (Repo `EriKah-CGE/ap-turm`, Branch `main`).
