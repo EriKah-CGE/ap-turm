@@ -144,6 +144,26 @@ Angriffsliste mit Wurf-Buttons, Freitext); Statblock-Text-Parser (Regex, 80 % re
   Kommunikation mit dem Nutzer: Deutsch, direkt, ohne Floskeln.
 - Lizenz: eigenes Regelwerk, keine SRD-Inhalte → keine Attribution nötig. `system.json` → `license: MIT`.
 
+## Release-Ablauf (Pflicht am Ende jeder Änderung)
+
+Der Spielleiter bekommt das System über die Manifest-URL
+`https://github.com/EriKah-CGE/ap-turm/releases/latest/download/system.json` (Repo `EriKah-CGE/ap-turm`, Branch `main`).
+Eine Änderung ist erst beim Spielleiter, wenn sie released ist. Darum endet jede abgeschlossene Änderung so:
+
+1. `npm test` grün, Nutzer hat in Foundry getestet, Änderungen committet.
+2. `CHANGELOG.md`: neue Sektion `## x.y.z` (kurz, Deutsch) anlegen und committen. SemVer: Fehlerbehebung → Patch,
+   neue Funktion → Minor.
+3. `npm run release -- x.y.z` (`tools/release.mjs`): prüft sauberen Baum, Version > aktuell, Tag frei,
+   CHANGELOG-Sektion vorhanden; setzt Version in `system.json`/`package.json`, Download-URL auf
+   `releases/download/vx.y.z/ap-turm.zip`, baut `ap-turm.zip` (nur system.json, module/, templates/, styles/, lang/,
+   icons/, README.md, LICENSE), committet „Release vx.y.z", taggt, pusht, `gh release create`.
+4. Danach `curl -sIL` auf Manifest-URL prüfen; Version im ausgelieferten `system.json` muss stimmen.
+
+`version` und `download` in `system.json` nie von Hand ändern — das macht das Skript. Neue Laufzeit-Ordner
+(außer den oben genannten) müssen in `INCLUDE` in `tools/release.mjs` ergänzt werden. Releases nur auf Anweisung
+des Nutzers pushen (öffentliches Repo). Dieser Ordner ist das Git-Repo: im Foundry-Setup dieser Installation nie
+„Update" für ap-turm klicken.
+
 ## Nicht tun
 
 - Nicht auf dnd5e aufsetzen. Kein Boilerplate-Generator laufen lassen (Struktur selbst anlegen,

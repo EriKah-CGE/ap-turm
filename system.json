@@ -12,6 +12,9 @@
       "name": "Eric"
     }
   ],
+  "url": "https://github.com/EriKah-CGE/ap-turm",
+  "manifest": "https://github.com/EriKah-CGE/ap-turm/releases/latest/download/system.json",
+  "download": "https://github.com/EriKah-CGE/ap-turm/releases/download/v1.2.0/ap-turm.zip",
   "esmodules": [
     "module/ap-turm.mjs"
   ],

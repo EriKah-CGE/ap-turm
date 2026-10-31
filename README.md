@@ -1,12 +1,26 @@
 # AP-Turm
 
+## Installation für den Spielleiter
+
+1. Foundry starten, im Setup auf **Game Systems** → **Install System**.
+2. Unten bei **Manifest URL** einfügen:
+   ```
+   https://github.com/EriKah-CGE/ap-turm/releases/latest/download/system.json
+   ```
+3. **Install** klicken.
+
+Updates erscheinen danach im Setup unter **Game Systems** als Update-Knopf (oder über „Check for Updates").
+
+**Wichtig:** Eine zuvor per Zip installierte Fassung vorher unter *Game Systems* deinstallieren. Die Welten bleiben
+dabei erhalten — sie liegen in `Data/worlds`, nicht im System-Ordner.
+
 Eigenständiges Spielsystem für **Foundry VTT v13** (getestet mit Build 13.351). Es setzt das
 Homebrew-Regelwerk der Einzeldatei-App `ap-character-sheet.html` um: Progression aus verdienten AP,
 Shop als AP-Budget, Turm-Modus mit Zauberpunkten, 20 Elementen, Kristallreif, Turmwissen und
 Würfelleiter. Es baut **nicht** auf dnd5e auf und braucht kein weiteres Modul (JB2A + Sequencer
 sind optional für Angriffsanimationen).
 
-Version 1.2.0 · Lizenz MIT · keine SRD-Inhalte
+Versionen und Änderungen: [CHANGELOG.md](CHANGELOG.md) · Lizenz MIT · keine SRD-Inhalte
 
 ## Neu in 1.2.0
 
@@ -49,16 +63,14 @@ vermerkt danach die neue Version.
 
 ---
 
-## Installation
+## Manuelle Installation (Zip, ohne Updates)
 
-1. `ap-turm-v1.2.0.zip` herunterladen.
-2. Zip in den Ordner `Data/systems/` des Foundry-Datenverzeichnisses entpacken, so dass
-   `Data/systems/ap-turm/system.json` liegt. (Windows-Standard:
-   `%LOCALAPPDATA%\FoundryVTT\Data\systems\`.)
+Nur nötig, wenn die Manifest-URL nicht genutzt werden kann:
+
+1. `ap-turm.zip` von der [Release-Seite](https://github.com/EriKah-CGE/ap-turm/releases/latest) herunterladen.
+2. Inhalt nach `Data/systems/ap-turm/` im Foundry-Datenverzeichnis entpacken, so dass
+   `Data/systems/ap-turm/system.json` liegt. (Windows-Standard: `%LOCALAPPDATA%\FoundryVTT\Data\systems\ap-turm\`.)
 3. Foundry neu starten. Unter **Game Systems** erscheint „AP-Turm".
-
-Alternativ lässt sich das Zip in der Setup-Oberfläche über *Install System → Manifest URL* oder per
-Drag & Drop einspielen, wenn es über eine URL erreichbar ist.
 
 ## Neue Welt anlegen
 
@@ -622,8 +634,27 @@ Spielleiter-Kürzel tauchen bei Spielern in *Configure Controls* nicht auf und t
 npm test         # Node-Tests: Regeln gegen die HTML-App, Import/Export-Rundlauf, Parser, Migration, Bundles
 npm run package  # baut ap-turm-v<version>.zip (ohne test, docs, tools, node_modules)
 npm run handover # Übergabeordner Data/ap-turm-handover (System-Zip, Bibliotheken-Zip, PDF, HANDOVER.txt)
+npm run release -- x.y.z  # GitHub-Release, siehe Release-Ablauf
 ```
 
 `ap-character-sheet.html` ist die Quelle der Wahrheit für Regeln und Formeln; die Tests laden sie und
 vergleichen `module/rules.mjs` Wert für Wert dagegen. `test/gen-config.mjs` erzeugt
 `module/config.mjs` neu aus der App, damit die Tabellen kopiert und nicht abgetippt sind.
+
+## Release-Ablauf
+
+Jede Änderung, die beim Spielleiter ankommen soll, endet mit einem Release:
+
+1. Änderungen committen; `npm test` muss grün sein.
+2. In `CHANGELOG.md` eine Sektion `## x.y.z` mit den Änderungen anlegen und committen.
+3. `npm run release -- x.y.z`
+
+Das Skript (`tools/release.mjs`) bricht ab, wenn das Arbeitsverzeichnis nicht sauber ist, die Version nicht größer als
+die aktuelle ist, der Tag `vx.y.z` schon existiert oder die CHANGELOG-Sektion fehlt. Sonst setzt es die Version in
+`system.json`/`package.json`, schreibt die Download-URL auf `releases/download/vx.y.z/ap-turm.zip` um, baut
+`ap-turm.zip` (nur `system.json`, `module/`, `templates/`, `styles/`, `lang/`, `icons/`, `README.md`, `LICENSE`),
+committet „Release vx.y.z", setzt den Tag, pusht und legt mit `gh` das GitHub-Release mit `ap-turm.zip` und
+`system.json` an. Foundry findet das Update über die Manifest-URL (`releases/latest/download/system.json`).
+
+**Achtung auf dem Entwicklungsrechner:** Dieser Ordner ist das Git-Repo. Hier im Foundry-Setup **nicht** auf
+„Update" klicken — Foundry würde den Ordner durch den Inhalt des Release-Zips ersetzen.
