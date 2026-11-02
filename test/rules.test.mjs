@@ -44,7 +44,7 @@ const end = js.indexOf("function labelFor(");
 const block = js.slice(start, end);
 const APP = new Function(block + `
   return {
-    setState:(s)=>{S=s;}, getState:()=>S, DEFAULTS, DATA_VERSION, migrateSpellRule, compactEffects, itemEffects, abilityBreakdown, derived, computeSpent, availableAp, totalAp, layPool, hitDie, hitDieMax,
+    setState:(s)=>{S=s;}, getState:()=>S, DEFAULTS, DATA_VERSION, migrateSpellRule, migrateState, adoptState, hasPreV5Spells, compactEffects, itemEffects, abilityBreakdown, derived, computeSpent, availableAp, totalAp, layPool, hitDie, hitDieMax,
     weaponStats, featBonuses, isLocked, isMaxed, costOfRank, totalSpentForItem, findItem,
     migrateWeapons, migrateFeats, migrateInsp, migrateItems, migrateCrystals,
     SHOP_DATA, PREREQS, SELECTORS, ARMORS, ELEMENTS, HIT_DICE, SKILLS, ABILITIES, ABBR, DAMAGE_TYPES, CREATURE_TYPES,
@@ -78,20 +78,8 @@ ok("tables", () => {
 const norm = (d) => JSON.parse(JSON.stringify(d, (k, v) => v instanceof Set ? [...v].sort() : v));
 function appDerived(S) { APP.setState(S); return norm(APP.derived()); }
 function appLoad(json) {
-  // replica of the app's file import handler
-  const D = APP.DEFAULTS();
-  const S = Object.assign(D, structuredClone(json));
-  S.identity = Object.assign(APP.DEFAULTS().identity, S.identity || {});
-  S.play = Object.assign(APP.DEFAULTS().play, S.play || {});
-  S.currency = Object.assign(APP.DEFAULTS().currency, S.currency || {});
-  if (!Array.isArray(S.weapons)) S.weapons = []; if (!Array.isArray(S.spells)) S.spells = []; if (!S.slotsUsed) S.slotsUsed = {};
-  if (!Array.isArray(S.feats)) S.feats = []; if (!Array.isArray(S.items)) S.items = []; if (!Array.isArray(S.crystals)) S.crystals = [];
-  if (!Array.isArray(S.turmwissen)) S.turmwissen = []; if (!S.mode) S.mode = "ap";
-  if (!S.armor || !APP.ARMORS[S.armor.id]) S.armor = { id: "none", shield: false };
-  APP.setState(S);
-  APP.migrateWeapons(); APP.migrateFeats(); APP.migrateInsp(); APP.migrateItems(); APP.migrateCrystals();
-  if (!Array.isArray(S.notices)) S.notices = [];
-  APP.migrateSpellRule(json.v);
+  // the app's own entry path (load from storage / file import): adoptState -> migrateState
+  APP.adoptState(structuredClone(json));
   return APP.getState();
 }
 /** Foundry-side pipeline without Foundry: creation data -> fake documents -> app state */
@@ -1127,7 +1115,7 @@ ok("item transfer: stack split and carry limit at the receiver", () => {
   assert.equal(transfer.carryCount(full, { extra: 1 }) > cfg.TOWER_CARRY_LIMIT, true);
 
   // against the app: build tag, tooltip and counting rule of v09-05o
-  assert.match(html, /class="buildtag"[^>]*>v09-05p</);
+  assert.match(html, /class="buildtag"[^>]*>v09-05q</);
   const appTower = new Function("allItems", js.match(/const towerItems=allItems\.filter\([^;]*\);/)[0] + "return towerItems.length;");
   assert.match(js, /Inside the tower: unlimited\. Only \$\{TOWER_CARRY_LIMIT\} tower finds may be carried back in on re-entry \(circlet crystals exempt\)\./);
   const tpl = fs.readFileSync(new URL("../templates/actor/character/inventory.hbs", import.meta.url), "utf8");
@@ -3276,10 +3264,71 @@ ok("spell rule v5: spellslot = spell purchase, learn = extra known spell, prereq
   assert.deepEqual([again.system.bought, again.notice, again.system.notices.length], [S.bought, "", 1]);
   assert.equal(exportAppData({ name: "x", system: { bought: old.bought }, items: [], dataVersion: 4 }).v, 4);
   assert.equal(convertAppExport(exportAppData({ name: "x", system: { bought: old.bought }, items: [], dataVersion: 4 })).system.bought.spellslot5, 2);
-  // a v5 sheet with learn purchases is never converted
-  assert.deepEqual(convertAppExport({ ...old, v: 5 }).system.bought, old.bought);
+  // a v5 sheet with valid Extra Spell purchases (learnN with spellslotN) is never converted
+  const v5 = { ...old, v: 5, bought: { spellslot1: 1, spellslot2: 1, learn1: 2, learn2: 1 } };
+  assert.deepEqual(convertAppExport(v5).system.bought, v5.bought);
+  assert.deepEqual(appLoad(v5).bought, v5.bought);
   // migration step registered for 1.3.0
   assert.deepEqual(migration.stepsFor("1.2.1", "1.3.0").map(x => x.version), ["1.3.0"]);
+});
+
+ok("spell rule migration on every entry path: app import, Foundry importer, Actor.migrateData", () => {
+  const old = JSON.parse(fs.readFileSync(new URL("./fixtures/spell-rule-v4.json", import.meta.url), "utf8"));
+  const want = { spellslot1: 1, spellslot2: 1, spellslot3: 1, spellslot4: 1, spellslot5: 2 };
+  const text = "Spellcasting rule change: your purchases were converted. AP balance changed by -9. Please settle with your GM.";
+  // App: file import of the old sheet (data version 4)
+  const S = appLoad(old);
+  assert.deepEqual(S.bought, want);
+  assert.ok(Object.keys(S.bought).every(k => !k.startsWith("learn")));
+  APP.setState(S); assert.equal(APP.derived().spTotal, 20);
+  assert.deepEqual([S.v, S.notices.length, S.notices[0].text], [5, 1, text]);
+  // the export (JSON of S after migrateState) imported again changes nothing
+  APP.setState(S); assert.equal(APP.migrateState(), null);
+  const exported = JSON.parse(JSON.stringify(APP.getState()));
+  const S2 = appLoad(exported);
+  assert.deepEqual([S2.bought, S2.notices.length, S2.v], [want, 1, 5]);
+  // the same old file imported twice gives the same result (the import replaces the sheet)
+  assert.deepEqual(appLoad(old).bought, want);
+  // old purchases under a wrong version mark (v5, learn without spellslot) are converted as well
+  const wrong = appLoad({ ...old, v: 5 });
+  assert.deepEqual([wrong.bought, wrong.notices.at(-1).text], [want, text]);
+  assert.equal(APP.hasPreV5Spells(old.bought), true);
+  assert.equal(APP.hasPreV5Spells(want), false);
+  assert.equal(APP.hasPreV5Spells({ spellslot3: 1, learn3: 2 }), false);
+  // missing version = old sheet
+  const { v, ...noV } = old;
+  assert.deepEqual(appLoad(noV).bought, want);
+  // mode switch: migrateState runs, the sheet stays as it is
+  APP.setState(S2); S2.mode = "ap"; assert.equal(APP.migrateState(), null); assert.deepEqual(S2.bought, want);
+  // app and Foundry use the same detection
+  for (const b of [old.bought, want, { spellslot3: 1, learn3: 2 }, { learn9: 1 }, {}]) assert.equal(rules.hasPreV5Spells(b), APP.hasPreV5Spells(b));
+
+  // Foundry importer: identical values, flag, notice for the GM whisper
+  const c = convertAppExport(old);
+  assert.deepEqual([c.system.bought, c.flags["ap-turm"].dataVersion, c.notice, c.system.notices.length], [want, 5, text, 1]);
+  const st = foundryState(c);
+  assert.deepEqual(norm(rules.derived(st)).spTotal, 20);
+  assert.deepEqual(convertAppExport({ ...old, v: 5 }).system.bought, want);
+  assert.deepEqual([convertAppExport(exportAppData({ name: c.name, system: c.system, items: [], dataVersion: 5 })).system.bought, convertAppExport(exportAppData({ name: c.name, system: c.system, items: [], dataVersion: 5 })).notice], [want, ""]);
+
+  // Actor source (Actor document migrateData): world load, compendium, bundle, duplicate, "Import Data"
+  const src = (flags, bought) => ({ _id: "a1", name: "Old", type: "character", flags, system: { bought: { ...bought }, notices: [] } });
+  for (const flags of [{}, { "ap-turm": { dataVersion: 4 } }, { "ap-turm": { dataVersion: 5 } }, undefined]) {
+    const a = rules.migrateActorSpellRule(src(flags, old.bought));
+    assert.deepEqual([a.system.bought, a.flags["ap-turm"].dataVersion, a.flags["ap-turm"].spellRulePending, a.system.notices.length], [want, 5, text, 1]);
+    // idempotent: the converted source passes unchanged
+    const again = structuredClone(a); delete again.flags["ap-turm"].spellRulePending;
+    assert.deepEqual(rules.migrateActorSpellRule(structuredClone(again)), again);
+  }
+  // new blank character: only the version is set
+  assert.deepEqual(rules.migrateActorSpellRule({ name: "New", type: "character" }).flags, { "ap-turm": { dataVersion: 5 } });
+  // valid v5 purchases stay, partial updates (no type) and NPCs are never touched
+  const ok5 = rules.migrateActorSpellRule(src({ "ap-turm": { dataVersion: 5 } }, { spellslot1: 1, learn1: 2 }));
+  assert.deepEqual([ok5.system.bought, ok5.flags["ap-turm"].spellRulePending], [{ spellslot1: 1, learn1: 2 }, undefined]);
+  const partial = { _id: "a1", system: { bought: { learn1: 1 } } };
+  assert.deepEqual(rules.migrateActorSpellRule(structuredClone(partial)), partial);
+  const npcSrc = { type: "npc", system: { bought: { learn1: 1 } } };
+  assert.deepEqual(rules.migrateActorSpellRule(structuredClone(npcSrc)), npcSrc);
 });
 
 /* Minimal Foundry stub so the data models' static migrateData can run in Node (no schema is built). */
@@ -3293,6 +3342,19 @@ async function loadDataModels() {
   const npcM = await import("../module/data/npc.mjs");
   return { ...items, ...npcM };
 }
+
+await okAsync("spell rule: APTActor.migrateData (document level) converts old sources", async () => {
+  await loadDataModels();   // Foundry stub first
+  foundry.documents ??= {};
+  foundry.documents.Actor ??= class { static migrateData(s) { return s; } };
+  const { APTActor } = await import("../module/actor.mjs");
+  const old = JSON.parse(fs.readFileSync(new URL("./fixtures/spell-rule-v4.json", import.meta.url), "utf8"));
+  const src = { _id: "x", name: old.name, type: "character", flags: {}, system: { bought: { ...old.bought }, notices: [] } };
+  const out = APTActor.migrateData(src);
+  assert.deepEqual([out.system.bought, out.flags["ap-turm"].dataVersion], [convertAppExport(old).system.bought, 5]);
+  assert.match(out.flags["ap-turm"].spellRulePending, /changed by -9\./);
+  assert.deepEqual(APTActor.migrateData({ _id: "x", system: { bought: { learn1: 1 } } }).system.bought, { learn1: 1 });
+});
 
 await okAsync("weapon damage types: both lists in turm mode, second damage line, typed apply, NPC not-assigned marks", async () => {
   // grouped choices: turm both lists, ap D&D types only

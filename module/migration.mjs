@@ -7,7 +7,8 @@
  * is ever broken - a migration only persists that result, so the stored data matches the final shape.
  * The pure helpers (compareVersions, needsMigration, stepsFor, legacyMarkers) are tested in Node.
  */
-import { DATA_VERSION, convertSpellPurchases, spellRuleNotice } from "./rules.mjs";
+import { DATA_VERSION } from "./rules.mjs";
+import { whisperGmNotice } from "./importer.mjs";
 
 const SYSTEM_ID = "ap-turm";
 export const VERSION_SETTING = "systemVersion";
@@ -158,43 +159,46 @@ export const MIGRATIONS = [
     run: async () => {
       const r = await migrateSpellRule();
       if (!r.converted.length) return "no character had Learn Spell purchases to convert";
-      return `${r.converted.length} character(s) converted: ${r.converted.map(c => `${c.name} (${c.delta > 0 ? "+" : ""}${c.delta} AP)`).join(", ")}`;
+      return `${r.converted.length} character(s) converted: ${r.converted.map(c => `${c.name} (${c.delta} AP)`).join(", ")}`;
     }
   }
 ];
 
 /**
- * Spell rule v5 for every character actor that does not carry flags["ap-turm"].dataVersion >= 5 yet: the first
- * "learn" purchase of each rank becomes a "spellslot" purchase (no AP refund or charge). Every converted actor
- * gets a notice in its Level tab and the GMs a whisper with name and AP difference. Idempotent via the flag.
+ * Store a spell rule conversion and tell the GMs once. The conversion itself already happened in memory when the
+ * source entered the client (APTActor.migrateData -> rules.migrateActorSpellRule) and left its notice text in
+ * flags["ap-turm"].spellRulePending. This writes the converted system data and the flags without that marker in one
+ * update, then whispers the notice (actor name + AP difference) to the GMs. No marker: nothing to do.
+ * @param {Actor} actor
+ * @returns {Promise<{name:string, text:string}|null>}  the settled conversion, or null
+ */
+export async function settleSpellRule(actor) {
+  if (actor?.type !== "character") return null;
+  const text = actor._source.flags?.[SYSTEM_ID]?.spellRulePending;
+  if (!text) return null;
+  const flags = foundry.utils.deepClone(actor._source.flags);
+  delete flags[SYSTEM_ID].spellRulePending;
+  flags[SYSTEM_ID].dataVersion = DATA_VERSION;
+  // recursive:false replaces system and flags as a whole: the stored data matches the converted state in one write
+  await actor.update({ system: foundry.utils.deepClone(actor._source.system), flags }, { recursive: false, diff: false });
+  await whisperGmNotice(actor.name, text);
+  return { name: actor.name, text };
+}
+
+/** Text of the AP difference inside a notice ("-9"), for reports. */
+export function noticeDelta(text) { return (String(text ?? "").match(/changed by ([+-]?\d+)/) ?? [])[1] ?? "?"; }
+
+/**
+ * settleSpellRule for every character actor (ready of the active GM, world migration step 1.3.0).
  * @param {Iterable<Actor>} [actors]  all world actors by default
- * @returns {Promise<{converted:{name:string, delta:number}[], flagged:number}>}
+ * @returns {Promise<{converted:{name:string, delta:string}[]}>}
  */
 export async function migrateSpellRule(actors = game.actors) {
-  const res = { converted: [], flagged: 0 };
-  const gms = game.users.filter(u => u.isGM).map(u => u.id);
-  const esc = (s) => foundry.utils.escapeHTML(String(s ?? ""));
+  const res = { converted: [] };
   for (const actor of actors) {
-    if (actor.type !== "character" || (Number(actor.getFlag(SYSTEM_ID, "dataVersion")) || 0) >= DATA_VERSION) continue;
     try {
-      const old = actor._source.system.bought ?? {};
-      const r = convertSpellPurchases(old);
-      const update = { [`flags.${SYSTEM_ID}.dataVersion`]: DATA_VERSION };
-      if (r.converted.length) {
-        for (const [k, v] of Object.entries(r.bought)) if (old[k] !== v) update[`system.bought.${k}`] = v;
-        for (const k of Object.keys(old)) if (!(k in r.bought)) update[`system.bought.-=${k}`] = null;
-        const text = spellRuleNotice(r.delta);
-        update["system.notices"] = [...(actor._source.system.notices ?? []), { date: new Date().toISOString().slice(0, 10), text }];
-        await actor.update(update);
-        await ChatMessage.implementation.create({
-          speaker: { alias: "AP-Turm" }, whisper: gms,
-          content: `<div class="apt-gm-notice"><b>${esc(actor.name)}</b>: ${esc(text)}</div>`
-        });
-        res.converted.push({ name: actor.name, delta: r.delta });
-      } else {
-        await actor.update(update);
-        res.flagged++;
-      }
+      const r = await settleSpellRule(actor);
+      if (r) res.converted.push({ name: r.name, delta: noticeDelta(r.text) });
     } catch (err) {
       console.error(`${SYSTEM_ID} | spell rule migration: "${actor.name}"`, err);
       ui.notifications.warn(`AP-Turm: "${actor.name}" could not be converted, see the console.`);

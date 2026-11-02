@@ -5,7 +5,7 @@
  * against the app's own load()/migrate*() functions. `importAppJSON` is the Foundry UI entry.
  */
 import { ARMORS, WEAPONS } from "./config.mjs";
-import { DATA_VERSION, convertSpellPurchases, spellRuleNotice, expandEffects } from "./rules.mjs";
+import { DATA_VERSION, convertSpellPurchases, spellRuleNotice, needsSpellRule, expandEffects } from "./rules.mjs";
 import { isNpcExport, validateNpcExport, createNpcFromExport, importNpcIntoActor, NPC_FORMAT } from "./npc-transfer.mjs";
 
 /* ---------- App defaults + migrations (ported 1:1 from ap-character-sheet.html) ---------- */
@@ -114,9 +114,9 @@ export function normalizeAppExport(data) {
   if (!S.armor || !ARMORS[S.armor.id]) S.armor = { id: "none", shield: false };
   migrateWeapons(S); migrateFeats(S); migrateInsp(S); migrateItems(S); migrateCrystals(S);
   if (!Array.isArray(S.notices)) S.notices = [];
-  // app migrateSpellRule(): sheets below v5 convert the first "learn" purchase of each rank into a spellslot purchase
+  // app migrateSpellRule(): sheets below v5 (or with old-rule purchases, hasPreV5Spells) convert the first "learn" purchase of each rank into a spellslot purchase
   S._spellNotice = "";
-  if ((Number(data?.v) || 0) < DATA_VERSION) {
+  if (needsSpellRule(data?.v, S.bought)) {
     const r = convertSpellPurchases(S.bought);
     if (r.converted.length) {
       S.bought = r.bought;
@@ -404,7 +404,8 @@ export async function importAppExportIntoActor(actor, data) {
   const check = validateAppExport(data);
   if (!check.ok) throw new Error(check.reason);
   const { notice, ...createData } = convertAppExport(data);
-  await actor.setFlag("ap-turm", "dataVersion", DATA_VERSION);
+  // current data version; an unsettled in-memory conversion of the old data is replaced by this import
+  await actor.update({ "flags.ap-turm.dataVersion": DATA_VERSION, "flags.ap-turm.-=spellRulePending": null });
   if (notice) await whisperGmNotice(actor.name, notice);
   // recursive:false replaces the whole system object so stale keys in bought/choices/milestones disappear
   await actor.update({ name: createData.name, system: createData.system }, { recursive: false });

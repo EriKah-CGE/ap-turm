@@ -20,6 +20,10 @@ Jede Version hat eine Sektion `## x.y.z`; `npm run release -- x.y.z` übernimmt 
   gibt nur einen weiteren bekannten Zauber. Neue Kaufkette Spellslot N → N−1, Extra Spell N → Spellslot N. Zähler
   „Rank N: x of y spells". Alte Bögen werden einmalig umgestellt (App: Datenversion 5, Meldung + Level-Tab;
   Foundry: Weltmigration mit Flüsternachricht an den Spielleiter pro Charakter), ohne AP-Ausgleich.
+- **Zauber-Migration auf jedem Eintrittspfad:** App: zentrale Migration beim Laden, Datei-Import, Moduswechsel und
+  Export (Build v09-05q). Foundry: Importer, Erstellung aus Kompendium/Bundle/Duplikat, „Import Data", jeder Weltstart
+  (aktiver GM) und Actor-`migrateData` als letztes Netz; Flüsternachricht mit AP-Differenz auch beim Import. Alte Käufe
+  werden auch bei falscher Versionsmarke erkannt (Extra Spell ohne Spellslot desselben Rangs).
 - **Waffen-Schadenstypen:** Im Turm-Modus auch D&D-Schadenstypen (gruppierte Auswahl), optionale zweite Schadenszeile
   je Waffe; „Apply to target" rechnet jeden Typ getrennt gegen Resistenzen. NPC-Aktionen im Turm-Modus mit beiden
   Listen; importierte Typen bleiben „nicht zugeordnet" (intern Präfix „?", alte NPCs werden beim Laden markiert).

@@ -55,8 +55,10 @@ Zauberkauf (Datenversion 5, App `v:5`, Foundry-Flag `flags.ap-turm.dataVersion`)
   Keine Punkte, kein Slot, kein Einfluss auf den Max-Rang.
 - **Bekannte Zauber Rang N** = `spellslotN + learnN` (Zähler „Rank N: x of y spells", Überschreitung nur gelb).
 - **Migration** alter Bögen (< v5): je Rang mit `learnN ≥ 1` wird ein `learnN` zu `spellslotN`; kein AP-Ausgleich,
-  einmaliger Hinweis mit der AP-Differenz (App: Toast + Level-Tab; Foundry: Weltmigration 1.3.0, Flüsternachricht an
-  den GM pro Actor).
+  einmaliger Hinweis mit der AP-Differenz (App: Toast + Level-Tab; Foundry: Flüsternachricht an den GM pro Actor).
+  Läuft auf **jedem** Eintrittspfad: App `migrateState()`/`adoptState()` (Laden, Import, Moduswechsel, Export); Foundry
+  Importer, `APTActor.migrateData` (Laden, Kompendium, Bundle, Duplikat, Import Data) + `settleSpellRule` (speichern,
+  Hinweis). Altbestand auch ohne Versionsmarke erkannt: `learnN ≥ 1` ohne `spellslotN` (`hasPreV5Spells`).
 
 Modus `turm` (Kampagnenmodus, Standard für diese Runde) vs. `ap` (Standard-D&D-Slots):
 - **Zauberpunkte** = Σ über Ränge r: `r × spellslot_r`; Max-Rang = höchster Rang mit `spellslot_r > 0`

@@ -22,8 +22,8 @@ import { statusEffects } from "./conditions.mjs";
 import * as statblock from "./statblock.mjs";
 import * as loot from "./loot.mjs";
 import { registerLootHooks, importLootTableDialog } from "./loot-dialog.mjs";
-import { registerMigrationSetting, checkMigration, migrateWorld, migrateSpellRule } from "./migration.mjs";
-import { DATA_VERSION } from "./rules.mjs";
+import { registerMigrationSetting, checkMigration, migrateWorld, migrateSpellRule, settleSpellRule } from "./migration.mjs";
+import { APTActor } from "./actor.mjs";
 import { registerConditionBarSettings, registerConditionBarHooks, refreshConditionBar, conditionBar } from "./condition-bar.mjs";
 import { award, awardApDialog, awardTurmwissenDialog } from "./award.mjs";
 import { requestRoll, requestRollDialog, registerRequestRoll } from "./request-roll.mjs";
@@ -88,6 +88,9 @@ Hooks.once("init", () => {
   registerTowerSettings();
   registerTowerHooks();
 
+  // Actor document class: last net of the data migrations (spell rule), see actor.mjs
+  CONFIG.Actor.documentClass = APTActor;
+
   // Data models (types are declared in system.json -> documentTypes)
   CONFIG.Actor.dataModels.character = CharacterData;
   CONFIG.Actor.dataModels.npc = NpcData;
@@ -149,11 +152,14 @@ Hooks.on("renderActorDirectory", (app, html) => {
   installTowerButton(root);   // "Tower" next to it (GM only): Tower Tracker window
 });
 
-/* New characters follow the current data version (spell rule v5); only actors from before the update lack the flag
-   and are converted by the world migration (migration.mjs, step 1.3.0). */
-Hooks.on("preCreateActor", (doc, data) => {
-  if (doc.type !== "character" || data?.flags?.[SYSTEM_ID]?.dataVersion != null) return;
-  doc.updateSource({ [`flags.${SYSTEM_ID}.dataVersion`]: DATA_VERSION });
+/* Spell rule (data version 5) on every way a character enters the world: APTActor.migrateData converts the source in
+   memory (load, compendium, bundle, duplicate, "Import Data"); the client that created or replaced the actor stores
+   the result and whispers the AP difference to the GMs, the active GM settles everything else on ready. */
+Hooks.on("createActor", (actor, options, userId) => {
+  if (userId === game.user.id) settleSpellRule(actor).catch(err => console.error(`${SYSTEM_ID} | spell rule`, err));
+});
+Hooks.on("updateActor", (actor, changes, options, userId) => {
+  if (userId === game.user.id && changes?.flags?.[SYSTEM_ID]?.spellRulePending) settleSpellRule(actor).catch(err => console.error(`${SYSTEM_ID} | spell rule`, err));
 });
 
 /* Import button in the RollTables directory header (same technique as the Actors button above) */
@@ -170,6 +176,7 @@ Hooks.once("ready", () => {
   chat.registerSocket();
   ensureSystemMacros().catch(err => console.error(`${SYSTEM_ID} | ensureSystemMacros`, err));
   checkMigration().catch(err => console.error(`${SYSTEM_ID} | migration`, err));
+  if (game.user.isActiveGM) migrateSpellRule().catch(err => console.error(`${SYSTEM_ID} | spell rule`, err));
   refreshConditionBar().catch(err => console.error(`${SYSTEM_ID} | condition bar`, err));
   ensureRulesJournal().catch(err => console.error(`${SYSTEM_ID} | rules journal`, err));
 });

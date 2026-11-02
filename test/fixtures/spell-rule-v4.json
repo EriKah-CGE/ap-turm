@@ -1,0 +1,11 @@
+{
+  "v": 4,
+  "name": "Old Spellcaster",
+  "mode": "turm",
+  "startAp": 200,
+  "earnedAp": 0,
+  "abilities": { "str": 10, "dex": 10, "con": 10, "int": 12, "wis": 10, "cha": 14 },
+  "bought": { "learn1": 1, "learn2": 1, "learn3": 1, "learn4": 1, "learn5": 1, "spellslot5": 1 },
+  "choices": {},
+  "milestones": {}
+}

@@ -20,6 +20,33 @@ export function convertSpellPurchases(boughtIn){
 }
 /** Text of the one-time notice (same wording as the app). */
 export function spellRuleNotice(delta){return `Spellcasting rule change: your purchases were converted. AP balance changed by ${delta>0?"+":""}${delta}. Please settle with your GM.`;}
+/** Old-rule purchases independent of any version mark (app hasPreV5Spells): under v5 learnN requires spellslotN and
+ *  selling cascades, so learnN >= 1 with spellslotN = 0 only exists in data from before v5. */
+export function hasPreV5Spells(bought){for(let L=1;L<=9;L++){if(((bought||{})["learn"+L]||0)>=1&&!((bought||{})["spellslot"+L]||0))return true;}return false;}
+/** Does data of version `ver` with these purchases need the spell rule conversion? */
+export function needsSpellRule(ver,bought){return (Number(ver)||0)<DATA_VERSION||hasPreV5Spells(bought);}
+/** Spell rule on a whole Actor source (Actor document migrateData; creation, load, full replacement). The version is
+ *  flags["ap-turm"].dataVersion. Only sources that carry type "character" are touched: partial updates never do.
+ *  A conversion adds the notice to system.notices and leaves its text in flags["ap-turm"].spellRulePending, so the
+ *  GM side can store the result and whisper it once (migration.mjs settleSpellRule). Mutates and returns `source`. */
+export function migrateActorSpellRule(source){
+  const plain=(v)=>!!v&&typeof v==="object"&&!Array.isArray(v);
+  if(!plain(source)||source.type!=="character")return source;
+  if(!plain(source.flags))source.flags={};
+  if(!plain(source.flags["ap-turm"]))source.flags["ap-turm"]={};
+  const f=source.flags["ap-turm"];
+  const sys=plain(source.system)?source.system:null;
+  const bought=sys&&plain(sys.bought)?sys.bought:{};
+  if(!needsSpellRule(f.dataVersion,bought))return source;
+  f.dataVersion=DATA_VERSION;
+  const r=convertSpellPurchases(bought);
+  if(!r.converted.length)return source;
+  const text=spellRuleNotice(r.delta);
+  sys.bought=r.bought;
+  sys.notices=[...(Array.isArray(sys.notices)?sys.notices:[]),{date:new Date().toISOString().slice(0,10),text}];
+  f.spellRulePending=text;
+  return source;
+}
 
 /* ---------- AP / Shop ---------- */
 export function findItem(id){return findShopItem(id);}
