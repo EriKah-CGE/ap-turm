@@ -367,7 +367,7 @@ export function applyCustomEffects(d, S, entries = installed, { used = {} } = {}
         case "casts": {
           const slot = d.slots.find(s => s.L === ef.rank);
           if (slot) slot.total += ef.value * n;
-          else { d.slots.push({ L: ef.rank, total: ef.value * n, learned: 0 }); d.slots.sort((a, b) => a.L - b.L); }
+          else { d.slots.push({ L: ef.rank, total: ef.value * n, extra: 0 }); d.slots.sort((a, b) => a.L - b.L); }
           break;
         }
         case "dice":

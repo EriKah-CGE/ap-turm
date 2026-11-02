@@ -92,7 +92,9 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       }),
       notes: new HTMLField({ required: true, initial: "" }),
       // AP log: awards and shop purchases / sales, oldest first, capped at HISTORY_CAP (qol.mjs)
-      history: new ArrayField(new ObjectField())
+      history: new ArrayField(new ObjectField()),
+      // one-time notices (spell rule conversion), shown in the Level tab; app field S.notices
+      notices: new ArrayField(new SchemaField({ date: new StringField({ initial: "" }), text: new StringField({ initial: "" }) }))
     };
   }
 

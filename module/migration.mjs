@@ -7,6 +7,8 @@
  * is ever broken - a migration only persists that result, so the stored data matches the final shape.
  * The pure helpers (compareVersions, needsMigration, stepsFor, legacyMarkers) are tested in Node.
  */
+import { DATA_VERSION, convertSpellPurchases, spellRuleNotice } from "./rules.mjs";
+
 const SYSTEM_ID = "ap-turm";
 export const VERSION_SETTING = "systemVersion";
 
@@ -149,8 +151,56 @@ export const MIGRATIONS = [
       const extra = r.tokens ? ` · ${r.tokens} unlinked token(s) still carry old values (they keep working, they are translated on load)` : "";
       return `${parts.join(", ")} updated (${r.findings.join(", ")})${extra}`;
     }
+  },
+  {
+    version: "1.3.0",
+    label: "Spell rule: Spellslot is the spell purchase, Learn Spell becomes Extra Spell",
+    run: async () => {
+      const r = await migrateSpellRule();
+      if (!r.converted.length) return "no character had Learn Spell purchases to convert";
+      return `${r.converted.length} character(s) converted: ${r.converted.map(c => `${c.name} (${c.delta > 0 ? "+" : ""}${c.delta} AP)`).join(", ")}`;
+    }
   }
 ];
+
+/**
+ * Spell rule v5 for every character actor that does not carry flags["ap-turm"].dataVersion >= 5 yet: the first
+ * "learn" purchase of each rank becomes a "spellslot" purchase (no AP refund or charge). Every converted actor
+ * gets a notice in its Level tab and the GMs a whisper with name and AP difference. Idempotent via the flag.
+ * @returns {Promise<{converted:{name:string, delta:number}[], flagged:number}>}
+ */
+export async function migrateSpellRule() {
+  const res = { converted: [], flagged: 0 };
+  const gms = game.users.filter(u => u.isGM).map(u => u.id);
+  const esc = (s) => foundry.utils.escapeHTML(String(s ?? ""));
+  for (const actor of game.actors) {
+    if (actor.type !== "character" || (Number(actor.getFlag(SYSTEM_ID, "dataVersion")) || 0) >= DATA_VERSION) continue;
+    try {
+      const old = actor._source.system.bought ?? {};
+      const r = convertSpellPurchases(old);
+      const update = { [`flags.${SYSTEM_ID}.dataVersion`]: DATA_VERSION };
+      if (r.converted.length) {
+        for (const [k, v] of Object.entries(r.bought)) if (old[k] !== v) update[`system.bought.${k}`] = v;
+        for (const k of Object.keys(old)) if (!(k in r.bought)) update[`system.bought.-=${k}`] = null;
+        const text = spellRuleNotice(r.delta);
+        update["system.notices"] = [...(actor._source.system.notices ?? []), { date: new Date().toISOString().slice(0, 10), text }];
+        await actor.update(update);
+        await ChatMessage.implementation.create({
+          speaker: { alias: "AP-Turm" }, whisper: gms,
+          content: `<div class="apt-gm-notice"><b>${esc(actor.name)}</b>: ${esc(text)}</div>`
+        });
+        res.converted.push({ name: actor.name, delta: r.delta });
+      } else {
+        await actor.update(update);
+        res.flagged++;
+      }
+    } catch (err) {
+      console.error(`${SYSTEM_ID} | spell rule migration: "${actor.name}"`, err);
+      ui.notifications.warn(`AP-Turm: "${actor.name}" could not be converted, see the console.`);
+    }
+  }
+  return res;
+}
 
 /* ---------- Foundry side ---------- */
 

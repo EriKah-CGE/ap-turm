@@ -22,7 +22,8 @@ import { statusEffects } from "./conditions.mjs";
 import * as statblock from "./statblock.mjs";
 import * as loot from "./loot.mjs";
 import { registerLootHooks, importLootTableDialog } from "./loot-dialog.mjs";
-import { registerMigrationSetting, checkMigration, migrateWorld } from "./migration.mjs";
+import { registerMigrationSetting, checkMigration, migrateWorld, migrateSpellRule } from "./migration.mjs";
+import { DATA_VERSION } from "./rules.mjs";
 import { registerConditionBarSettings, registerConditionBarHooks, refreshConditionBar, conditionBar } from "./condition-bar.mjs";
 import { award, awardApDialog, awardTurmwissenDialog } from "./award.mjs";
 import { requestRoll, requestRollDialog, registerRequestRoll } from "./request-roll.mjs";
@@ -53,7 +54,7 @@ const SYSTEM_ID = "ap-turm";
 
 Hooks.once("init", () => {
   CONFIG.AP_TURM = AP_TURM;
-  game.apturm = { config: AP_TURM, rules, importAppJSON, importAppJSONIntoActor, createActorFromAppExport, importAppExportIntoActor, convertAppExport, exportActor, exportAppData, downloadActorExport, exportNpc, exportNpcData, downloadNpcExport, createNpcFromExport, importNpcIntoActor, isNpcExport, rolls, chat, macros, statblock, loot: { ...loot, importLootTableDialog }, migrateWorld, conditionBar, refreshConditionBar, award, requestRoll, transfer, library, fx: { playAttackFx, playCastFx, fxAvailable, showHitFeedback }, qol: { breakConcentration, rollNpcInitiative, undoApplied: chat.undoApplied }, jukebox, customShop: { ...customShop, openShopEditor }, overview, openCombatOverview, area, rulesJournal: { ...rulesJournalLogic, ensureRulesJournal, rebuildRulesJournal }, backup, spawn: { placeCopies, placeCopiesDialog }, libraries5e: { ...libraries5e, convert: dnd5eConvert }, reachRing: { refresh: refreshReachRing, state: reachRingState }, diceTray, tower: towerTracker };
+  game.apturm = { config: AP_TURM, rules, importAppJSON, importAppJSONIntoActor, createActorFromAppExport, importAppExportIntoActor, convertAppExport, exportActor, exportAppData, downloadActorExport, exportNpc, exportNpcData, downloadNpcExport, createNpcFromExport, importNpcIntoActor, isNpcExport, rolls, chat, macros, statblock, loot: { ...loot, importLootTableDialog }, migrateWorld, migrateSpellRule, conditionBar, refreshConditionBar, award, requestRoll, transfer, library, fx: { playAttackFx, playCastFx, fxAvailable, showHitFeedback }, qol: { breakConcentration, rollNpcInitiative, undoApplied: chat.undoApplied }, jukebox, customShop: { ...customShop, openShopEditor }, overview, openCombatOverview, area, rulesJournal: { ...rulesJournalLogic, ensureRulesJournal, rebuildRulesJournal }, backup, spawn: { placeCopies, placeCopiesDialog }, libraries5e: { ...libraries5e, convert: dnd5eConvert }, reachRing: { refresh: refreshReachRing, state: reachRingState }, diceTray, tower: towerTracker };
   chat.registerSettings();
   registerHitFeedbackSetting();
   registerFxSetting();
@@ -146,6 +147,13 @@ Hooks.on("renderActorDirectory", (app, html) => {
     ]
   });
   installTowerButton(root);   // "Tower" next to it (GM only): Tower Tracker window
+});
+
+/* New characters follow the current data version (spell rule v5); only actors from before the update lack the flag
+   and are converted by the world migration (migration.mjs, step 1.3.0). */
+Hooks.on("preCreateActor", (doc, data) => {
+  if (doc.type !== "character" || data?.flags?.[SYSTEM_ID]?.dataVersion != null) return;
+  doc.updateSource({ [`flags.${SYSTEM_ID}.dataVersion`]: DATA_VERSION });
 });
 
 /* Import button in the RollTables directory header (same technique as the Actors button above) */

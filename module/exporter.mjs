@@ -40,11 +40,12 @@ const n = (v, d = 0) => { const x = Number(v); return Number.isFinite(x) ? x : d
  * @param {object[]} args.items    Plain item data: {_id?, id?, name, type, flags?, system}
  * @returns {object}               App export (DEFAULTS() shape, v4)
  */
-export function exportAppData({ name, system: sys, items }) {
+export function exportAppData({ name, system: sys, items, dataVersion = 5 }) {
   const list = [...(items || [])];
   const pick = (t) => list.filter(i => i.type === t);
   const out = {
-    v: 4,
+    // an actor the world migration has not converted yet is exported as v4, so the app converts it on load
+    v: Number(dataVersion) >= 5 ? 5 : 4,
     theme: sys.theme || "celestial",
     mode: sys.mode === "turm" ? "turm" : "ap",
     name: String(name ?? ""),
@@ -102,6 +103,7 @@ export function exportAppData({ name, system: sys, items }) {
       charges: n(g.system.charges), used: n(g.system.used), recharge: g.system.recharge ?? "long", origin: g.system.origin ?? "city"
     })),
     armor: { id: sys.armor?.id || "none", shield: !!sys.armor?.shield },
+    notices: (sys.notices || []).map(x => ({ date: String(x?.date ?? ""), text: String(x?.text ?? "") })),
     _wepMigrated: true,
     _featMigrated: true,
     _itemMigrated: true
@@ -125,6 +127,7 @@ export function exportFileName(name) {
 export function exportActor(actor) {
   return exportAppData({
     name: actor.name,
+    dataVersion: actor.getFlag("ap-turm", "dataVersion") ?? 4,
     system: actor.system.toObject(),
     items: actor.items.map(i => i.toObject())
   });

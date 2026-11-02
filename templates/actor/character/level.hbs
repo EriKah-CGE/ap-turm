@@ -37,6 +37,13 @@
     {{else}}<p class="empty">No milestones yet (one per 75 earned AP).</p>{{/each}}
   </div>
 
+  {{#if notices.length}}
+  <div class="apt-box apt-notices">
+    <h3>Notices</h3>
+    {{#each notices}}<div class="apt-notice"><b>{{date}}</b> {{text}}</div>{{/each}}
+  </div>
+  {{/if}}
+
   <details class="apt-box apt-entries apt-history" {{#if historyOpen}}open{{/if}}>
     <summary><h3>History <small>{{history.length}}</small></h3></summary>
     <p class="hint">The log starts with this update: earlier AP awards and purchases are not listed. Keeps the last {{historyCap}} entries.</p>

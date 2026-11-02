@@ -47,10 +47,21 @@ Progression (alles aus **verdienten AP** `earnedAp`; `startAp` ist nur Kaufbudge
 - Zaubermodifikator = `max(CHA, WIS, INT)`; SG = `8 + PB + Mod + spellDC-Käufe`;
   Zauberangriff = `PB + Mod + spellDC-Käufe` (+ Erschöpfungsmalus)
 
+Zauberkauf (Datenversion 5, App `v:5`, Foundry-Flag `flags.ap-turm.dataVersion`):
+- **`spellslotN` („Spellslot Lvl N (+1 spell)") ist der Zauberkauf:** berechtigt zum Wirken von Rang N, gibt einen
+  bekannten Zauber von Rang N und einen Slot (Modus `ap`: Slots Rang N = `spellslotN`; Modus `turm`: N Zauberpunkte
+  je Kauf). Kette: `spellslotN` setzt `spellslot(N-1)` voraus, `spellslot1` ohne Voraussetzung.
+- **`learnN` („Extra Spell Lvl N")** gibt nur einen weiteren bekannten Zauber von Rang N; setzt `spellslotN` voraus.
+  Keine Punkte, kein Slot, kein Einfluss auf den Max-Rang.
+- **Bekannte Zauber Rang N** = `spellslotN + learnN` (Zähler „Rank N: x of y spells", Überschreitung nur gelb).
+- **Migration** alter Bögen (< v5): je Rang mit `learnN ≥ 1` wird ein `learnN` zu `spellslotN`; kein AP-Ausgleich,
+  einmaliger Hinweis mit der AP-Differenz (App: Toast + Level-Tab; Foundry: Weltmigration 1.3.0, Flüsternachricht an
+  den GM pro Actor).
+
 Modus `turm` (Kampagnenmodus, Standard für diese Runde) vs. `ap` (Standard-D&D-Slots):
-- **Zauberpunkte** = Σ über Ränge r: `r × (learn_r ? 1 : 0 + spellslot_r)`; Max-Rang = höchster `learn_r`
+- **Zauberpunkte** = Σ über Ränge r: `r × spellslot_r`; Max-Rang = höchster Rang mit `spellslot_r > 0`
 - **Rang 1–5:** beliebig oft wirkbar, kosten nur Punkte
-- **Rang 6–9:** zusätzlich begrenzt auf `learn_r + spellslot_r` Wirkungen pro langer Rast
+- **Rang 6–9:** zusätzlich begrenzt auf `spellslot_r` Wirkungen pro langer Rast
   (eigener Zähler, `slotsUsed[r]`), kosten **trotzdem** Punkte
 - **Traglimit:** 5 Gegenstände, aber **nur** für Herkunft `tower` (im Turm gefunden) und **nur beim
   Wiederbetreten** des Turms; während eines Runs im Turm unbegrenzt, `carried in` (Herkunft `city`) immer

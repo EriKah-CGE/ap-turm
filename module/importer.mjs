@@ -5,11 +5,12 @@
  * against the app's own load()/migrate*() functions. `importAppJSON` is the Foundry UI entry.
  */
 import { ARMORS, WEAPONS } from "./config.mjs";
+import { DATA_VERSION, convertSpellPurchases, spellRuleNotice } from "./rules.mjs";
 import { isNpcExport, validateNpcExport, createNpcFromExport, importNpcIntoActor, NPC_FORMAT } from "./npc-transfer.mjs";
 
 /* ---------- App defaults + migrations (ported 1:1 from ap-character-sheet.html) ---------- */
 
-export const APP_DEFAULTS = () => ({ v: 4, theme: "celestial", mode: "ap", name: "", startAp: 50, earnedAp: 0, spUsed: 0, layUsed: 0, crystals: [], turmwissen: [],
+export const APP_DEFAULTS = () => ({ v: DATA_VERSION, notices: [], theme: "celestial", mode: "ap", name: "", startAp: 50, earnedAp: 0, spUsed: 0, layUsed: 0, crystals: [], turmwissen: [],
   abilities: { str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10 },
   bought: {}, choices: {}, selectedSkills: [], selectedProfs: [], customProfs: [], hpRolls: [], milestones: {},
   identity: { species: "", klasse: "Weapon Bearer", background: "", alignment: "", exp: "" },
@@ -65,7 +66,7 @@ export function validateAppExport(data) {
   for (const k of ["bought", "choices", "milestones", "identity", "play", "currency", "slotsUsed"]) {
     if (data[k] !== undefined && (typeof data[k] !== "object" || data[k] === null || Array.isArray(data[k]))) warn.push(`Field "${k}" has the wrong type and is replaced by the default.`);
   }
-  if (data.v !== undefined && Number(data.v) > 4) warn.push(`The sheet comes from a newer app version (v${data.v}); unknown fields are lost.`);
+  if (data.v !== undefined && Number(data.v) > DATA_VERSION) warn.push(`The sheet comes from a newer app version (v${data.v}); unknown fields are lost.`);
   return { ok: true, warnings: warn };
 }
 
@@ -112,6 +113,18 @@ export function normalizeAppExport(data) {
   if (!S.mode) S.mode = "ap";
   if (!S.armor || !ARMORS[S.armor.id]) S.armor = { id: "none", shield: false };
   migrateWeapons(S); migrateFeats(S); migrateInsp(S); migrateItems(S); migrateCrystals(S);
+  if (!Array.isArray(S.notices)) S.notices = [];
+  // app migrateSpellRule(): sheets below v5 convert the first "learn" purchase of each rank into a spellslot purchase
+  S._spellNotice = "";
+  if ((Number(data?.v) || 0) < DATA_VERSION) {
+    const r = convertSpellPurchases(S.bought);
+    if (r.converted.length) {
+      S.bought = r.bought;
+      S._spellNotice = spellRuleNotice(r.delta);
+      S.notices.push({ date: new Date().toISOString().slice(0, 10), text: S._spellNotice });
+    }
+  }
+  S.v = DATA_VERSION;
   return S;
 }
 
@@ -177,7 +190,8 @@ export function convertAppExport(data) {
       alignment: String(S.identity.alignment ?? ""),
       exp: String(S.identity.exp ?? "")
     },
-    notes: textToHtml(S.notes)
+    notes: textToHtml(S.notes),
+    notices: (S.notices || []).filter(x => x && typeof x === "object").map(x => ({ date: String(x.date ?? ""), text: String(x.text ?? "") }))
   };
 
   const flag = (src) => ({ "ap-turm": cleanObj({ appId: src.id }) });
@@ -209,10 +223,22 @@ export function convertAppExport(data) {
     }
   });
 
-  return { name: String(S.name || "").trim() || "Imported Character", type: "character", system, items };
+  // notice: the spell rule conversion that just happened (not stored on the actor; the import posts it to the GM)
+  return { name: String(S.name || "").trim() || "Imported Character", type: "character", system, items,
+    flags: { "ap-turm": { dataVersion: DATA_VERSION } }, notice: S._spellNotice };
 }
 
 /* ---------- Foundry UI ---------- */
+
+/** Chat message to the GMs only: "<actor>: <notice>" (spell rule conversion). */
+export function whisperGmNotice(name, text) {
+  const e = (s) => foundry.utils.escapeHTML(String(s ?? ""));
+  return ChatMessage.implementation.create({
+    speaker: { alias: "AP-Turm" },
+    whisper: game.users.filter(u => u.isGM).map(u => u.id),
+    content: `<div class="apt-gm-notice"><b>${e(name)}</b>: ${e(text)}</div>`
+  });
+}
 
 /** Error dialog: what went wrong and why, instead of a notification that scrolls away. */
 async function reportImportError(reason, { title = "Import failed", file = "" } = {}) {
@@ -338,8 +364,9 @@ export async function importAppJSONIntoActor(actor) {
 export async function createActorFromAppExport(data) {
   const check = validateAppExport(data);
   if (!check.ok) throw new Error(check.reason);
-  const createData = convertAppExport(data);
+  const { notice, ...createData } = convertAppExport(data);
   const actor = await Actor.implementation.create(createData);
+  if (notice) await whisperGmNotice(actor.name, notice);
   ui.notifications.info(game.i18n.format("AP_TURM.Import.Done", { name: actor.name, items: createData.items.length }));
   return actor;
 }
@@ -374,7 +401,9 @@ export async function importAppExportIntoActor(actor, data) {
   if (actor.type !== "character") throw new Error("Import target must be a character actor");
   const check = validateAppExport(data);
   if (!check.ok) throw new Error(check.reason);
-  const createData = convertAppExport(data);
+  const { notice, ...createData } = convertAppExport(data);
+  await actor.setFlag("ap-turm", "dataVersion", DATA_VERSION);
+  if (notice) await whisperGmNotice(actor.name, notice);
   // recursive:false replaces the whole system object so stale keys in bought/choices/milestones disappear
   await actor.update({ name: createData.name, system: createData.system }, { recursive: false });
   // Foundry-only text of spells (Spell Library) is not in the app JSON: carry it over to the re-imported spells

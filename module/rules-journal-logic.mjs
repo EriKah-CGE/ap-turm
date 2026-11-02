@@ -92,7 +92,9 @@ ${list([
     `Spell save DC = 8 + PB + spell modifier + Spell Attack/DC purchases (e.g. PB +2, modifier +3: DC ${derived(baseState({ abilities: { str: 10, dex: 10, con: 10, int: 16, wis: 10, cha: 10 } })).spellDC}).`,
     `Spell attack = PB + spell modifier + Spell Attack/DC purchases (+ exhaustion penalty).`,
     `Lay on Hands pool = earned AP / 5, at least 1 (e.g. 150 earned AP: ${layPool(150)}).`,
-    `Turm mode spell points = Σ rank × (1 for the first "Learn Spell" of that rank + spellslot purchases of that rank). Ranks 1-5 cast as often as the points allow; ranks 6-9 additionally at most (learned + slots of that rank) casts per long rest, and still cost points.`
+    `"Spellslot Lvl N" is the spell purchase: it allows casting rank N, gives one known spell of rank N and one slot (mode ap) or N spell points (mode Turm). It requires Spellslot Lvl N−1. "Extra Spell Lvl N" only gives one more known spell of rank N (requires Spellslot Lvl N).`,
+    `Known spells of rank N = Spellslot Lvl N + Extra Spell Lvl N purchases.`,
+    `Turm mode spell points = Σ rank × Spellslot purchases of that rank; max rank = highest rank with a Spellslot. Ranks 1-5 cast as often as the points allow; ranks 6-9 additionally at most (Spellslot purchases of that rank) casts per long rest, and still cost points.`
   ])}
 <h3>Hit dice and HP</h3>
 <p>HP max = sum of the hit die rolls up to the current level + level × CON modifier. Every "Hit Die" purchase steps the die up; a 1 on any component die is rerolled.</p>

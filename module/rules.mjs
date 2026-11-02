@@ -8,6 +8,19 @@
  */
 import { SHOP_DATA, PREREQS, ABILITIES, SKILLS, HIT_DICE, ARMORS, ABBR, findShopItem } from "./config.mjs";
 
+/* ---------- Data version / spell rule (app DATA_VERSION, migrateSpellRule) ---------- */
+/** App data version: 5 = spell rule with spellslotN as the spell purchase and learnN as "Extra Spell". */
+export const DATA_VERSION=5;
+/** The app's migrateSpellRule() as a pure function: for every rank with learnN >= 1 the first learnN becomes a
+ *  spellslotN purchase. Returns {bought, converted (ranks), delta (AP balance change = spent before - spent after)}. */
+export function convertSpellPurchases(boughtIn){
+  const bought={...(boughtIn||{})};const before=computeSpent({bought});const converted=[];
+  for(let L=1;L<=9;L++){const k="learn"+L;if((bought[k]||0)>=1){bought["spellslot"+L]=(bought["spellslot"+L]||0)+1;bought[k]-=1;if(!bought[k])delete bought[k];converted.push(L);}}
+  return {bought,converted,delta:before-computeSpent({bought})};
+}
+/** Text of the one-time notice (same wording as the app). */
+export function spellRuleNotice(delta){return `Spellcasting rule change: your purchases were converted. AP balance changed by ${delta>0?"+":""}${delta}. Please settle with your GM.`;}
+
 /* ---------- AP / Shop ---------- */
 export function findItem(id){return findShopItem(id);}
 export function costOfRank(item,k){const mult=item.mult!==undefined?item.mult:2;if(k<item.costs.length)return item.costs[k];return item.costs[item.costs.length-1]*mult;}
@@ -162,23 +175,24 @@ export function derived(S){
   const saveData={};for(const a in ABILITIES){const prof=profSaves.has(a);saveData[a]={prof,mod:mods[a]+(prof?pb:0)+exhPen};}
   const init=mods.dex+fb.init+exhPen;
   const passivePerc=10+skillData.prc.mod;
-  const slots=[];for(let L=1;L<=9;L++){const learned=S.bought["learn"+L]||0;const extra=S.bought["spellslot"+L]||0;const tot=(learned>0?1:0)+extra;if(tot>0||learned>0)slots.push({L,total:tot,learned});}
-  /* Turm: spell points = rank x (first purchase of that rank + slots of that rank); max rank = highest rank learned */
+  /* Spell purchases (v5): spellslotN = the spell purchase (casting rank N, one known spell, a slot; Turm: N points per slot).
+     learnN = "Extra Spell": one more known spell of rank N only. Mode ap: slots of rank N = spellslotN. */
+  const slots=[];for(let L=1;L<=9;L++){const tot=S.bought["spellslot"+L]||0;if(tot>0)slots.push({L,total:tot,extra:S.bought["learn"+L]||0});}
+  /* Turm: spell points = sum of rank x spellslot purchases of that rank; max rank = highest rank with a spellslot */
   let spTotal=0, spMaxRank=0, spBreak=[];
   for(let L=1;L<=9;L++){
-    const learned=(S.bought["learn"+L]||0)>0?1:0;
-    const extra=S.bought["spellslot"+L]||0;
-    const units=learned+extra;
-    if(learned) spMaxRank=Math.max(spMaxRank,L);
-    if(units){ spTotal+=L*units; spBreak.push({L,units,pts:L*units,learned:!!learned}); }
+    const units=S.bought["spellslot"+L]||0;
+    if(units){ spMaxRank=Math.max(spMaxRank,L); spTotal+=L*units; spBreak.push({L,units,pts:L*units}); }
   }
+  /* known spells per rank = spellslotN + learnN; have = spells of that rank on the sheet */
+  const known=[];for(let L=1;L<=9;L++){const max=(S.bought["spellslot"+L]||0)+(S.bought["learn"+L]||0);const have=(S.spells||[]).filter(sp=>(parseInt(sp.lvl)||0)===L).length;if(max>0||have>0)known.push({L,max,have,over:have>max});}
   const spUsed=Math.max(0,Math.min(parseInt(S.spUsed)||0,spTotal));
   const spLeft=spTotal-spUsed;
   const spellMod=Math.max(mods.cha,mods.wis,mods.int);
   const spellDC=8+pb+spellMod+(S.bought.spellDC||0);
   const spellAtk=pb+spellMod+(S.bought.spellDC||0)+exhPen;
   const atkBonus=Math.max(mods.str,mods.dex)+pb+(S.bought.wepPlus1||0)+exhPen;
-  return {earned,level,pb,numMilestones,cantripTier,bonusStatPoints,fin,mods,maxCap,walk,hpSum,hpMax,ac,acNote,profSaves,skillProfSet,skillExpSet,strIntim,skillData,saveData,init,passivePerc,slots,spellMod,spellDC,spellAtk,atkBonus,exh,exhPen,fb,spTotal,spUsed,spLeft,spMaxRank,spBreak,arm,armWorn,shield,armStrLack};
+  return {earned,level,pb,numMilestones,cantripTier,bonusStatPoints,fin,mods,maxCap,walk,hpSum,hpMax,ac,acNote,profSaves,skillProfSet,skillExpSet,strIntim,skillData,saveData,init,passivePerc,slots,known,spellMod,spellDC,spellAtk,atkBonus,exh,exhPen,fb,spTotal,spUsed,spLeft,spMaxRank,spBreak,arm,armWorn,shield,armStrLack};
 }
 
 /* ============================================================

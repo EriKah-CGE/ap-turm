@@ -194,7 +194,7 @@ export async function exportAllCharacters() {
   const actors = game.actors.filter(a => a.type === "character").sort((a, b) => a.name.localeCompare(b.name));
   if (!actors.length) { ui.notifications.warn("There are no characters to export."); return null; }
   const now = new Date();
-  const files = backupFiles(actors.map(a => ({ name: a.name, system: a.system.toObject(), items: a.items.map(i => i.toObject()) })), now);
+  const files = backupFiles(actors.map(a => ({ name: a.name, dataVersion: a.getFlag("ap-turm", "dataVersion") ?? 4, system: a.system.toObject(), items: a.items.map(i => i.toObject()) })), now);
   const zip = makeZip(files.map(f => ({ name: f.name, text: JSON.stringify(f.data, null, 2) })), now);
   const zipName = backupZipName(now);
   foundry.utils.saveDataToFile(zip, "application/zip", zipName);

@@ -236,7 +236,7 @@ export class ApTurmCharacterSheet extends SheetSizeMixin(HandlebarsApplicationMi
     const purchases = Object.keys(SHOP_DATA).map(cat => {
       const lines = []; let addedLearn = false, addedSlot = false;
       SHOP_DATA[cat].filter(it => (S.bought[it.id] || 0) > 0).forEach(it => {
-        if (/^learn\d$/.test(it.id)) { if (!addedLearn) { const l = seriesLine("learn", "Learn Spell"); if (l) lines.push(l); addedLearn = true; } return; }
+        if (/^learn\d$/.test(it.id)) { if (!addedLearn) { const l = seriesLine("learn", "Extra Spell"); if (l) lines.push(l); addedLearn = true; } return; }
         if (/^spellslot\d$/.test(it.id)) { if (!addedSlot) { const l = seriesLine("spellslot", "Spellslot"); if (l) lines.push(l); addedSlot = true; } return; }
         const ch = (S.choices[it.id] && S.choices[it.id].length) ? S.choices[it.id].map(t => labelFor(it.id, t)).join(", ") : "";
         const ce = it.custom ? customEntry(it.id) : null;
@@ -291,7 +291,7 @@ export class ApTurmCharacterSheet extends SheetSizeMixin(HandlebarsApplicationMi
       const chosen = (S.choices[it.id] && S.choices[it.id].length) ? S.choices[it.id].map(t => labelFor(it.id, t)).join(", ") : "";
       return { id: it.id, name: it.name, count: st.count, locked: st.locked, canBuy: st.canBuy && editable, canSell: st.count > 0 && editable,
         costStr, costCls, chosen, needs: prereqList(it.id).map(r => findShopItem(r)?.name ?? r).join(" + "),
-        desc: it.desc ?? "", custom: !!it.custom };
+        desc: it.desc ?? it.hint ?? "", custom: !!it.custom };
     });
 
     /* level tab */
@@ -356,6 +356,7 @@ export class ApTurmCharacterSheet extends SheetSizeMixin(HandlebarsApplicationMi
       gearAll, gearCity, gearTower, armorOptions, crystals, currency,
       history: (sys.history ?? []).map(e => ({ kind: e.kind, text: historyText(e), when: e.t ? new Date(e.t).toLocaleString() : "" })),
       historyCap: HISTORY_CAP, historyOpen: this.#historyOpen,
+      notices: (this.actor.system.notices ?? []).map(n => ({ date: n.date, text: n.text })),
       isGM: game.user.isGM, carryLimit: TOWER_CARRY_LIMIT, carried: carryCount(actor.items), crystalLimit: CRYSTAL_LIMIT, attuned: gearAll.filter(g => g.attuned).length,
       notesEnriched: await foundry.applications.ux.TextEditor.implementation.enrichHTML(sys.notes, { secrets: actor.isOwner, relativeTo: actor })
     });

@@ -77,6 +77,19 @@ vermerkt danach die neue Version.
 
 ---
 
+## Zauberkauf (ab 1.3.0)
+
+- **Spellslot Lvl N (+1 spell)** ist der eigentliche Zauberkauf: Er erlaubt das Wirken von Rang N, gibt einen bekannten
+  Zauber von Rang N und einen Slot (Modus AP) bzw. N Zauberpunkte (Modus Turm). Er setzt Spellslot Lvl N−1 voraus.
+- **Extra Spell Lvl N** (früher „Learn Spell") gibt nur einen weiteren bekannten Zauber von Rang N und setzt
+  Spellslot Lvl N voraus. Keine Zauberpunkte, kein Slot, kein Einfluss auf den Max-Rang.
+- Im Zauberbereich steht pro Rang „Rank N: x of y spells"; mehr Zauber als erlaubt werden nur gelb markiert.
+- **Umstellung alter Bögen:** Je Rang mit einem „Learn Spell"-Kauf wird ein Kauf zu „Spellslot". AP werden nicht
+  automatisch ausgeglichen; der Bogen meldet einmal die Differenz („AP balance changed by −X"). In Foundry läuft das
+  als Weltmigration beim ersten Start mit 1.3.0 (Backup-Hinweis vorher), der Spielleiter bekommt pro Charakter eine
+  Flüsternachricht mit Name und Differenz, der Hinweis steht außerdem im Level-Tab. In der App erscheint er als Meldung
+  und im Level-Tab. Import und Export erkennen umgestellte und alte Bögen an der Datenversion.
+
 ## Manuelle Installation (Zip, ohne Updates)
 
 Nur nötig, wenn die Manifest-URL nicht genutzt werden kann:
