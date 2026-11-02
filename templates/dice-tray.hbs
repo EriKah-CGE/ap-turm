@@ -1,0 +1,21 @@
+<section class="apt-dicetray" id="ap-turm-dice-tray" aria-label="{{localize "AP_TURM.DiceTray.Label"}}">
+  <div class="apt-dt-row apt-dt-dice">
+    {{#each dice}}
+    <button type="button" class="apt-dt-die" data-dt="die" data-faces="{{faces}}" data-tooltip="{{tooltip}}" aria-label="{{tooltip}}">
+      {{#if percentile}}<span class="apt-dt-icon apt-dt-d100" inert><i class="fa-solid fa-dice-d10"></i><i class="fa-solid fa-dice-d10"></i></span>{{else}}<i class="apt-dt-icon fa-solid fa-dice-d{{faces}}" inert></i>{{/if}}
+      <span class="apt-dt-num">{{faces}}</span><span class="apt-dt-count" hidden></span>
+    </button>
+    {{/each}}
+  </div>
+  <div class="apt-dt-row apt-dt-toggles">
+    <button type="button" class="apt-dt-toggle" data-dt="adv" data-mode="advantage" aria-pressed="false" data-tooltip="{{localize "AP_TURM.DiceTray.AdvantageHint"}}">{{localize "AP_TURM.DiceTray.Adv"}}</button>
+    <button type="button" class="apt-dt-toggle" data-dt="adv" data-mode="disadvantage" aria-pressed="false" data-tooltip="{{localize "AP_TURM.DiceTray.DisadvantageHint"}}">{{localize "AP_TURM.DiceTray.Dis"}}</button>
+    <button type="button" class="apt-dt-toggle" data-dt="reroll" aria-pressed="false" data-tooltip="{{localize "AP_TURM.DiceTray.RerollHint"}}">{{localize "AP_TURM.DiceTray.Reroll"}}</button>
+  </div>
+  <div class="apt-dt-row apt-dt-form">
+    <input type="text" class="apt-dt-mod" data-dt="mod" inputmode="numeric" placeholder="+0" aria-label="{{localize "AP_TURM.DiceTray.Modifier"}}" data-tooltip="{{localize "AP_TURM.DiceTray.Modifier"}}">
+    <input type="text" class="apt-dt-formula" data-dt="formula" placeholder="{{localize "AP_TURM.DiceTray.FormulaPlaceholder"}}" aria-label="{{localize "AP_TURM.DiceTray.Formula"}}" spellcheck="false" autocomplete="off">
+    <button type="button" class="apt-dt-roll" data-dt="roll" data-tooltip="{{localize "AP_TURM.DiceTray.RollHint"}}"><i class="fa-solid fa-dice-d20" inert></i> {{localize "AP_TURM.DiceTray.Roll"}}</button>
+    <button type="button" class="apt-dt-clear" data-dt="clear" data-tooltip="{{localize "AP_TURM.DiceTray.Clear"}}" aria-label="{{localize "AP_TURM.DiceTray.Clear"}}"><i class="fa-solid fa-xmark" inert></i></button>
+  </div>
+</section>

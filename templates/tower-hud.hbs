@@ -1,0 +1,11 @@
+<div id="ap-turm-tower-hud" class="apt-tower-hud" aria-label="{{localize "AP_TURM.Tower.Title"}}">
+  <span class="apt-th-level">{{localize "AP_TURM.Tower.LevelShort"}} {{level}}</span>
+  <span class="apt-th-sep">·</span>
+  <span class="apt-el-chip{{#if chip.unknown}} unknown{{/if}}"{{#if chip.color}} style="--apt-chip: {{chip.color}}"{{/if}}>{{chip.label}}</span>
+  <span class="apt-th-sep">·</span>
+  <span class="apt-th-quakes">{{localize "AP_TURM.Tower.Quakes"}} {{#each pips}}<span class="apt-pip{{#if on}} on{{/if}}"></span>{{/each}}</span>
+  <span class="apt-th-sep">·</span>
+  <span>{{localize "AP_TURM.Tower.Inside"}} {{inside}}</span>
+  <span class="apt-th-sep">·</span>
+  <span>{{localize "AP_TURM.Tower.Outside"}} {{outside}}h</span>
+</div>

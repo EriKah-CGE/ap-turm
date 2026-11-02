@@ -33,6 +33,8 @@ import * as sp from "../module/spawn-logic.mjs";
 import * as rc from "../module/reach-logic.mjs";
 import * as st from "../module/stash-logic.mjs";
 import * as d5 from "../module/dnd5e-convert.mjs";
+import * as tray from "../module/dice-tray-logic.mjs";
+import * as tower from "../module/tower-tracker-logic.mjs";
 
 /* ---------- load app logic ---------- */
 const html = fs.readFileSync(new URL("../ap-character-sheet.html", import.meta.url), "utf8");
@@ -3072,6 +3074,119 @@ await okAsync("release: manifest/package.json versions match, migration by versi
   assert.equal(migration.needsMigration("", "1.2.0"), "fresh");
   assert.deepEqual(migration.stepsFor("0.9.0", "1.2.0").map(s => s.version), ["1.0.0"]);
   assert.deepEqual(migration.stepsFor("1.1.0", "1.2.0"), []);
+});
+
+ok("dice tray: formula from clicks, modifier, advantage, reroll 1s", () => {
+  let s = tray.emptyTray();
+  assert.equal(tray.trayFormula(s), "");
+  // 2d6+3 by clicks
+  s = tray.addDie(tray.addDie(s, 6), 6);
+  s = tray.setMod(s, "+3");
+  assert.equal(tray.trayFormula(s), "2d6 + 3");
+  // right click removes one, never below zero
+  s = tray.removeDie(s, 6);
+  assert.equal(tray.trayFormula(s), "1d6 + 3");
+  s = tray.removeDie(tray.removeDie(s, 6), 6);
+  assert.equal(tray.trayFormula(s), "3");
+  assert.equal(tray.setMod(s, "-2").mod, -2);
+  assert.equal(tray.trayFormula(tray.setMod(s, "-2")), "-2");
+  assert.equal(tray.setMod(s, "abc").mod, 0);
+  // fixed order d4 ... d100, negative modifier
+  s = tray.setMod(tray.addDie(tray.addDie(tray.addDie(tray.emptyTray(), 100), 4), 8), -1);
+  assert.equal(tray.trayFormula(s), "1d4 + 1d8 + 1d100 - 1");
+  // advantage / disadvantage: d20 implied, toggling the same mode again = normal
+  let a = tray.toggleAdv(tray.setMod(tray.emptyTray(), 5), "advantage");
+  assert.equal(tray.trayFormula(a), "2d20kh1 + 5");
+  assert.equal(tray.trayFormula(tray.toggleAdv(a, "disadvantage")), "2d20kl1 + 5");
+  assert.equal(tray.trayFormula(tray.toggleAdv(a, "advantage")), "5");
+  assert.equal(tray.trayFormula(tray.addDie(a, 20)), "2d20kh1 + 5");
+  assert.equal(tray.trayFormula(tray.addDie(tray.addDie(tray.emptyTray(), 20), 20)), "2d20");
+  // reroll 1s like the app's rollHitDie (reroll until not 1 = rr1)
+  const html2 = fs.readFileSync(new URL("../ap-character-sheet.html", import.meta.url), "utf8");
+  assert.ok(html2.includes("function rollHitDie(){return hitDie().dice.reduce((sum,d)=>{let r;do{r=1+Math.floor(Math.random()*d);}while(r===1);"));
+  assert.equal(tray.REROLL_MOD, "rr1");
+  let h = tray.emptyTray();
+  for (let i = 0; i < 6; i++) h = tray.addDie(h, 8);
+  h = tray.toggleReroll(h);
+  assert.equal(tray.trayFormula(h), "6d8rr1");
+  assert.equal(tray.trayFormula(tray.toggleAdv(h, "advantage")), "6d8rr1 + 2d20rr1kh1");
+  // single die (Shift+click) and the sheet's plain d20
+  assert.equal(tray.singleDieFormula(8), "1d8");
+  assert.equal(tray.plainD20Formula("normal"), "1d20");
+  assert.equal(tray.plainD20Formula("advantage"), "2d20kh1");
+  assert.equal(tray.plainD20Formula("disadvantage"), "2d20kl1");
+});
+
+ok("tower tracker: d20 element table, time, interval quakes, outside time, undo", () => {
+  // d20 over the 20 elements in ELEMENTS order
+  assert.equal(tower.ELEMENT_ORDER.length, 20);
+  assert.deepEqual(tower.ELEMENT_ORDER, Object.keys(cfg.ELEMENTS));
+  assert.equal(tower.elementForD20(1), "erde");
+  assert.equal(tower.elementForD20(18), "feuer");
+  assert.equal(tower.elementForD20(19), "turm");
+  assert.equal(tower.elementForD20(20), "arch");
+  assert.equal(tower.elementForD20(21), "");
+  // formatting
+  assert.equal(tower.formatDuration(0), "0m");
+  assert.equal(tower.formatDuration(10), "10m");
+  assert.equal(tower.formatDuration(60), "1h");
+  assert.equal(tower.formatDuration(3130), "2d 4h 10m");
+  assert.equal(tower.formatDuration(2880 + 240), "2d 4h");
+  assert.deepEqual(tower.quakePips(2).map(p => p.on), [true, true, false]);
+  // start: level 1 or free, times 0, log empty
+  let r = tower.startRun({ level: 7, startedAt: "Day 1" });
+  assert.deepEqual([r.active, r.level, r.levelsReached, r.quakes, r.timeInsideMinutes, r.timeOnLevelMinutes, r.log.length], [true, 7, 7, 0, 0, 0, 0]);
+  assert.equal(tower.startRun({ level: 99 }).level, 50);
+  assert.equal(tower.startRun({}).level, 1);
+  // outside = levelsReached hours (+ offset)
+  assert.equal(tower.outsideHours(r), 7);
+  assert.equal(tower.outsideHours({ ...r, outsideOffsetHours: 2.5 }), 9.5);
+  assert.equal(tower.formatHours(9.5), "9.5");
+  // level change: quakes 0, time on level 0, levelsReached = max
+  r = { ...r, quakes: 2, timeOnLevelMinutes: 50, timeInsideMinutes: 50, element: "feuer" };
+  let up = tower.setLevel(r, 9);
+  assert.deepEqual([up.level, up.quakes, up.timeOnLevelMinutes, up.timeInsideMinutes, up.levelsReached, up.element], [9, 0, 0, 50, 9, ""]);
+  assert.equal(tower.setLevel(up, 8).levelsReached, 9);
+  assert.equal(tower.setLevel(up, 9), up);
+  // manual interval: no automatic quakes
+  r = tower.startRun({ level: 1 });
+  let b = tower.bookTime(r, 600);
+  assert.deepEqual([b.run.timeOnLevelMinutes, b.run.timeInsideMinutes, b.run.quakes, b.quakes.length], [600, 600, 0, 0]);
+  // interval 60: booking crosses multiples -> one quake each, several at once, capped at 3
+  r = { ...tower.startRun({ level: 1 }), quakeIntervalMinutes: 60 };
+  b = tower.bookTime(r, 10);
+  assert.deepEqual(b.quakes, []);
+  b = tower.bookTime(b.run, 50);                 // 60: reaches the first multiple
+  assert.deepEqual(b.quakes, [1]);
+  b = tower.bookTime(b.run, 125);                // 185: passes 120 and 180
+  assert.deepEqual([b.quakes, b.run.quakes, tower.collapsed(b.run)], [[2, 3], 3, true]);
+  b = tower.bookTime(b.run, 600);                // no fourth quake, time still counts
+  assert.deepEqual([b.quakes, b.run.quakes, b.run.timeOnLevelMinutes], [[], 3, 785]);
+  assert.equal(tower.quakesFromTime(0, 480, 60, 1), 2);  // a manual quake counts towards the 3
+  assert.equal(tower.quakesFromTime(30, 59, 60, 0), 0);
+  assert.equal(tower.quakesFromTime(0, 100, 0, 0), 0);
+  assert.equal(tower.addQuake({ ...r, quakes: 3 }).quakes, 3);
+  // log + undo: time and quakes back, never across a level change
+  r = tower.withLog(r, r, [{ type: "start", text: "Enter" }]);
+  assert.equal(tower.canUndo(r), false);
+  const t1 = tower.bookTime(r, 70);
+  let r2 = tower.withLog(r, t1.run, [{ type: "time", text: "+70" }, { type: "quake", text: "Quake 1" }], { undoable: true });
+  assert.deepEqual([r2.log.length, r2.log[1].ts, r2.log[1].level, tower.canUndo(r2)], [3, 70, 1, true]);
+  const u = tower.undoLast(r2);
+  assert.deepEqual([u.run.timeOnLevelMinutes, u.run.timeInsideMinutes, u.run.quakes, u.run.log.length, u.removed.length], [0, 0, 0, 1, 2]);
+  let r3 = tower.withLog(r2, tower.setLevel(r2, 2), [{ type: "level", text: "Level 2" }]);
+  assert.equal(tower.canUndo(r3), false);
+  const r5 = tower.withLog(r2, tower.setLevel(r2, 2), [{ type: "collapse", level: 1, text: "Level 1 collapses" }, { type: "level", text: "Level 2" }]);
+  assert.deepEqual(r5.log.slice(-2).map(e => e.level), [1, 2]);
+  assert.equal(tower.undoLast(r3).run, r3);
+  // element override is undoable
+  let r4 = tower.withLog(r3, tower.setElement(r3, "eis"), [{ type: "element", text: "Eis" }], { undoable: true });
+  assert.equal(tower.undoLast(r4).run.element, "");
+  assert.equal(tower.setElement(r3, "macht").element, "");
+  // normalize stored junk
+  const n = tower.normalizeRun({ level: "0", quakes: 9, element: "nope", log: [null, { g: 1 }] });
+  assert.deepEqual([n.level, n.quakes, n.element, n.log.length, n.active], [1, 3, "", 1, false]);
+  assert.deepEqual(tower.summary({ ...r, levelsReached: 7, timeInsideMinutes: 3130, outsideOffsetHours: 0 }), { levelsReached: 7, inside: "2d 4h 10m", outsideHours: "7" });
 });
 
 console.log(`All ${passed} test groups passed.`);

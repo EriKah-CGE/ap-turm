@@ -1,0 +1,86 @@
+<div class="apt-tower-body">
+{{#if run.active}}
+  <section class="apt-tw-row apt-tw-run">
+    <span class="apt-tw-started">{{#if run.startedAt}}{{localize "AP_TURM.Tower.Started"}}: {{run.startedAt}}{{/if}}</span>
+    {{#if journal}}<button type="button" class="apt-tw-link" data-action="towerJournal" data-tooltip="{{localize "AP_TURM.Tower.OpenJournal"}}"><i class="fa-solid fa-book" inert></i> {{journal}}</button>{{/if}}
+    <button type="button" data-action="towerLeave"><i class="fa-solid fa-door-open" inert></i> {{localize "AP_TURM.Tower.Leave"}}</button>
+  </section>
+
+  <fieldset>
+    <legend>{{localize "AP_TURM.Tower.Level"}}</legend>
+    <div class="apt-tw-row">
+      <button type="button" class="apt-tw-step" data-action="towerLevel" data-step="-1" aria-label="-1"><i class="fa-solid fa-minus" inert></i></button>
+      <input type="number" name="level" class="apt-tw-level" min="1" max="{{maxLevel}}" value="{{run.level}}">
+      <button type="button" class="apt-tw-step" data-action="towerLevel" data-step="1" aria-label="+1"><i class="fa-solid fa-plus" inert></i></button>
+      <span class="apt-tw-dim">{{localize "AP_TURM.Tower.Reached"}}: {{run.levelsReached}} / {{maxLevel}}</span>
+    </div>
+  </fieldset>
+
+  <fieldset>
+    <legend>{{localize "AP_TURM.Tower.Element"}}</legend>
+    <div class="apt-tw-row">
+      <span class="apt-el-chip{{#if chip.unknown}} unknown{{/if}}"{{#if chip.color}} style="--apt-chip: {{chip.color}}"{{/if}}>{{chip.label}}</span>
+      <button type="button" data-action="towerRollElement"><i class="fa-solid fa-dice-d20" inert></i> {{localize "AP_TURM.Tower.RollD20"}}</button>
+      <select name="element" aria-label="{{localize "AP_TURM.Tower.Override"}}" data-tooltip="{{localize "AP_TURM.Tower.Override"}}">
+        {{#each elements}}<option value="{{key}}"{{#if selected}} selected{{/if}}>{{label}}</option>{{/each}}
+      </select>
+    </div>
+  </fieldset>
+
+  <fieldset>
+    <legend>{{localize "AP_TURM.Tower.Time"}}</legend>
+    <div class="apt-tw-row">
+      <button type="button" data-action="towerTime" data-minutes="10">+10 min</button>
+      <button type="button" data-action="towerTime" data-minutes="60">+1 h</button>
+      <button type="button" data-action="towerTime" data-minutes="480">+8 h</button>
+      <button type="button" data-action="towerTime" data-minutes="1440">+1 day</button>
+    </div>
+    <div class="apt-tw-row">
+      <input type="number" name="minutes" min="1" step="1" placeholder="{{localize "AP_TURM.Tower.Minutes"}}" aria-label="{{localize "AP_TURM.Tower.Minutes"}}">
+      <button type="button" data-action="towerTimeCustom"><i class="fa-solid fa-plus" inert></i> {{localize "AP_TURM.Tower.AddMinutes"}}</button>
+    </div>
+    <div class="apt-tw-stats">
+      <span>{{localize "AP_TURM.Tower.OnLevel"}}: <strong>{{onLevel}}</strong></span>
+      <span>{{localize "AP_TURM.Tower.Inside"}}: <strong>{{inside}}</strong></span>
+      <span>{{localize "AP_TURM.Tower.Outside"}}: <strong>{{outside}} h</strong> {{localize "AP_TURM.Tower.SinceEntering"}}</span>
+    </div>
+    <div class="apt-tw-row">
+      <label>{{localize "AP_TURM.Tower.Offset"}} <input type="number" name="offset" step="any" value="{{offset}}" data-tooltip="{{localize "AP_TURM.Tower.OffsetHint"}}"></label>
+    </div>
+  </fieldset>
+
+  <fieldset>
+    <legend>{{localize "AP_TURM.Tower.Quakes"}}</legend>
+    <div class="apt-tw-row">
+      <span class="apt-tw-pips">{{#each pips}}<span class="apt-pip{{#if on}} on{{/if}}"></span>{{/each}}</span>
+      <span>{{run.quakes}} / {{maxQuakes}}</span>
+      {{#if collapsed}}
+      <button type="button" class="apt-tw-danger" data-action="towerLanding"><i class="fa-solid fa-person-falling" inert></i> {{localize "AP_TURM.Tower.Collapse.Roll"}}</button>
+      {{else}}
+      <button type="button" data-action="towerQuake"><i class="fa-solid fa-house-crack" inert></i> {{localize "AP_TURM.Tower.Quake"}}</button>
+      {{/if}}
+      <button type="button" class="apt-tw-icon" data-action="towerTable" data-tooltip="{{localize "AP_TURM.Tower.OpenTable"}}" aria-label="{{localize "AP_TURM.Tower.OpenTable"}}"><i class="fa-solid fa-table-list" inert></i></button>
+    </div>
+    <div class="apt-tw-row">
+      <label>{{localize "AP_TURM.Tower.Interval"}} <input type="number" name="interval" min="0" step="1" value="{{run.quakeIntervalMinutes}}" data-tooltip="{{localize "AP_TURM.Tower.IntervalHint"}}"></label>
+    </div>
+  </fieldset>
+
+  <fieldset class="apt-tw-logbox">
+    <legend>{{localize "AP_TURM.Tower.Log"}}</legend>
+    <div class="apt-tw-row">
+      <button type="button" data-action="towerUndo" {{#unless canUndo}}disabled{{/unless}} data-tooltip="{{#if canUndo}}{{undoText}}{{else}}{{localize "AP_TURM.Tower.NothingToUndo"}}{{/if}}"><i class="fa-solid fa-rotate-left" inert></i> {{localize "AP_TURM.Tower.Undo"}}</button>
+    </div>
+    <ol class="apt-tw-log">
+      {{#each log}}<li class="{{type}}"><span class="when">{{stamp}}</span><span class="what">{{text}}</span></li>{{else}}<li class="empty">{{localize "AP_TURM.Tower.LogEmpty"}}</li>{{/each}}
+    </ol>
+  </fieldset>
+{{else}}
+  <p class="apt-tw-dim">{{localize "AP_TURM.Tower.NoRun"}}</p>
+  <div class="apt-tw-row">
+    <label>{{localize "AP_TURM.Tower.StartLevel"}} <input type="number" name="startLevel" min="1" max="{{maxLevel}}" value="1"></label>
+    <button type="button" data-action="towerEnter"><i class="fa-solid fa-tower-observation" inert></i> {{localize "AP_TURM.Tower.Enter"}}</button>
+  </div>
+  {{#if run.levelsReached}}<p class="apt-tw-dim">{{localize "AP_TURM.Tower.LastRun" level=run.levelsReached inside=inside outside=outside}}</p>{{/if}}
+{{/if}}
+</div>

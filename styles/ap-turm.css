@@ -153,6 +153,11 @@
   }
   .ap-turm input.apt-name { font-family: var(--apt-font-h); font-weight: 700; font-size: 17px; width: 100%; background: transparent; border: none; border-radius: 0; padding: 0; min-height: 0; color: var(--apt-ink); text-overflow: ellipsis; }
   .ap-turm input.apt-name:focus { box-shadow: none; }
+  /* name row with the "Roll d20" button (character + NPC header) */
+  .ap-turm .apt-namerow { display: flex; align-items: center; gap: 6px; min-width: 0; }
+  .ap-turm .apt-namerow input.apt-name { flex: 1 1 auto; min-width: 0; }
+  .ap-turm .apt-d20btn { flex: none; width: 24px; height: 24px; min-height: 0; padding: 0; display: grid; place-items: center; font-size: 13px; line-height: 1; border: 1px solid var(--apt-line); border-radius: 6px; background: var(--apt-panel-hi); color: var(--apt-green); cursor: pointer; }
+  .ap-turm .apt-d20btn:hover { color: var(--apt-ink); border-color: var(--apt-green); }
   .ap-turm .apt-idgrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 5px; }
   .ap-turm .apt-fld { border: 1px solid var(--apt-line); border-radius: 5px; background: var(--apt-panel-hi); padding: 3px 8px; min-width: 0; }
   .ap-turm .apt-fld label { display: block; font-size: 7.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--apt-green); font-weight: 600; }
@@ -1091,4 +1096,122 @@
   /* source tag in the spell library picker, source checkboxes of the import dialog */
   .apt-lib-picker .apt-src-tag { display: inline-block; margin-left: 4px; padding: 0 5px; border-radius: 8px; font-size: 9.5px; font-weight: 600; line-height: 15px; vertical-align: middle; background: rgba(201, 168, 106, .25); color: inherit; }
   .apt-import5e .apt-import5e-row { display: flex; align-items: center; gap: 6px; margin: 4px 0; }
+}
+
+@layer system {
+  /* ---------- dice tray below the chat input (dice-tray.mjs) ----------
+     Two rows (dice + toggles, formula + buttons), together about 60 px. Colors from Foundry's interface theme
+     variables, so it follows light/dark like the chat input above it. */
+  #ap-turm-dice-tray {
+    --apt-dt-h: 24px;
+    flex: none; display: flex; flex-direction: column; gap: 4px; width: 100%;
+    pointer-events: all; font-size: var(--font-size-12, 12px);
+  }
+  #ap-turm-dice-tray .apt-dt-row { display: flex; gap: 3px; align-items: stretch; min-width: 0; }
+  #ap-turm-dice-tray button {
+    position: relative; flex: 1 1 0; min-width: 0; height: var(--apt-dt-h); min-height: 0; margin: 0; padding: 0 2px;
+    font-size: var(--font-size-11, 11px); font-weight: 600; line-height: 1; white-space: nowrap;
+    border: 1px solid var(--color-border, var(--color-cool-4)); border-radius: 4px;
+    color: var(--color-text-primary); background: var(--color-cool-5-50, rgba(0, 0, 0, .25)); box-shadow: none;
+  }
+  #ap-turm-dice-tray button:hover { border-color: var(--color-warm-2); color: var(--color-text-emphatic); }
+  #ap-turm-dice-tray .apt-dt-die.active { border-color: var(--color-warm-2); }
+  /* dice: 34x34 buttons, 20 px die icon, face count as small text below, "x3" badge top right */
+  #ap-turm-dice-tray .apt-dt-dice { justify-content: space-between; padding-right: 4px; }
+  #ap-turm-dice-tray .apt-dt-die {
+    flex: 0 0 34px; width: 34px; height: 34px; padding: 2px 0 0;
+    display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 1px;
+  }
+  #ap-turm-dice-tray .apt-dt-icon { display: block; width: 20px; height: 20px; font-size: 20px; line-height: 20px; text-align: center; }
+  #ap-turm-dice-tray .apt-dt-d100 { position: relative; }
+  #ap-turm-dice-tray .apt-dt-d100 i { position: absolute; font-size: 15px; line-height: 15px; }
+  #ap-turm-dice-tray .apt-dt-d100 i:first-child { left: -1px; top: 0; opacity: .6; }
+  #ap-turm-dice-tray .apt-dt-d100 i:last-child { right: -1px; bottom: 0; }
+  #ap-turm-dice-tray .apt-dt-num { font-size: 9px; line-height: 9px; font-weight: 600; opacity: .85; }
+  #ap-turm-dice-tray .apt-dt-toggle { flex: 0.9 1 0; }
+  #ap-turm-dice-tray .apt-dt-toggle[aria-pressed="true"] { background: var(--color-warm-2); border-color: var(--color-warm-1); color: var(--color-dark-1, #111); }
+  #ap-turm-dice-tray .apt-dt-count {
+    position: absolute; top: -5px; right: -4px; min-width: 13px; height: 13px; padding: 0 2px; border-radius: 7px;
+    font-size: 9px; line-height: 13px; text-align: center; background: var(--color-warm-1); color: var(--color-dark-1, #111);
+  }
+  #ap-turm-dice-tray .apt-dt-count[hidden] { display: none; }
+  #ap-turm-dice-tray input {
+    height: var(--apt-dt-h); min-height: 0; margin: 0; padding: 0 5px; font-size: var(--font-size-12, 12px);
+    border: 1px solid var(--color-border, var(--color-cool-4)); border-radius: 4px;
+  }
+  #ap-turm-dice-tray .apt-dt-mod { flex: 0 0 38px; width: 38px; text-align: center; }
+  #ap-turm-dice-tray .apt-dt-formula { flex: 1 1 auto; min-width: 0; font-family: var(--font-mono, monospace); }
+  #ap-turm-dice-tray .apt-dt-roll { flex: 0 0 auto; padding: 0 8px; }
+  #ap-turm-dice-tray .apt-dt-clear { flex: 0 0 var(--apt-dt-h); }
+  #ap-turm-dice-tray i, #ap-turm-dice-tray .apt-dt-die span { pointer-events: none; }
+  /* in the floating notification area (sidebar collapsed / other tab) keep the chat input's width */
+  #chat-notifications #ap-turm-dice-tray { width: var(--sidebar-width, 300px); }
+}
+
+@layer system {
+  /* ---------- tower tracker (tower-tracker.mjs) ---------- */
+  .ap-turm-import-row:has(.apt-tower-btn) { flex-wrap: nowrap; }
+  .ap-turm-import-row:has(.apt-tower-btn) > .ap-turm-sidebar-btn { flex: 1 1 auto; width: auto; min-width: 0; }
+  .ap-turm-import-row > .apt-tower-btn { flex: 0 0 auto; }
+
+  /* element chip (window and HUD); --apt-chip = element color from ELEMENTS */
+  .apt-el-chip {
+    display: inline-flex; align-items: center; padding: 1px 8px; border-radius: 10px; font-size: 12px; font-weight: 700; line-height: 18px;
+    white-space: nowrap; color: #fff; text-shadow: 0 1px 2px rgba(0, 0, 0, .7);
+    background: var(--apt-chip, #777); border: 1px solid color-mix(in srgb, var(--apt-chip, #777) 60%, #000);
+  }
+  .apt-el-chip.unknown { color: var(--color-text-secondary); text-shadow: none; background: transparent; border: 1px dashed var(--color-border, #777); }
+  .apt-pip { display: inline-block; width: 9px; height: 9px; margin: 0 1px; border-radius: 50%; vertical-align: middle;
+    border: 1px solid currentColor; opacity: .55; }
+  .apt-pip.on { background: #d0582a; border-color: #d0582a; opacity: 1; }
+
+  /* GM window */
+  .apt-tower .window-content { padding: 8px 10px; }
+  .apt-tower .apt-tower-body { display: flex; flex-direction: column; gap: 6px; }
+  .apt-tower fieldset { margin: 0; padding: 4px 8px 8px; display: flex; flex-direction: column; gap: 6px;
+    border: 1px solid var(--color-border, var(--color-cool-4)); border-radius: 6px; }
+  .apt-tower legend { padding: 0 4px; font-weight: 700; }
+  .apt-tower .apt-tw-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .apt-tower .apt-tw-row > button { flex: 1 1 auto; width: auto; margin: 0; white-space: nowrap; }
+  .apt-tower .apt-tw-row > .apt-tw-step, .apt-tower .apt-tw-row > .apt-tw-icon { flex: 0 0 32px; }
+  .apt-tower .apt-tw-run { justify-content: space-between; }
+  .apt-tower .apt-tw-run > button:last-child { flex: 0 0 auto; }
+  .apt-tower .apt-tw-link { flex: 1 1 auto; text-align: left; overflow: hidden; text-overflow: ellipsis; }
+  .apt-tower input.apt-tw-level { flex: 0 0 64px; width: 64px; text-align: center; font-size: 18px; font-weight: 700; height: 32px; }
+  .apt-tower input[name="minutes"] { flex: 1 1 80px; width: 80px; }
+  .apt-tower input[name="offset"], .apt-tower input[name="interval"], .apt-tower input[name="startLevel"] { width: 70px; margin-left: 4px; }
+  .apt-tower select[name="element"] { flex: 1 1 120px; width: auto; }
+  .apt-tower .apt-tw-stats { display: flex; flex-wrap: wrap; gap: 4px 14px; }
+  .apt-tower .apt-tw-dim, .apt-tower .apt-tw-started { color: var(--color-text-secondary); font-size: 12px; }
+  .apt-tower .apt-tw-danger { border-color: #c0502a; color: #fff; background: #9a3a20; }
+  .apt-tower .apt-tw-log { list-style: none; margin: 0; padding: 0; max-height: 200px; overflow-y: auto; font-size: 12px; }
+  .apt-tower .apt-tw-log li { display: grid; grid-template-columns: 110px 1fr; gap: 6px; padding: 2px 0;
+    border-bottom: 1px dotted var(--color-border, rgba(128, 128, 128, .4)); }
+  .apt-tower .apt-tw-log li.empty { display: block; color: var(--color-text-secondary); }
+  .apt-tower .apt-tw-log .when { color: var(--color-text-secondary); white-space: nowrap; }
+  .apt-tower .apt-tw-log li.quake .what, .apt-tower .apt-tw-log li.collapse .what { color: #d0582a; font-weight: 600; }
+  .apt-tower .apt-tw-log li.level .what { font-weight: 700; }
+
+  /* HUD right below the scene control buttons (position set by tower-tracker.mjs) */
+  #ap-turm-tower-hud {
+    position: fixed; z-index: var(--z-index-app, 30); width: max-content; pointer-events: none;
+    display: flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 6px; font-size: 13px; font-weight: 600;
+    background: rgba(20, 16, 12, .86); color: #f0e4c8; border: 1px solid #8a6a3a; box-shadow: 0 2px 8px rgba(0, 0, 0, .4);
+  }
+  #ap-turm-tower-hud .apt-th-sep { opacity: .5; }
+  #ap-turm-tower-hud .apt-th-level { font-weight: 800; }
+  #ap-turm-tower-hud .apt-el-chip.unknown { color: #c9b993; border-color: #8a6a3a; }
+
+  /* chat cards */
+  .apt-tower-card { padding: 4px 6px; border-radius: 5px; border-left: 4px solid #8a6a3a; }
+  .apt-tower-card .apt-tower-card-title { font-size: 15px; font-weight: 800; }
+  .apt-tower-card p, .apt-tower-card ul { margin: 4px 0 0; }
+  .apt-tower-card.quake { border-left-color: #d0582a; background: rgba(208, 88, 42, .14); }
+  .apt-tower-card.quake .apt-tower-card-title { font-size: 17px; color: #d0582a; }
+  .apt-tower-card.collapse { border-left-color: #a02234; background: rgba(160, 34, 52, .18); }
+  .apt-tower-card.collapse .apt-tower-card-title { font-size: 17px; color: #c0303f; }
+
+  /* banner (third quake, collapse): like the turn banner, bigger and red */
+  .apt-turn-banner.apt-tower-banner { top: 38%; font-size: 40px; padding: 18px 44px; border: 2px solid #d0582a; background: rgba(40, 14, 10, .92); }
+  .apt-turn-banner.apt-tower-banner i { color: #f08050; }
 }

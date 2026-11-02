@@ -46,12 +46,14 @@ import { libraries5e, importLibrariesDialog, importFromBundleFileDialog } from "
 import * as dnd5eConvert from "./dnd5e-convert.mjs";
 import { registerSpawn, placeCopies, placeCopiesDialog } from "./spawn.mjs";
 import { registerReachRingSetting, registerReachRing, refreshReachRing, reachRingState } from "./reach-ring.mjs";
+import { registerDiceTraySetting, registerDiceTray, diceTray } from "./dice-tray.mjs";
+import { registerTowerSettings, registerTowerHooks, installTowerButton, towerTracker } from "./tower-tracker.mjs";
 
 const SYSTEM_ID = "ap-turm";
 
 Hooks.once("init", () => {
   CONFIG.AP_TURM = AP_TURM;
-  game.apturm = { config: AP_TURM, rules, importAppJSON, importAppJSONIntoActor, createActorFromAppExport, importAppExportIntoActor, convertAppExport, exportActor, exportAppData, downloadActorExport, exportNpc, exportNpcData, downloadNpcExport, createNpcFromExport, importNpcIntoActor, isNpcExport, rolls, chat, macros, statblock, loot: { ...loot, importLootTableDialog }, migrateWorld, conditionBar, refreshConditionBar, award, requestRoll, transfer, library, fx: { playAttackFx, playCastFx, fxAvailable, showHitFeedback }, qol: { breakConcentration, rollNpcInitiative, undoApplied: chat.undoApplied }, jukebox, customShop: { ...customShop, openShopEditor }, overview, openCombatOverview, area, rulesJournal: { ...rulesJournalLogic, ensureRulesJournal, rebuildRulesJournal }, backup, spawn: { placeCopies, placeCopiesDialog }, libraries5e: { ...libraries5e, convert: dnd5eConvert }, reachRing: { refresh: refreshReachRing, state: reachRingState } };
+  game.apturm = { config: AP_TURM, rules, importAppJSON, importAppJSONIntoActor, createActorFromAppExport, importAppExportIntoActor, convertAppExport, exportActor, exportAppData, downloadActorExport, exportNpc, exportNpcData, downloadNpcExport, createNpcFromExport, importNpcIntoActor, isNpcExport, rolls, chat, macros, statblock, loot: { ...loot, importLootTableDialog }, migrateWorld, conditionBar, refreshConditionBar, award, requestRoll, transfer, library, fx: { playAttackFx, playCastFx, fxAvailable, showHitFeedback }, qol: { breakConcentration, rollNpcInitiative, undoApplied: chat.undoApplied }, jukebox, customShop: { ...customShop, openShopEditor }, overview, openCombatOverview, area, rulesJournal: { ...rulesJournalLogic, ensureRulesJournal, rebuildRulesJournal }, backup, spawn: { placeCopies, placeCopiesDialog }, libraries5e: { ...libraries5e, convert: dnd5eConvert }, reachRing: { refresh: refreshReachRing, state: reachRingState }, diceTray, tower: towerTracker };
   chat.registerSettings();
   registerHitFeedbackSetting();
   registerFxSetting();
@@ -80,6 +82,10 @@ Hooks.once("init", () => {
   registerSpawn();
   registerReachRingSetting();
   registerReachRing();
+  registerDiceTraySetting();
+  registerDiceTray();
+  registerTowerSettings();
+  registerTowerHooks();
 
   // Data models (types are declared in system.json -> documentTypes)
   CONFIG.Actor.dataModels.character = CharacterData;
@@ -139,6 +145,7 @@ Hooks.on("renderActorDirectory", (app, html) => {
       { id: "import-bundle", icon: "fa-file-arrow-up", label: "Import from bundle file", gm: true, handler: () => importFromBundleFileDialog() }
     ]
   });
+  installTowerButton(root);   // "Tower" next to it (GM only): Tower Tracker window
 });
 
 /* Import button in the RollTables directory header (same technique as the Actors button above) */

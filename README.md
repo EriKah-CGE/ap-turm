@@ -599,6 +599,23 @@ Unter *Configure Controls* → *AP-Turm* einstellbar; in Textfeldern greifen sie
 
 Spielleiter-Kürzel tauchen bei Spielern in *Configure Controls* nicht auf und tun für sie nichts, auch keine Meldung.
 
+## Würfelleiste (Dice Tray)
+
+Unter dem Chat-Eingabefeld liegt eine Würfelleiste für alle Nutzer (wandert mit, wenn die Sidebar eingeklappt oder ein
+anderer Tab offen ist):
+
+- **d4 … d100:** Klick fügt einen Würfel zur Formel hinzu (mehrfach = 3d6), Rechtsklick entfernt einen,
+  **Shift+Klick** würfelt sofort genau diesen einen Würfel.
+- **Adv / Dis:** der d20 wird zu `2d20kh1` bzw. `2d20kl1`. **R1** („Reroll 1s"): jeder Würfel mit 1 wird neu
+  geworfen, bis er keine 1 zeigt (`rr1`, wie die Hit-Die-Regel der App).
+- **Modifikator-Feld** (+/- Zahl), **Formel-Feld** frei editierbar, **Enter** oder **Roll** würfelt, **×** leert.
+  Die zuletzt gewürfelte Formel bleibt stehen.
+- Sprecher ist das ausgewählte Token, sonst der eigene Charakter; der Wurfmodus folgt der Auswahl im Chat.
+- Ausblenden: *Configure Settings → AP-Turm → Show dice tray* (pro Nutzer).
+
+Im Charakter- und NPC-Bogen sitzt neben dem Namen ein **d20-Knopf** („Roll d20"): reiner d20-Wurf für diesen Actor,
+Shift = Advantage, Ctrl = Disadvantage.
+
 ## Würfe und Mehrspielerbetrieb
 
 - Klick = normal, **Shift** = Vorteil (`2d20kh1`), **Ctrl/Alt** = Nachteil (`2d20kl1`),

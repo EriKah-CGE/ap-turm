@@ -2,7 +2,7 @@
   <div class="apt-banner">
     <img class="apt-portrait apt-actor-portrait" src="{{img}}" alt="{{name}}" data-action="portrait" data-edit="img" title="Click: show large · right-click: change image">
     <div class="apt-namebox">
-      <input class="apt-name" type="text" name="name" value="{{name}}" title="{{name}}" placeholder="Enter name…">
+      <div class="apt-namerow"><input class="apt-name" type="text" name="name" value="{{name}}" title="{{name}}" placeholder="Enter name…"><button type="button" class="apt-d20btn" data-action="rollD20" data-tooltip="{{localize "AP_TURM.DiceTray.RollD20Hint"}}" aria-label="{{localize "AP_TURM.DiceTray.RollD20"}}"><i class="fa-solid fa-dice-d20" inert></i></button></div>
       <div class="apt-idgrid npc">
         <div class="apt-fld wide2"><label title="What players see instead of the name: chat cards, combat tracker, token tooltip. Empty = the real name. The token's own nameplate follows Foundry's token setting.">Display name</label><input type="text" name="system.displayName" value="{{system.displayName}}" placeholder="— real name —"></div>
         <div class="apt-fld wide2"><label>Type</label><input type="text" name="system.typeLine" value="{{system.typeLine}}" placeholder="Medium humanoid, neutral"></div>

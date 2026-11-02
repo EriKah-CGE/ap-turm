@@ -21,6 +21,7 @@ import { saveToLibrary, fromLibraryDialog } from "../library.mjs";
 import { npcItemRows } from "../npc-items.mjs";
 import { portraitClick } from "./character-sheet.mjs";
 import { placeCopiesDialog } from "../spawn.mjs";
+import { rollPlainD20 } from "../dice-tray.mjs";
 
 const { HandlebarsApplicationMixin, DialogV2 } = foundry.applications.api;
 const { ActorSheetV2 } = foundry.applications.sheets;
@@ -47,6 +48,7 @@ export class ApTurmNpcSheet extends SheetSizeMixin(HandlebarsApplicationMixin(Ac
     form: { submitOnChange: true, closeOnSubmit: false },
     // every action writes to the actor unless it is listed as read-only below
     actions: guardWrites({
+      rollD20: ApTurmNpcSheet.#onRollD20,
       importNpcJson: ApTurmNpcSheet.#onImportNpcJson,
       exportNpcJson: ApTurmNpcSheet.#onExportNpcJson,
       placeCopies: ApTurmNpcSheet.#onPlaceCopies,
@@ -79,7 +81,7 @@ export class ApTurmNpcSheet extends SheetSizeMixin(HandlebarsApplicationMixin(Ac
       saveToLibrary: ApTurmNpcSheet.#onSaveToLibrary,
       fromLibrary: ApTurmNpcSheet.#onFromLibrary,
       portrait: { handler: ApTurmNpcSheet.#onPortrait, buttons: [0, 2] }
-    }, ["portrait", "exportNpcJson", "placeCopies", "rollAbility", "rollSave", "rollInitiative", "entryAttack", "entryDamage", "entrySave", "editItem", "saveToLibrary"])
+    }, ["rollD20", "portrait", "exportNpcJson", "placeCopies", "rollAbility", "rollSave", "rollInitiative", "entryAttack", "entryDamage", "entrySave", "editItem", "saveToLibrary"])
   };
 
   static PARTS = {
@@ -362,5 +364,10 @@ export class ApTurmNpcSheet extends SheetSizeMixin(HandlebarsApplicationMixin(Ac
     const n = parsed.recognized.length, a = parsed.entries.length, u = this.actor.system.unassigned;
     ui.notifications.info(`Statblock: ${n} field group${n === 1 ? "" : "s"} recognized (${parsed.recognized.join(", ")}), ${a} entr${a === 1 ? "y" : "ies"}${u ? `, ${u} damage type${u === 1 ? "" : "s"} not assigned to an element` : ""}.`);
     this.changeTab("stats", "primary");
+  }
+
+  /** "Roll d20" in the header: plain d20 (Shift advantage, Ctrl/Alt disadvantage), speaker = this actor. */
+  static #onRollD20(event) {
+    return rollPlainD20(this.actor, event);
   }
 }

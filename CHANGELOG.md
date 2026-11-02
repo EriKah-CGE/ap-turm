@@ -2,6 +2,19 @@
 
 Jede Version hat eine Sektion `## x.y.z`; `npm run release -- x.y.z` übernimmt sie als Release-Notes auf GitHub.
 
+## 1.3.0
+
+- Würfelleiste (Dice Tray) direkt unter dem Chat-Eingabefeld für Spieler und Spielleiter: d4–d100 per Klick zur Formel
+  (Rechtsklick entfernt, Shift+Klick würfelt genau diesen Würfel), Modifikator, freie Formel (Enter würfelt),
+  Advantage/Disadvantage für den d20, „Reroll 1s" für Hit-Dice-Würfe. Echte Würfe im Chat, Wurfmodus wie im Chat gewählt,
+  Dice-So-Nice-tauglich. Ausblendbar über die Client-Einstellung „Show dice tray".
+- „Roll d20"-Knopf in der Kopfzeile von Charakter- und NPC-Bogen (Shift: Advantage, Ctrl: Disadvantage).
+- Dice Tray: Würfelsymbole statt Text (Zahl darunter, Zähler „×3" als Badge).
+- Tower Tracker (GM, Knopf „Tower" neben AP-Turm): Lauf betreten/verlassen mit Journal „Tower Log <Datum>", Ebene,
+  Element per d20 (überschreibbar), Zeitbuchung mit automatischen Beben im Intervall, drittes Beben → Kollaps und
+  Würfel auf „Uncontrolled Landing", Log mit „Undo last". Spieler-HUD unter den Szene-Steuerungen (abschaltbar),
+  Banner beim dritten Beben und beim Kollaps.
+
 ## 1.2.1
 
 - Verteilung über GitHub: Installation und Updates per Manifest-URL im Foundry-Setup

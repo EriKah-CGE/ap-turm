@@ -20,6 +20,7 @@ import { historyText, HISTORY_CAP } from "../qol.mjs";
 import { customEntry } from "../custom-shop.mjs";
 import { prereqList } from "../rules.mjs";
 import { openShopEditor } from "../shop-editor.mjs";
+import { rollPlainD20 } from "../dice-tray.mjs";
 
 /** Right mouse button (click with button 2 or a contextmenu event). */
 const isRightClick = (ev) => ev?.button === 2 || ev?.type === "contextmenu";
@@ -85,6 +86,7 @@ export class ApTurmCharacterSheet extends SheetSizeMixin(HandlebarsApplicationMi
     form: { submitOnChange: true, closeOnSubmit: false },
     // every action writes to the actor unless it is listed as read-only below
     actions: guardWrites({
+      rollD20: ApTurmCharacterSheet.#onRollD20,
       importAppJson: ApTurmCharacterSheet.#onImportAppJson,
       exportAppJson: ApTurmCharacterSheet.#onExportAppJson,
       deathSave: roll(ApTurmCharacterSheet.#onDeathSave),
@@ -136,7 +138,7 @@ export class ApTurmCharacterSheet extends SheetSizeMixin(HandlebarsApplicationMi
       rollAbility: roll(ApTurmCharacterSheet.#onRollAbility),
       rollInitiative: roll(ApTurmCharacterSheet.#onRollInitiative),
       castSpell: ApTurmCharacterSheet.#onCastSpell
-    }, ["exportAppJson", "shopCategory", "editItem", "saveToLibrary", "openShopEditor", "portrait", "rollAttack", "rollDamage", "rollSave", "rollSkill", "rollAbility", "rollInitiative"])
+    }, ["rollD20", "exportAppJson", "shopCategory", "editItem", "saveToLibrary", "openShopEditor", "portrait", "rollAttack", "rollDamage", "rollSave", "rollSkill", "rollAbility", "rollInitiative"])
   };
 
   static PARTS = {
@@ -579,4 +581,9 @@ export class ApTurmCharacterSheet extends SheetSizeMixin(HandlebarsApplicationMi
 
   static #onAddTurmwissen() { return this.actor.system.addTurmwissen(); }
   static #onRemoveTurmwissen() { return this.actor.system.removeLastTurmwissen(); }
+
+  /** "Roll d20" in the header: plain d20 (Shift advantage, Ctrl/Alt disadvantage), speaker = this actor. */
+  static #onRollD20(event) {
+    return rollPlainD20(this.actor, event);
+  }
 }
