@@ -90,6 +90,19 @@ vermerkt danach die neue Version.
   Flüsternachricht mit Name und Differenz, der Hinweis steht außerdem im Level-Tab. In der App erscheint er als Meldung
   und im Level-Tab. Import und Export erkennen umgestellte und alte Bögen an der Datenversion.
 
+## Waffen: Schadenstypen und zweite Schadenszeile (ab 1.3.0)
+
+- Im Turm-Modus dürfen Waffen auch die normalen D&D-Schadenstypen tragen. Die Auswahl ist gruppiert („Damage types"
+  und „Elements"); im AP-Modus gibt es weiterhin nur die D&D-Typen. Resistance, +1d6 Elemental, Element Swap und der
+  Zauber-Editor bleiben im Turm-Modus bei den Elementen.
+- Jede Waffe hat eine optionale zweite Schadenszeile (z. B. 1d8 Slashing + 1d6 Feuer). Die Kampfleiste zeigt
+  „1d8+5 slashing + 1d6 Feuer". Crit verdoppelt beide Zeilen, Crit Max maximiert beide; +1d6 Elemental bleibt eine
+  eigene dritte Zeile.
+- „Apply to target" rechnet jeden Schadenstyp getrennt gegen Resistenzen, Immunitäten und Verwundbarkeiten (je Typ
+  abgerundet) und zeigt auf der Karte die Aufschlüsselung.
+- NPC-Aktionen bieten im Turm-Modus dieselbe gruppierte Auswahl; „nicht zugeordnet" bleibt für importierte Typen
+  möglich.
+
 ## Manuelle Installation (Zip, ohne Updates)
 
 Nur nötig, wenn die Manifest-URL nicht genutzt werden kann:
@@ -167,9 +180,10 @@ werden ihrem Elterneintrag zugeordnet.
   des NPCs übernommen (bei verschiedenen DCs keiner).
 - Bestehende NPCs bekommen die Flächen-Tags beim nächsten **Parse**; es wird nichts automatisch
   umgebaut.
-- Im Turm-Modus werden D&D-Schadenstypen **nicht** automatisch auf Elemente abgebildet. Sie stehen
-  gelb markiert im Bogen (Karten zeigen „type not assigned"); ein Klick öffnet die Elementauswahl. Nicht zugeordnete
-  Typen greifen bei Resistenzen nicht.
+- Im Turm-Modus werden importierte D&D-Schadenstypen **nicht** automatisch zugeordnet. Sie stehen gelb markiert im
+  Bogen (Karten zeigen „type not assigned"); ein Klick öffnet die Auswahl mit beiden Listen (D&D-Schadenstypen und
+  Elemente). Nicht zugeordnete Typen greifen bei Resistenzen nicht; ein bewusst gewählter D&D-Typ greift dagegen auch
+  im Turm-Modus.
 
 ## Loot-Tabellen
 

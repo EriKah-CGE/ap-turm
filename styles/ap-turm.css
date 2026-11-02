@@ -1224,3 +1224,8 @@
   .ap-turm .apt-notices .apt-notice b { font-weight: 600; margin-right: 6px; opacity: .75; }
   .scard .shint, .ap-turm .scard .desc { font-style: italic; }
 }
+
+@layer system {
+  /* damage card: one verdict per damage type (weapon line, second line, elemental) */
+  .ap-turm-chat .apt-card-def .lines { display: flex; flex-direction: column; gap: 1px; width: 100%; }
+}

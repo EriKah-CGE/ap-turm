@@ -69,7 +69,9 @@ Modus `turm` (Kampagnenmodus, Standard für diese Runde) vs. `ap` (Standard-D&D-
   5 Sockeln `{name, elem}`, vom Limit ausgenommen
 - **20 Elemente** mit Farben: erde eis chaos blut ordnung licht blitz gaya erz energie gift heilig
   wind wasser schoepfung zerstoerung dunkelheit feuer + `turm` + `arch` (**nicht** „macht")
-- Waffen-Schadenstyp im Turm-Modus = Element (statt D&D-Typ); Waffen haben Notizfeld
+- Waffen-Schadenstyp im Turm-Modus: D&D-Schadenstyp **oder** Element (gruppierte Auswahl); Waffen haben Notizfeld und
+  eine optionale zweite Schadenszeile `dice2`/`type2` (eigener Typ, eigene Resistenzprüfung; Crit verdoppelt bzw.
+  maximiert beide; +1d6 Elemental aus dem Shop bleibt eine eigene Zeile)
 - **Turmwissen:** Array `[{trigger}]`, Index+1 = Rang, nur letzter Eintrag löschbar
 - **Währungen Turm:** KU, BR, SI, GO, ED — Kurse 100/100/100, GO→ED **10**. Modus `ap`: cp/sp/ep/gp/pp
 - **Lay on Hands:** Pool = `floor(earned/5)`, Reset bei langer Rast
@@ -84,11 +86,14 @@ Modus `turm` (Kampagnenmodus, Standard für diese Runde) vs. `ap` (Standard-D&D-
   **maximierte Crit-Würfel** bei `critMax`; `eleDmg` = +1d6 je Rang auf jedem Treffer — **Element wird beim Kauf gewählt**
   (`choices.eleDmg[]`, modusabhängige Liste); `changeEle` (Element Swap) fragt beim Kauf ein neues Element ab, das
   das eleDmg-Element **ersetzt** (letzter Swap gilt). Nicht das Waffenelement verwenden.
-- **Modusregel für alle Schadens-/Elementwahlen:** `ap` → `DAMAGE_TYPES` (D&D), `turm` → `ELEMENTS`. Gilt für
-  Waffen-Schadenstyp, `res`, `eleDmg`, `changeEle`, Zauber-Editor. Altwerte aus dem anderen Modus bleiben lesbar.
+- **Modusregel für Schadens-/Elementwahlen:** Waffen: im Turm-Modus beide Listen; res/eleDmg/changeEle/Zauber-Editor
+  unverändert (Turm → Elemente). Modus `ap` überall nur `DAMAGE_TYPES`. NPC-Aktionen und Gegenstands-Resistenzen im
+  Turm-Modus ebenfalls aus beiden Listen. Altwerte aus dem anderen Modus bleiben lesbar.
 - **Statblock-Import:** im Modus `ap` D&D-Typen 1:1; im Modus `turm` keine automatische Zuordnung zu Elementen —
   Typen werden als „nicht zugeordnet" importiert und vom Spielleiter manuell gesetzt (gilt für Resistenzen/Immunitäten/
   Verwundbarkeiten und die Schadenstypen aller Aktionen; nicht zugeordnete Typen greifen bei Resistenzen nicht).
+  Gespeichert mit Präfix `?` (`?fire`); ohne Präfix ist jeder Schlüssel ein echter Typ, auch ein D&D-Typ im Turm-Modus.
+  NPCs von vor 1.3.0 (Flag `typeMarks` fehlt) werden in `NpcData.migrateData` einmalig markiert.
 
 ## Zuordnung App-Zustand → Foundry
 

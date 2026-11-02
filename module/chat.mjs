@@ -8,7 +8,7 @@
  */
 import { ABILITIES, SKILLS, damageTypeColor } from "./config.mjs";
 import { fmtMod } from "./rules.mjs";
-import { buildAttack, buildDamage, buildNpcAttack, buildNpcDamage, entryAttackData, manualAdvantages, isUnassignedType, damageTotal, critRange, attackOutcome, damageTypeLabel, damageMultiplier,
+import { buildAttack, buildDamage, buildNpcAttack, buildNpcDamage, entryAttackData, manualAdvantages, isUnassignedType, damageTotal, damageGroups, typedDamage, critRange, attackOutcome, damageTypeLabel, damageMultiplier,
   characterDefenses, defenseVerdict, applyDamage, adjustHp, ADV_FORMULA, MODE_LABEL, rollModeFromEvent, d20Formula, abilityCheckBonus,
   deathSaveOutcome, hitDieHealFormula, downedStatusId, downedTransition, downedPlan, downedLine, checkSuccess } from "./rolls.mjs";
 import { rollModifiers, resolveMode, statusIdsOf, exhaustionLevel, exhaustionId, stepExhaustion, EXHAUSTION_MAX, EXHAUSTION_IDS } from "./conditions.mjs";
@@ -327,20 +327,35 @@ export async function startNpcTurn(actor) {
 /** Turm mode: warning line for a damage type that no element has been assigned to (the roll still runs). */
 function unassignedWarning(actor, dtype) {
   if (!isUnassignedType(dtype, actor.system.mode)) return [];
-  return [`Damage type "${damageTypeLabel(dtype)}" is unassigned: resistances do not apply until an element is set on the NPC sheet.`];
+  return [`Damage type "${damageTypeLabel(dtype)}" is not assigned: resistances do not apply until a type is set on the NPC sheet.`];
 }
 
-/** Defense chips of the targeted token and the verdict for this damage type (shown on the damage card). */
-function targetDefenseView(target, dtype) {
+/**
+ * Defense chips of the targeted token and the verdict per damage type (shown on the damage card). Every type of the
+ * roll (weapon, second line, elemental) is checked on its own; `groups` = [{type, amount}].
+ */
+function targetDefenseView(target, groups) {
   if (!target?.actor) return null;
   const pools = targetPools(target.actor);
-  const v = defenseVerdict(dtype, pools.defenses, { mode: target.actor.system.mode ?? "ap" });
-  return { name: target.name, nameHtml: target.nameHtml, mult: v.mult, label: v.label, reason: v.reason, chips: v.chips.map(c => ({ ...c, color: damageTypeColor(c.key) })) };
+  const mode = target.actor.system.mode ?? "ap";
+  const verdicts = groups.map(g => ({ g, v: defenseVerdict(g.type, pools.defenses, { mode }) }));
+  const chips = (verdicts[0]?.v.chips ?? defenseVerdict("", pools.defenses, { mode }).chips).map(c => ({
+    ...c, hit: verdicts.some(x => x.v.chips.find(y => y.kind === c.kind && y.key === c.key)?.hit), color: damageTypeColor(c.key)
+  }));
+  const typed = typedDamage(groups, pools.defenses, { mode });
+  const lines = verdicts.map(({ g, v }, i) => ({
+    type: damageTypeLabel(g.type), color: damageTypeColor(g.type), amount: typed.lines[i].amount, taken: typed.lines[i].taken,
+    mult: v.mult, label: v.label, reason: v.reason
+  }));
+  const act = lines.some(l => l.mult !== 1);
+  return { name: target.name, nameHtml: target.nameHtml, chips, lines, multi: lines.length > 1, act, taken: typed.taken,
+    mult: lines.length === 1 ? lines[0].mult : null, label: lines.length === 1 ? lines[0].label : "", reason: lines.length === 1 ? lines[0].reason : "" };
 }
 
 /** Roll every damage part (plus crit dice), render the damage card with the "apply" button. */
 async function postDamageCard(actor, { name, dmg, flags = {} }) {
-  dmg.warnings = [...(dmg.warnings ?? []), ...unassignedWarning(actor, dmg.dtype)];
+  const partTypes = [...new Set(dmg.parts.map(p => p.type ?? ""))];
+  dmg.warnings = [...(dmg.warnings ?? []), ...partTypes.flatMap(t => unassignedWarning(actor, t))];
   const rolls = [];
   for (const p of dmg.parts) {
     const r = await new Roll(p.formula).evaluate();
@@ -348,6 +363,7 @@ async function postDamageCard(actor, { name, dmg, flags = {} }) {
     if (p.critFormula) { const cr = await new Roll(p.critFormula).evaluate(); p.critRolled = cr.total; rolls.push(cr); }
   }
   const total = damageTotal(dmg.parts);
+  const groups = damageGroups(dmg.parts);
   const cardParts = dmg.parts.map(p => ({
     label: p.label, formula: p.formula, rolled: p.rolled,
     critText: p.critFormula ? `+ ${p.critFormula} = ${p.critRolled}` : (p.critFlat ? `+ max ${p.critFlat}` : ""),
@@ -356,11 +372,11 @@ async function postDamageCard(actor, { name, dmg, flags = {} }) {
   const html = await render("damage", {
     actorName: actor.name, weapon: name, total, parts: cardParts, crit: dmg.crit, critMax: dmg.critMax && dmg.crit,
     dtype: damageTypeLabel(dmg.dtype), dtypeColor: damageTypeColor(dmg.dtype), warnings: dmg.warnings,
-    target: targetDefenseView(targetInfo(), dmg.dtype)
+    target: targetDefenseView(targetInfo(), groups)
   });
   return ChatMessage.implementation.create({
     speaker: speakerFor(actor), rolls, content: html,
-    flags: { [SYSTEM_ID]: { type: "damage", actorUuid: actor.uuid, actorName: actor.name, actorPub: publicNameOf(actor), total, dtype: dmg.dtype, crit: dmg.crit, ...flags } }
+    flags: { [SYSTEM_ID]: { type: "damage", actorUuid: actor.uuid, actorName: actor.name, actorPub: publicNameOf(actor), total, dtype: dmg.dtype, groups, crit: dmg.crit, ...flags } }
   });
 }
 
@@ -420,7 +436,7 @@ export async function applyDamageFromMessage(message, { token = undefined } = {}
   const flags = message.getFlag(SYSTEM_ID, "type") ? message.flags[SYSTEM_ID] : null;
   if (!flags) return;
   let f;
-  if (flags.type === "damage") f = { total: flags.total, dtype: flags.dtype, actorName: flags.actorName, actorPub: flags.actorPub ?? flags.actorName, crit: !!flags.crit };
+  if (flags.type === "damage") f = { total: flags.total, dtype: flags.dtype, groups: Array.isArray(flags.groups) ? flags.groups : null, actorName: flags.actorName, actorPub: flags.actorPub ?? flags.actorName, crit: !!flags.crit };
   else if (flags.type === "check" && flags.apply) {
     f = { total: flags.apply.amount, dtype: flags.apply.dtype, actorName: flags.apply.sourceName, actorPub: flags.apply.sourcePub ?? flags.apply.sourceName };
     if (token === undefined && flags.apply.tokenUuid) token = fromUuidSync(flags.apply.tokenUuid) ?? await fromUuid(flags.apply.tokenUuid);
@@ -438,20 +454,25 @@ export async function applyDamageFromMessage(message, { token = undefined } = {}
  * @param {Actor} actor
  * @param {object} args  {total, dtype, actorName: source name, name: display name, tokenDoc, requestedBy, crit: bigger hit number}
  */
-export async function applyDamageToActor(actor, { total, dtype, actorName, actorPub = null, name = null, tokenDoc = null, requestedBy = "", requestedById = "", crit = false } = {}) {
+export async function applyDamageToActor(actor, { total, dtype, groups = null, actorName, actorPub = null, name = null, tokenDoc = null, requestedBy = "", requestedById = "", crit = false } = {}) {
   const who = name || actor.name;
   const whoHtml = nameHtml(who, publicName({ type: actor.type, name: who, displayName: displayNameOf(actor) }));
   const srcHtml = nameHtml(actorName, actorPub ?? actorName);
   const pools = targetPools(actor);
   const mode = actor.system.mode ?? "ap";
-  const mult = damageMultiplier(dtype, pools.defenses, { mode });
-  const res = applyDamage({ hp: pools.hp, temp: pools.temp }, total, mult);
+  // every damage type on its own (1.3.0): weapon line, second line and elemental dice each meet the defenses separately
+  const typeGroups = Array.isArray(groups) && groups.length ? groups : [{ type: dtype, amount: total }];
+  const typed = typedDamage(typeGroups, pools.defenses, { mode });
+  const mult = typed.lines.length === 1 ? typed.lines[0].mult : 1;
+  const res = applyDamage({ hp: pools.hp, temp: pools.temp }, typed.taken, 1);
   await actor.update({ "system.hp.value": res.hp, "system.hp.temp": res.temp });
   showHitFeedback({ tokenDoc, actor, taken: res.taken, fromTemp: res.fromTemp, dtype, mode, crit });
   const tr = await syncDownedStatus(actor, { before: pools.hp, after: res.hp });
-  const label = damageTypeLabel(dtype);
-  const note = isUnassignedType(dtype, mode) ? " · type unassigned, no resistance"
-    : mult === 0 ? " · immune" : mult === 0.5 ? " · resistant, halved" : mult === 2 ? " · vulnerable, doubled" : "";
+  const multNote = (m, t) => isUnassignedType(t, mode) ? " · not assigned, no resistance"
+    : m === 0 ? " · immune" : m === 0.5 ? " · resistant, halved" : m === 2 ? " · vulnerable, doubled" : "";
+  const label = typed.lines.length === 1 ? damageTypeLabel(typed.lines[0].type)
+    : typed.lines.map(l => `${l.taken} ${damageTypeLabel(l.type)}${multNote(l.mult, l.type)}`).join(", ");
+  const note = typed.lines.length === 1 ? multNote(mult, typed.lines[0].type) : "";
   const tempNote = res.fromTemp ? ` (${res.fromTemp} Temp-HP)` : "";
   const via = requestedBy ? ` (requested by ${requestedBy})` : "";
   const line = `${srcHtml} hits ${whoHtml}: ${esc(`${res.taken} damage (${label})${note}${tempNote}, ${pools.hp} → ${res.hp} HP${via}`)}`;
@@ -533,10 +554,10 @@ async function restoreDefeatedToken(f) {
  * @param {object} req  {uuid, name, total, dtype, actorName}
  * @returns {boolean}   whether the request went out
  */
-export function requestGmApply({ uuid, name, total, dtype, actorName, actorPub = null, crit = false }) {
+export function requestGmApply({ uuid, name, total, dtype, groups = null, actorName, actorPub = null, crit = false }) {
   if (!uuid) { ui.notifications.warn(`${name}: no token found, damage not applied.`); return false; }
   if (!game.users.activeGM) { ui.notifications.warn(`You do not own ${name} and no GM is online. The damage was not applied.`); return false; }
-  game.socket.emit(`system.${SYSTEM_ID}`, { action: "applyDamage", uuid, total, dtype, actorName, actorPub, crit: !!crit, userId: game.user.id });
+  game.socket.emit(`system.${SYSTEM_ID}`, { action: "applyDamage", uuid, total, dtype, groups, actorName, actorPub, crit: !!crit, userId: game.user.id });
   ui.notifications.info(`You do not own ${name} - the GM applies the damage.`);
   return true;
 }
@@ -556,6 +577,7 @@ export async function handleApplyDamageRequest(data) {
   const tokenDoc = doc?.documentName === "Token" ? doc : null;
   await applyDamageToActor(actor, {
     total, dtype: String(data.dtype ?? ""), actorName: String(data.actorName ?? user.name),
+    groups: Array.isArray(data.groups) ? data.groups.filter(g => g && Number.isFinite(Number(g.amount))).map(g => ({ type: String(g.type ?? ""), amount: Number(g.amount) })) : null,
     name: tokenDoc?.name ?? actor.name, tokenDoc, requestedBy: user.name, requestedById: user.id, crit: !!data.crit,
     actorPub: data.actorPub ? String(data.actorPub) : null
   });

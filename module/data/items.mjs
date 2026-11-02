@@ -15,6 +15,9 @@ export class WeaponData extends foundry.abstract.TypeDataModel {
       dice: str("1d8"),
       // D&D damage type in mode "ap", element key in mode "turm"
       dtype: str("slashing"),
+      // optional second damage line (rule from the user, 1.3.0): own dice and own type, e.g. 1d6 fire
+      dice2: str(),
+      type2: str(),
       bonus: int(),
       prof: new BooleanField({ initial: true }),
       equipped: new BooleanField({ initial: false }),
@@ -26,6 +29,7 @@ export class WeaponData extends foundry.abstract.TypeDataModel {
 
   static migrateData(source) {
     if (source.dtype === "macht") source.dtype = "arch";
+    if (source.type2 === "macht") source.type2 = "arch";
     return super.migrateData(source);
   }
 }

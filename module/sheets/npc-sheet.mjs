@@ -5,9 +5,9 @@
  * Roll conventions as on the character sheet: click normal, Shift advantage, Ctrl/Alt disadvantage, right-click dialog.
  * Turm mode: imported D&D damage types are shown as yellow "not assigned" tags; a click opens the element dropdown.
  */
-import { ABILITIES, ABBR, damageTypeChoices, damageTypeLabel, damageTypeColor, damageTypeOptions, ELEMENTS } from "../config.mjs";
+import { ABILITIES, ABBR, damageTypeChoices, damageTypeLabel, damageTypeColor, damageTypeOptions, damageTypeGroups, damageTypeGroupOptions, ELEMENTS } from "../config.mjs";
 import { fmtMod } from "../rules.mjs";
-import { isUnassignedType, DEFENSE_ABBR } from "../rolls.mjs";
+import { isUnassignedType, markUnassignedTypes, DEFENSE_ABBR } from "../rolls.mjs";
 import { rollCheck, rollInitiative, rollNpcAttack, rollNpcDamage, requestSave, useEntry, applyHpDelta } from "../chat.mjs";
 import { parseStatblock, statblockToUpdate, parseUsable, SECTIONS, emptyEntry, parseSkills, formatSkills } from "../statblock.mjs";
 import { SECTION_ORDER } from "../data/npc.mjs";
@@ -126,7 +126,8 @@ export class ApTurmNpcSheet extends SheetSizeMixin(HandlebarsApplicationMixin(Ac
     const defenses = Object.entries(DEFENSES).map(([kind, label]) => ({
       kind, label, abbr: DEFENSE_ABBR[kind],
       entries: sys[kind].map((v, index) => ({ index, value: v, label: damageTypeLabel(v), color: isTurm ? damageTypeColor(v) : "", unassigned: unassigned(v) })),
-      options: Object.entries(typeChoices).filter(([k]) => !sys[kind].includes(k)).map(([value, label]) => ({ value, label }))
+      // turm: D&D damage types and elements as two groups; ap: D&D types only
+      groups: damageTypeGroups(mode).map(g => ({ label: g.label, grouped: isTurm, options: g.options.filter(o => !sys[kind].includes(o.value)) }))
     }));
     const defenseChips = defenses.flatMap(d => d.entries.map(e => ({ ...e, abbr: d.abbr, kindLabel: d.label })));
     const pips = (c) => Array.from({ length: c.max }, (_, i) => ({ i: i + 1, used: i >= c.value }));
@@ -222,7 +223,12 @@ export class ApTurmNpcSheet extends SheetSizeMixin(HandlebarsApplicationMixin(Ac
     const sel = (opts, cur) => opts.map(([v, l]) => `<option value="${esc(v)}" ${v === cur ? "selected" : ""}>${esc(l)}</option>`).join("");
     const sections = Object.entries(SECTIONS);
     const abil = [["", "—"], ...Object.entries(ABILITIES)];
-    const types = [["", "—"], ...damageTypeOptions(mode, entry.dmgType).map(o => [o.value, o.label])];
+    const tg = damageTypeGroupOptions(mode, entry.dmgType, { none: true, noneLabel: "—" });
+    const typeSelect = tg.extra.map(o => `<option value="${esc(o.value)}" ${o.selected ? "selected" : ""}>${esc(o.label)}</option>`).join("")
+      + tg.groups.map(g => {
+        const opts = g.options.map(o => `<option value="${esc(o.value)}" ${o.selected ? "selected" : ""}>${esc(o.label)}</option>`).join("");
+        return mode === "turm" ? `<optgroup label="${esc(g.label)}">${opts}</optgroup>` : opts;
+      }).join("");
     const per = [["", "—"], ["day", "per day"], ["short rest", "per short rest"], ["long rest", "per long rest"]];
     const parentOpts = [["", "—"], ...parents.filter(n => n && n !== entry.name).map(n => [n, n])];
     const g = (label, field) => `<div class="form-group"><label>${label}</label><div class="form-fields">${field}</div></div>`;
@@ -231,7 +237,7 @@ export class ApTurmNpcSheet extends SheetSizeMixin(HandlebarsApplicationMixin(Ac
       ${g("Section", `<select name="section">${sel(sections, entry.section)}</select>`)}
       ${g("Option of", `<select name="parent">${sel(parentOpts, entry.parent)}</select>`)}
       ${g("To hit", `<input type="number" name="toHit" value="${entry.toHit ?? ""}" placeholder="—" step="1"> <input type="text" name="range" value="${esc(entry.range)}" placeholder="reach / range">`)}
-      ${g("Damage", `<input type="text" name="damage" value="${esc(entry.damage)}" placeholder="2d6 + 4"> <select name="dmgType">${sel(types, entry.dmgType)}</select>`)}
+      ${g("Damage", `<input type="text" name="damage" value="${esc(entry.damage)}" placeholder="2d6 + 4"> <select name="dmgType">${typeSelect}</select>`)}
       ${g("Save", `DC <input type="number" name="saveDc" value="${entry.saveDc ?? ""}" placeholder="—" step="1"> <select name="saveAbility">${sel(abil, entry.saveAbility)}</select>`)}
       ${g("Recharge", `<input type="text" name="recharge" value="${esc(entry.recharge)}" placeholder="5-6 / 6 / rest">`)}
       ${g("Uses", `<input type="number" name="usesMax" value="${entry.uses.max || ""}" placeholder="—" min="0" step="1"> <select name="usesPer">${sel(per, entry.uses.per)}</select>`)}
@@ -311,12 +317,14 @@ export class ApTurmNpcSheet extends SheetSizeMixin(HandlebarsApplicationMixin(Ac
   static async #onFromLibrary() { this.#itemsOpen = true; await fromLibraryDialog(this.actor); }
 
   static #onEntryRecharge(ev, t) { const i = this.#index(t), sys = this.actor.system; return sys.setEntryRecharge(i, !sys.entries[sys.holderIndex(i)]?.rechargeUsed); }
-  /** Yellow "not assigned" tag (turm mode): swap it for an element dropdown in place; the choice replaces the D&D type. */
+  /** Yellow "not assigned" tag (turm mode): swap it for a dropdown in place (D&D damage types and elements as groups);
+   *  the choice replaces the imported type. */
   static #onAssignType(ev, t) {
     const kind = t.dataset.kind, index = +t.dataset.index;
     const sel = document.createElement("select");
     sel.className = "apt-assign";
-    sel.innerHTML = `<option value="">— choose element —</option>` + Object.entries(ELEMENTS).map(([k, v]) => `<option value="${k}">${esc(v.l)}</option>`).join("");
+    sel.innerHTML = `<option value="">— choose type —</option>` + damageTypeGroups("turm").map(g =>
+      `<optgroup label="${esc(g.label)}">${g.options.map(o => `<option value="${esc(o.value)}">${esc(o.label)}</option>`).join("")}</optgroup>`).join("");
     t.after(sel); t.hidden = true; sel.focus();
     const close = () => { if (sel.isConnected) sel.remove(); t.hidden = false; };
     sel.addEventListener("change", (e) => {
@@ -358,6 +366,8 @@ export class ApTurmNpcSheet extends SheetSizeMixin(HandlebarsApplicationMixin(Ac
     const usable = parseUsable(parsed);
     if (!usable.ok) { ui.notifications.error(`${usable.reason} ${this.actor.name} stays unchanged.`, { console: false }); return; }
     const update = statblockToUpdate(parsed);
+    // turm: imported D&D words stay "not assigned" (prefix "?") until the GM picks a type
+    markUnassignedTypes(update.system, this.actor.system.mode);
     update.system.statblock = text;
     if (update.system.skills) for (const k of Object.keys(this.actor.system.skills)) if (!(k in update.system.skills)) update.system.skills[`-=${k}`] = null;
     await this.actor.update(update);

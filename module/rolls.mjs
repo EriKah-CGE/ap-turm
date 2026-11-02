@@ -12,7 +12,7 @@
  * Apply:   temp HP first, then HP; resistance halves (rounded down), immunity zeroes.
  */
 import { weaponStats, eleElement, hitDie } from "./rules.mjs";
-import { damageTypeLabel as configDamageTypeLabel, ELEMENTS } from "./config.mjs";
+import { damageTypeLabel as configDamageTypeLabel, ELEMENTS, isUnassignedKey, UNASSIGNED_PREFIX } from "./config.mjs";
 
 /* ---------- dice strings ---------- */
 
@@ -186,6 +186,12 @@ export function buildDamage(w, d, S, { crit = false, critMax = null, extra = "",
   parts.push({ label: "Weapon", dice: base.dice, flat: base.flat + st.dmgMod, type: dtype,
     detail: `${w.dice}${st.dmgMod ? (st.dmgMod > 0 ? " + " : " - ") + Math.abs(st.dmgMod) : ""}` });
   if (useDueling && hasDueling) parts.push({ label: "Dueling", dice: [], flat: 2, type: dtype });
+  // optional second damage line of the weapon (e.g. 1d8 slashing + 1d6 fire): own type, own resistance check
+  if (String(w.dice2 ?? "").trim()) {
+    const second = parseDice(w.dice2);
+    if (!second.ok && !second.dice.length && !second.flat) warnings.push(`Second damage "${w.dice2}" could not be read.`);
+    parts.push({ label: "Weapon 2", dice: second.dice, flat: second.flat, type: w.type2 || dtype, detail: String(w.dice2) });
+  }
   // +1d6 per eleDmg rank in the chosen element (choices.eleDmg / changeEle), not the weapon's type
   const ele = S.bought.eleDmg || 0;
   if (ele > 0) {
@@ -273,6 +279,31 @@ export function buildNpcDamage(atk, { crit = false, extra = "" } = {}) {
   return { parts, crit, critMax: false, dtype, warnings };
 }
 
+/** Damage per type once the parts are rolled: [{type, amount}] in the order of first appearance. */
+export function damageGroups(parts) {
+  const out = [];
+  for (const p of parts ?? []) {
+    const amount = (p.rolled ?? 0) + (p.critRolled ?? 0) + (p.critFlat ?? 0);
+    const type = p.type ?? "";
+    const g = out.find(x => x.type === type);
+    if (g) g.amount += amount; else out.push({ type, amount });
+  }
+  return out;
+}
+
+/**
+ * Damage per type against the target's defenses: every type is halved / doubled / zeroed on its own (rounded down
+ * per type), then summed. Returns {taken, lines:[{type, amount, mult, taken}]}.
+ */
+export function typedDamage(groups, defenses = {}, { mode = "ap" } = {}) {
+  const lines = (groups ?? []).map(g => {
+    const amount = Math.max(0, Math.floor(Number(g.amount) || 0));
+    const mult = damageMultiplier(g.type, defenses, { mode });
+    return { type: g.type ?? "", amount, mult, taken: Math.floor(amount * mult) };
+  });
+  return { taken: lines.reduce((a, l) => a + l.taken, 0), lines };
+}
+
 /** Sum of parts once their dice results are known: parts[i].rolled (normal) and parts[i].critRolled. */
 export function damageTotal(parts) {
   return parts.reduce((a, p) => a + (p.rolled ?? 0) + (p.critRolled ?? 0) + (p.critFlat ?? 0), 0);
@@ -300,8 +331,20 @@ export function listCovers(list, dtype) {
  * Such a type is shown with a warning and neither resists nor is resisted until the GM assigns an element.
  */
 export function isUnassignedType(key, mode) {
-  const k = norm(key);
-  return mode === "turm" && !!k && !(k in ELEMENTS);
+  return isUnassignedKey(key);
+}
+
+/**
+ * Mode "turm": mark imported damage types as "not assigned" ("?fire"). Every key that is no element and not marked yet
+ * gets the prefix: resistances, immunities, vulnerabilities and the entries' dmgType of an NPC system object.
+ * Mode "ap" keeps D&D types 1:1. Mutates and returns `sys`.
+ */
+export function markUnassignedTypes(sys, mode) {
+  if (mode !== "turm" || !sys) return sys;
+  const mark = (k) => { const s = String(k ?? "").trim(); return !s || isUnassignedKey(s) || (s.toLowerCase() in ELEMENTS) ? s : UNASSIGNED_PREFIX + s; };
+  for (const kind of ["resistances", "immunities", "vulnerabilities"]) if (Array.isArray(sys[kind])) sys[kind] = sys[kind].map(mark);
+  if (Array.isArray(sys.entries)) for (const e of sys.entries) if (e && typeof e === "object" && e.dmgType) e.dmgType = mark(e.dmgType);
+  return sys;
 }
 
 /**

@@ -201,6 +201,7 @@ export function convertAppExport(data) {
     system: {
       abil: ["str", "dex", "fin", "con", "int", "wis", "cha"].includes(w.abil) ? w.abil : "str",
       dice: String(w.dice ?? "1d8"), dtype: w.dtype === "macht" ? "arch" : String(w.dtype ?? "slashing"),
+      dice2: String(w.dice2 ?? ""), type2: w.type2 === "macht" ? "arch" : String(w.type2 ?? ""),
       bonus: i(w.bonus), prof: w.prof !== false, equipped: !!w.equipped, notes: String(w.notes ?? ""),
       reach: Number(w.reach) > 0 ? i(w.reach) : 5
     }

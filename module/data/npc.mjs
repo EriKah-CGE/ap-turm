@@ -10,7 +10,7 @@
 import { mod } from "../rules.mjs";
 import { exhaustionLevel, exhaustedSpeed } from "../conditions.mjs";
 import { emptyEntry, parseEntry } from "../statblock.mjs";
-import { isUnassignedType } from "../rolls.mjs";
+import { isUnassignedType, markUnassignedTypes } from "../rolls.mjs";
 
 const { SchemaField, NumberField, StringField, ArrayField, HTMLField, BooleanField, TypedObjectField } = foundry.data.fields;
 
@@ -28,6 +28,9 @@ export class NpcData extends foundry.abstract.TypeDataModel {
   static defineSchema() {
     return {
       mode: new StringField({ required: true, initial: "turm", choices: ["ap", "turm"] }),
+      // true = "not assigned" damage types carry the prefix "?" (1.3.0). Older stored data in mode turm treated every
+      // non-element key as not assigned; migrateData marks those once (see markUnassignedTypes).
+      typeMarks: new BooleanField({ initial: true }),
       // what players see instead of the name (chat cards, tracker, tooltip); empty = the real name
       displayName: str(),
       typeLine: str(),
@@ -124,6 +127,11 @@ export class NpcData extends foundry.abstract.TypeDataModel {
       }
     }
     delete source.attacks; delete source.traits; delete source.actions;
+    // stored data from before 1.3.0 (full source: has "mode", lacks "typeMarks"): mode turm marks non-element keys
+    if ("mode" in source && source.typeMarks === undefined) {
+      markUnassignedTypes(source, source.mode);
+      source.typeMarks = true;
+    }
     return super.migrateData(source);
   }
 

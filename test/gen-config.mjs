@@ -48,8 +48,34 @@ export function findShopItem(id){for(const c in SHOP_DATA){const f=SHOP_DATA[c].
 export function damageTypeChoices(mode){
   return mode==="turm" ? Object.fromEntries(Object.keys(ELEMENTS).map(k=>[k,ELEMENTS[k].l])) : {...DAMAGE_TYPES};
 }
-export function damageTypeLabel(key){ return ELEMENTS[key]?.l ?? DAMAGE_TYPES[key] ?? (key ?? ""); }
-export function damageTypeColor(key){ return ELEMENTS[key]?.c ?? ""; }
+export function damageTypeLabel(key){ const k=baseTypeKey(key); return ELEMENTS[k]?.l ?? DAMAGE_TYPES[k] ?? k; }
+export function damageTypeColor(key){ return ELEMENTS[baseTypeKey(key)]?.c ?? ""; }
+
+/* ---------- "not assigned" (statblock / dnd5e import in mode turm) ----------
+ * An imported type the GM has not decided on yet is stored with the prefix "?" ("?fire"). It never resists and is
+ * never resisted. Every key without the prefix is a real type, D&D type or element, in both modes. */
+export const UNASSIGNED_PREFIX="?";
+export function isUnassignedKey(key){ return String(key??"").startsWith(UNASSIGNED_PREFIX); }
+export function baseTypeKey(key){ const s=String(key??""); return s.startsWith(UNASSIGNED_PREFIX)?s.slice(1):s; }
+
+/* ---------- weapons, NPC actions, item defenses (rule from the user, 1.3.0) ----------
+ * Mode "turm": both lists, grouped ("Damage types" = DAMAGE_TYPES, "Elements" = ELEMENTS); mode "ap": DAMAGE_TYPES only.
+ * res / eleDmg / changeEle / spell editor keep damageTypeChoices (turm -> elements). */
+export function damageTypeGroups(mode){
+  const dnd={label:"Damage types",options:Object.entries(DAMAGE_TYPES).map(([value,label])=>({value,label}))};
+  if(mode!=="turm")return [dnd];
+  return [dnd,{label:"Elements",options:Object.keys(ELEMENTS).map(k=>({value:k,label:ELEMENTS[k].l}))}];
+}
+/** Grouped select data: {extra: options before the groups (none / current foreign or unassigned value), groups}. */
+export function damageTypeGroupOptions(mode,current,{none=false,noneLabel="— none —"}={}){
+  const cur=String(current??"");
+  const groups=damageTypeGroups(mode).map(g=>({label:g.label,options:g.options.map(o=>({...o,selected:o.value===cur}))}));
+  const known=groups.some(g=>g.options.some(o=>o.value===cur));
+  const extra=[];
+  if(none)extra.push({value:"",label:noneLabel,selected:!cur});
+  if(cur&&!known)extra.push({value:cur,label:damageTypeLabel(cur)+(isUnassignedKey(cur)?" (not assigned)":""),selected:true,foreign:true});
+  return {extra,groups};
+}
 /** Choices for a select: current mode's list plus the current value if it comes from the other mode. */
 export function damageTypeOptions(mode, current){
   const choices=damageTypeChoices(mode);
@@ -58,7 +84,7 @@ export function damageTypeOptions(mode, current){
   return out;
 }
 
-export const AP_TURM={PREREQS,SELECTORS,SHOP_DATA,ARMOR_WEAPON_PROFS,ABILITIES,ABBR,SKILLS,DAMAGE_TYPES,CREATURE_TYPES,FIGHT_STYLES,WEAPONS,DMG_SHORT,HIT_DICE,WEP_ABIL,ARMORS,ELEMENTS,RECHARGE,FEAT_EXTRA,TOWER_CARRY_LIMIT,CRYSTAL_LIMIT,CURRENCIES,MODES,SPELL_LEVELS,GEAR_ORIGINS,WEAPON_ABILITY_LABELS,findShopItem,damageTypeChoices,damageTypeLabel,damageTypeColor,damageTypeOptions};
+export const AP_TURM={PREREQS,SELECTORS,SHOP_DATA,ARMOR_WEAPON_PROFS,ABILITIES,ABBR,SKILLS,DAMAGE_TYPES,CREATURE_TYPES,FIGHT_STYLES,WEAPONS,DMG_SHORT,HIT_DICE,WEP_ABIL,ARMORS,ELEMENTS,RECHARGE,FEAT_EXTRA,TOWER_CARRY_LIMIT,CRYSTAL_LIMIT,CURRENCIES,MODES,SPELL_LEVELS,GEAR_ORIGINS,WEAPON_ABILITY_LABELS,findShopItem,damageTypeChoices,damageTypeLabel,damageTypeColor,damageTypeOptions,damageTypeGroups,damageTypeGroupOptions,isUnassignedKey,baseTypeKey,UNASSIGNED_PREFIX};
 export default AP_TURM;
 `;
 fs.writeFileSync(new URL("../module/config.mjs", import.meta.url), out);

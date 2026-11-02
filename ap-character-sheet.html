@@ -679,6 +679,19 @@ function hitDieMax(){return hitDie().dice.reduce((a,b)=>a+b,0);}
 /* würfelt den aktuellen Trefferwürfel, 1en je Teilwürfel neu */
 function rollHitDie(){return hitDie().dice.reduce((sum,d)=>{let r;do{r=1+Math.floor(Math.random()*d);}while(r===1);return sum+r;},0);}
 function newWeapon(name){return {id:"w"+Date.now().toString(36)+Math.random().toString(36).slice(2,6),name:name||"New Weapon",abil:"str",dice:"1d8",dtype:"slashing",bonus:0,prof:true,equipped:false,notes:""};}
+/* Weapon damage types (1.3.0): mode turm offers D&D damage types and elements as two groups, mode ap only D&D types.
+   A stored value outside both lists stays selectable as the first option. */
+function weaponTypeOptions(sel,{none=false}={}){
+  const o=(k,l)=>`<option value="${k}" ${sel===k?"selected":""}>${escapeHtml(l)}</option>`;
+  const dnd=Object.keys(DAMAGE_TYPES).map(k=>o(k,DAMAGE_TYPES[k])).join("");
+  const known=!!(DAMAGE_TYPES[sel]||(isTurm()&&ELEMENTS[sel]));
+  let out=none?`<option value="" ${!sel?"selected":""}>— same as first line —</option>`:"";
+  if(sel&&!known)out+=`<option value="${escapeHtml(sel)}" selected>${escapeHtml(ELEMENTS[sel]?ELEMENTS[sel].l:sel)}</option>`;
+  if(!isTurm())return out+dnd;
+  return out+`<optgroup label="Damage types">${dnd}</optgroup><optgroup label="Elements">${Object.keys(ELEMENTS).map(k=>o(k,ELEMENTS[k].l)).join("")}</optgroup>`;
+}
+/* type label as shown in the weapon line: element name (coloured) or the D&D key */
+function dmgTypeSpan(t){return `<span class="dt" style="${ELEMENTS[t]?`color:${ELEMENTS[t].c}`:""}">${ELEMENTS[t]?ELEMENTS[t].l:escapeHtml(t||"")}</span>`;}
 const WEP_ABIL={str:"STR",dex:"DEX",con:"CON",int:"INT",wis:"WIS",cha:"CHA",fin:"FIN"};
 function shortRest(){
   let n=0;(S.items||[]).forEach(it=>{if((parseInt(it.charges)||0)>0&&it.recharge==="short"&&(it.used||0)>0){it.used=0;n++;}});
@@ -899,7 +912,7 @@ function renderOverview(){
       <td class="wnm"><input data-wf="name" data-wid="${w.id}" value="${escapeHtml(w.name)}" placeholder="Weapon name"></td>
       <td class="wpr"><span class="profchip ${w.prof?'on':''}" data-wprof="${w.id}" title="Proficient?">${w.prof?'✓':'–'}</span><span class="abchip" data-wabil="${w.id}" title="Attack ability">${WEP_ABIL[w.abil]||w.abil}</span></td>
       <td class="num">${fmtMod(st.atk)}</td>
-      <td class="wdm">${st.dmg}${extraDmg} <span class="dt" style="${ELEMENTS[w.dtype]?`color:${ELEMENTS[w.dtype].c}`:""}">${ELEMENTS[w.dtype]?ELEMENTS[w.dtype].l:w.dtype}</span></td>
+      <td class="wdm">${st.dmg} ${dmgTypeSpan(w.dtype)}${(w.dice2||"").trim()?` + ${escapeHtml(w.dice2.trim())} ${dmgTypeSpan(w.type2||w.dtype)}`:""}${extraDmg}</td>
       <td class="wed"><button class="wbtn" data-wedit="${w.id}">✎</button></td>
     </tr>`;
   }).join("");
@@ -1224,13 +1237,12 @@ function editSpell(id){
 function editWeapon(id){
   const w=S.weapons.find(x=>x.id===id); if(!w) return;
   const abilOpts=[["str","Strength"],["dex","Dexterity"],["fin","Finesse (best of STR/DEX)"],["con","Constitution"],["int","Intelligence"],["wis","Wisdom"],["cha","Charisma"]].map(([k,v])=>`<option value="${k}" ${w.abil===k?"selected":""}>${v}</option>`).join("");
-  const dtOpts=(S.mode==="turm"
-    ? ((ELEMENTS[w.dtype]?"":`<option value="${w.dtype}" selected>${w.dtype}</option>`)+Object.keys(ELEMENTS).map(k=>`<option value="${k}" ${w.dtype===k?"selected":""}>${ELEMENTS[k].l}</option>`).join(""))
-    : ((DMG_SHORT[w.dtype]?"":`<option value="${w.dtype}" selected>${ELEMENTS[w.dtype]?ELEMENTS[w.dtype].l:w.dtype}</option>`)+Object.keys(DMG_SHORT).map(k=>`<option value="${k}" ${w.dtype===k?"selected":""}>${DAMAGE_TYPES[k]||k}</option>`).join("")));
+  const dtOpts=weaponTypeOptions(w.dtype);
   openModal(`<h3>Edit Weapon</h3>
     <label>Name</label><input type="text" id="w-name" value="${escapeHtml(w.name)}">
     <label>Damage dice</label><input type="text" id="w-dice" value="${escapeHtml(w.dice)}" placeholder="1d8 / 2d6 / 1d10">
     <label>Damage type</label><select id="w-dtype">${dtOpts}</select>
+    <label>Second damage (optional)</label><div style="display:flex;gap:6px"><input type="text" id="w-dice2" value="${escapeHtml(w.dice2||"")}" placeholder="e.g. 1d6" style="flex:0 0 90px"><select id="w-type2" style="flex:1">${weaponTypeOptions(w.type2||"",{none:true})}</select></div>
     <label>Notes / special effects</label><textarea id="w-notes" class="ta" style="min-height:52px" placeholder="z. B. bei Crit: Ziel brennt…">${escapeHtml(w.notes||"")}</textarea>
     <label>Attack ability</label><select id="w-abil">${abilOpts}</select>
     <label>Magic bonus (+X)</label><input type="text" id="w-bonus" value="${Number(w.bonus)||0}">
@@ -1242,6 +1254,8 @@ function editWeapon(id){
     w.name=document.getElementById("w-name").value.trim()||"Weapon";
     w.dice=document.getElementById("w-dice").value.trim();
     w.dtype=document.getElementById("w-dtype").value;
+    w.dice2=document.getElementById("w-dice2").value.trim();
+    w.type2=w.dice2?document.getElementById("w-type2").value:"";
     w.notes=(document.getElementById("w-notes").value||"").trim();
     w.abil=document.getElementById("w-abil").value;
     w.bonus=parseInt(document.getElementById("w-bonus").value)||0;

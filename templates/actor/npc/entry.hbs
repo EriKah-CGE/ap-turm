@@ -4,7 +4,7 @@
     <span class="badges">
       {{#if toHitLabel}}<span class="tag">{{toHitLabel}} to hit</span>{{/if}}
       {{#if saveDc}}<span class="tag">DC {{saveDc}} {{saveAbility}}</span>{{/if}}
-      {{#if damage}}{{#if dmgUnassigned}}<a class="tag dmg unassigned" data-action="assignType" data-kind="entry" data-index="{{index}}" title="Imported D&D type, no element yet: click to choose one">{{damage}} {{dmgTypeLabel}} → assign element</a>{{else}}<span class="tag dmg" style="{{#if dmgColor}}--el:{{dmgColor}}{{/if}}">{{damage}} {{dmgTypeLabel}}</span>{{/if}}{{/if}}
+      {{#if damage}}{{#if dmgUnassigned}}<a class="tag dmg unassigned" data-action="assignType" data-kind="entry" data-index="{{index}}" title="Imported type, not assigned yet: click to choose a damage type or element">{{damage}} {{dmgTypeLabel}} → assign type</a>{{else}}<span class="tag dmg" style="{{#if dmgColor}}--el:{{dmgColor}}{{/if}}">{{damage}} {{dmgTypeLabel}}</span>{{/if}}{{/if}}
       {{#if range}}<span class="tag dim">{{range}}</span>{{/if}}
       {{#if area}}<span class="tag dim">{{area.label}}</span>{{/if}}
       {{#if recharge}}<a class="tag rc {{#if rechargeUsed}}used{{/if}}" data-action="entryRecharge" title="Click: toggle spent / available{{#if rechargeFrom}} (shared with {{rechargeFrom}}){{/if}}">Recharge {{recharge}}{{#if rechargeFrom}} · {{rechargeFrom}}{{/if}}{{#if rechargeUsed}} · verbraucht{{/if}}</a>{{/if}}

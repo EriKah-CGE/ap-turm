@@ -10,7 +10,12 @@
   <div class="apt-card-target apt-card-def">
     <b>{{{target.nameHtml}}}</b>
     <span class="chips">{{#each target.chips}}<span class="tag def {{#if hit}}hit{{/if}} {{#if unassigned}}unassigned{{/if}}" style="{{#if color}}--el:{{color}}{{/if}}"><small>{{abbr}}</small> {{label}}</span>{{else}}<span class="none">no resistances</span>{{/each}}</span>
+    {{#if target.multi}}
+    <span class="lines">{{#each target.lines}}<span class="mult {{#if (eq mult 1)}}{{else}}act{{/if}}"><span style="{{#if color}}color:{{color}}{{/if}}">{{type}}</span> {{amount}} {{label}}{{#if reason}} ({{reason}}){{/if}} = {{taken}}</span>{{/each}}</span>
+    <span class="mult {{#if target.act}}act{{/if}}">Total {{target.taken}}</span>
+    {{else}}
     <span class="mult {{#if (eq target.mult 1)}}{{else}}act{{/if}}">{{target.label}}{{#if target.reason}} ({{target.reason}}){{/if}}</span>
+    {{/if}}
   </div>
   {{/if}}
   {{#each warnings}}<div class="apt-card-warn">{{this}}</div>{{/each}}

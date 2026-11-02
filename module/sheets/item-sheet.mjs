@@ -1,7 +1,7 @@
 /**
  * Item sheet (weapon / spell / feat / gear), editable. Fields mirror the app's edit modals.
  */
-import { ABILITIES, ABBR, RECHARGE, GEAR_ORIGINS, WEAPON_ABILITY_LABELS, FEAT_EXTRA, SPELL_LEVELS, damageTypeOptions } from "../config.mjs";
+import { ABILITIES, ABBR, RECHARGE, GEAR_ORIGINS, WEAPON_ABILITY_LABELS, FEAT_EXTRA, SPELL_LEVELS, damageTypeOptions, damageTypeGroupOptions } from "../config.mjs";
 
 import { SheetSizeMixin } from "./sizing.mjs";
 import { saveToLibrary } from "../library.mjs";
@@ -54,8 +54,10 @@ export class ApTurmItemSheet extends SheetSizeMixin(HandlebarsApplicationMixin(I
       isTurm, pb: actor?.system.pb ?? 2
     };
     if (ctx.isWeapon) {
-      // ap: D&D damage types, turm: elements; a value stored under the other mode stays selectable
-      ctx.dtypeOptions = damageTypeOptions(mode, sys.dtype);
+      // ap: D&D damage types; turm: D&D damage types and elements as two groups (1.3.0); other values stay selectable
+      ctx.dtypeGroups = damageTypeGroupOptions(mode, sys.dtype);
+      ctx.type2Groups = damageTypeGroupOptions(mode, sys.type2, { none: true, noneLabel: "— same as first line —" });
+      ctx.grouped = isTurm;
       ctx.abilOptions = opt(WEAPON_ABILITY_LABELS, sys.abil);
     }
     if (ctx.isSpell) {

@@ -680,22 +680,34 @@ ok("statblock entries: regex extraction (to hit, DC, damage, recharge, uses, cos
   assert.deepEqual(statblock.parseSkills("Animal Handling +4, Sleight of Hand -1"), { animalhandling: 4, sleightofhand: -1 });
   assert.equal(statblock.formatSkills({ animalhandling: 4, sleightofhand: -1 }), "Animal Handling +4, Sleight of Hand -1");
   assert.equal(statblock.parseConditionList("Fire; Frightened, Poisoned"), "Frightened, Poisoned");
-  // damage types are never translated; turm mode treats D&D words as "not assigned" (no resistance until assigned)
+  // damage types are never translated; a turm-mode import marks D&D words "not assigned" ("?cold": no resistance until
+  // the GM picks a type). Without the mark a D&D type is a real type in both modes (1.3.0).
   assert.equal(statblock.damageKey("Cold"), "cold");
-  assert.equal(rolls.isUnassignedType("cold", "turm"), true); assert.equal(rolls.isUnassignedType("cold", "ap"), false);
+  assert.equal(rolls.isUnassignedType("?cold", "turm"), true); assert.equal(rolls.isUnassignedType("cold", "turm"), false);
+  assert.equal(rolls.isUnassignedType("cold", "ap"), false);
   assert.equal(rolls.isUnassignedType("eis", "turm"), false); assert.equal(rolls.isUnassignedType("", "turm"), false);
+  const marked = rolls.markUnassignedTypes({ resistances: ["cold", "eis", "?fire"], immunities: [], vulnerabilities: ["Feuer"], entries: [{ dmgType: "piercing" }, { dmgType: "" }] }, "turm");
+  assert.deepEqual([marked.resistances, marked.vulnerabilities, marked.entries.map(e => e.dmgType)], [["?cold", "eis", "?fire"], ["Feuer"], ["?piercing", ""]]);
+  assert.deepEqual(rolls.markUnassignedTypes({ resistances: ["cold"] }, "ap").resistances, ["cold"]);
+  assert.equal(cfg.damageTypeLabel("?cold"), "Cold");
   // defense chips + verdict for the damage card (why halved / doubled / zeroed)
   const v1 = rolls.defenseVerdict("eis", { resistances: ["erz"], immunities: ["eis"], vulnerabilities: ["feuer"] }, { mode: "turm" });
   assert.deepEqual([v1.mult, v1.label, v1.reason], [0, "× 0", "IMM Eis"]);
   assert.deepEqual(v1.chips.map(c => [c.abbr, c.label, c.hit, c.unassigned]), [["RES", "Erz/Machina", false, false], ["IMM", "Eis", true, false], ["VUL", "Feuer", false, false]]);
   const v2 = rolls.defenseVerdict("fire", { resistances: ["fire"] }, { mode: "ap" });
   assert.deepEqual([v2.mult, v2.label, v2.reason], [0.5, "× ½", "RES Fire"]);
-  const v3 = rolls.defenseVerdict("cold", { immunities: ["cold"] }, { mode: "turm" });
-  assert.deepEqual([v3.mult, v3.label, v3.reason, v3.chips[0].unassigned, v3.chips[0].hit], [1, "× 1", "type not assigned", true, false]);
+  // "not assigned" (imported, prefix "?") never resists and is never resisted; a chosen D&D type counts in turm mode too
+  const v3 = rolls.defenseVerdict("cold", { immunities: ["?cold"] }, { mode: "turm" });
+  assert.deepEqual([v3.mult, v3.label, v3.reason, v3.chips[0].unassigned, v3.chips[0].hit], [1, "× 1", "", true, false]);
+  const v3b = rolls.defenseVerdict("?cold", { immunities: ["cold"] }, { mode: "turm" });
+  assert.deepEqual([v3b.mult, v3b.reason], [1, "type not assigned"]);
+  assert.deepEqual(rolls.defenseVerdict("cold", { immunities: ["cold"] }, { mode: "turm" }).mult, 0);
   assert.deepEqual(rolls.defenseVerdict("feuer", { vulnerabilities: ["feuer"] }, { mode: "turm" }).label, "× 2");
   assert.deepEqual(rolls.defenseVerdict("feuer", {}, { mode: "turm" }), { mult: 1, label: "× 1", reason: "", chips: [] });
   assert.equal(rolls.damageMultiplier("cold", { immunities: ["cold"] }, { mode: "ap" }), 0);
-  assert.equal(rolls.damageMultiplier("cold", { immunities: ["cold"] }, { mode: "turm" }), 1);
+  assert.equal(rolls.damageMultiplier("cold", { immunities: ["cold"] }, { mode: "turm" }), 0);
+  assert.equal(rolls.damageMultiplier("cold", { immunities: ["?cold"] }, { mode: "turm" }), 1);
+  assert.equal(rolls.damageMultiplier("?cold", { immunities: ["cold"] }, { mode: "turm" }), 1);
   assert.equal(rolls.damageMultiplier("eis", { immunities: ["cold"] }, { mode: "turm" }), 1);
   assert.equal(rolls.damageMultiplier("eis", { immunities: ["eis"] }, { mode: "turm" }), 0);
   assert.equal(rolls.damageMultiplier("eis", { resistances: ["eis", "cold"] }, { mode: "turm" }), 0.5);
@@ -731,13 +743,15 @@ ok("statblock parser: Adult Silver Dragon (GM fixture) — header fields, legend
   const leg = p.entries.filter(e => e.section === "legendary");
   assert.deepEqual(leg.map(e => [e.name, e.legendaryCost]), [["Detect", 1], ["Tail Attack", 1], ["Wing Attack", 2]]);
   assert.deepEqual(pickE(byName(p, "Wing Attack")), { section: "legendary", toHit: null, saveDc: 21, saveAbility: "dex", damage: "2d6 + 8", dmgType: "bludgeoning", range: "", recharge: "", uses: 0, per: "", cost: 2 });
-  // actor update: turm mode keeps "cold" and reports it as not assigned
+  // actor update: the parser keeps "cold"; the sheet marks it "not assigned" in turm mode (prefix "?"), ap keeps it 1:1
   const u = statblock.statblockToUpdate(p);
   assert.deepEqual(u.system.immunities, ["cold"]); assert.equal(u.system.speeds, "Fly 80"); assert.equal(u.system.entries.length, 12);
   assert.equal(u.system.legendary.resist.max, 3); assert.equal(u.system.legendary.actions.max, 3);
-  const unassigned = [...u.system.immunities, ...u.system.entries.map(e => e.dmgType)].filter(k => rolls.isUnassignedType(k, "turm"));
-  assert.deepEqual(unassigned, ["cold", "piercing", "slashing", "bludgeoning", "cold", "bludgeoning"]);   // 6 tags to assign by hand
-  assert.deepEqual([...u.system.immunities, ...u.system.entries.map(e => e.dmgType)].filter(k => rolls.isUnassignedType(k, "ap")), []);
+  const uAp = rolls.markUnassignedTypes(structuredClone(u.system), "ap");
+  assert.deepEqual([...uAp.immunities, ...uAp.entries.map(e => e.dmgType)].filter(k => rolls.isUnassignedType(k, "ap")), []);
+  const uT = rolls.markUnassignedTypes(structuredClone(u.system), "turm");
+  const unassigned = [...uT.immunities, ...uT.entries.map(e => e.dmgType)].filter(k => rolls.isUnassignedType(k, "turm"));
+  assert.deepEqual(unassigned, ["?cold", "?piercing", "?slashing", "?bludgeoning", "?cold", "?bludgeoning"]);   // 6 tags to assign by hand
 });
 
 ok("statblock parser: the GM's own statblocks (test/fixtures/gm/*.txt) — every line survives as a field or entry", () => {
@@ -2867,15 +2881,16 @@ ok("dnd5e monsters: all field groups, tags, legendary counters (Adult Red Dragon
   assert.deepEqual(s.saves, { str: null, dex: 6, con: 13, int: null, wis: 7, cha: 11 });
   assert.deepEqual(s.skills, { perception: 13, stealth: 6 });
   assert.equal(s.senses, "Blindsight 60 ft., Darkvision 120 ft."); assert.equal(s.languages, "Common, Draconic");
-  assert.deepEqual([s.resistances, s.immunities, s.vulnerabilities], [[], ["fire"], []]);
+  assert.deepEqual([s.resistances, s.immunities, s.vulnerabilities], [[], ["?fire"], []]);   // turm: not assigned yet
+  assert.equal(s.typeMarks, true);
   assert.deepEqual(s.legendary, { resist: { value: 3, max: 3 }, actions: { value: 3, max: 3 } });
   assert.equal(s.statblock, ""); assert.match(s.notes, /Imported from SRD 2014/); assert.match(s.notes, /19d12 \+ 133/);
   assert.equal(m.prototypeToken.width, 3); assert.equal(m.prototypeToken.actorLink, false);
   const e = (n) => s.entries.find(x => x.name === n);
-  assert.deepEqual(sel5e(e("Bite"), ["section", "toHit", "range", "damage", "dmgType"]), { section: "actions", toHit: 14, range: "10 ft", damage: "2d10 + 8 + 2d6", dmgType: "piercing" });
+  assert.deepEqual(sel5e(e("Bite"), ["section", "toHit", "range", "damage", "dmgType"]), { section: "actions", toHit: 14, range: "10 ft", damage: "2d10 + 8 + 2d6", dmgType: "?piercing" });
   assert.equal(e("Bite").text, "Melee Weapon Attack: +14 to hit, reach 10 ft., one target. Hit: 19 (2d10 + 8) Piercing damage plus 7 (2d6) Fire damage.");
   assert.deepEqual(sel5e(e("Fire Breath"), ["section", "saveDc", "saveAbility", "damage", "dmgType", "areaShape", "areaSize", "recharge"]),
-    { section: "actions", saveDc: 21, saveAbility: "dex", damage: "18d6", dmgType: "fire", areaShape: "cone", areaSize: 60, recharge: "5-6" });
+    { section: "actions", saveDc: 21, saveAbility: "dex", damage: "18d6", dmgType: "?fire", areaShape: "cone", areaSize: 60, recharge: "5-6" });
   assert.match(e("Fire Breath").text, /DC 21 Dexterity saving throw, taking 63 \(18d6\) Fire damage/);
   assert.deepEqual(sel5e(e("Wing Attack"), ["section", "legendaryCost", "saveDc", "saveAbility"]), { section: "legendary", legendaryCost: 2, saveDc: 22, saveAbility: "dex" });
   assert.equal(e("Detect").legendaryCost, 1); assert.equal(e("Legendary Resistance").section, "traits");
@@ -2910,16 +2925,16 @@ ok("dnd5e monsters: mode rule (ap 1:1, turm not assigned), CR -> PB fallback, en
   const src = fx5e("monster-adult-red-dragon-2014");
   const turm = d5.convertMonster(src, { mode: "turm" }), ap = d5.convertMonster(src, { mode: "ap" });
   assert.equal(turm.system.mode, "turm"); assert.equal(ap.system.mode, "ap");
-  // the keys are the same; the mode decides: turm -> "not assigned" (no effect until the GM maps it), ap -> D&D type
-  assert.deepEqual(turm.system.immunities, ["fire"]); assert.deepEqual(ap.system.immunities, ["fire"]);
-  assert.equal(rolls.isUnassignedType("fire", "turm"), true); assert.equal(rolls.isUnassignedType("fire", "ap"), false);
-  assert.equal(rolls.damageMultiplier("fire", { immunities: ["fire"] }, { mode: "ap" }), 0);
-  assert.equal(rolls.damageMultiplier("fire", { immunities: ["fire"] }, { mode: "turm" }), 1);
-  assert.equal(turm.system.entries.find(e => e.name === "Bite").dmgType, "piercing");
+  // turm -> "not assigned" ("?fire": no effect until the GM picks a type), ap -> the D&D type 1:1
+  assert.deepEqual(turm.system.immunities, ["?fire"]); assert.deepEqual(ap.system.immunities, ["fire"]);
+  assert.equal(rolls.isUnassignedType("?fire", "turm"), true); assert.equal(rolls.isUnassignedType("fire", "ap"), false);
+  assert.equal(rolls.damageMultiplier("fire", { immunities: ap.system.immunities }, { mode: "ap" }), 0);
+  assert.equal(rolls.damageMultiplier("fire", { immunities: turm.system.immunities }, { mode: "turm" }), 1);
+  assert.equal(turm.system.entries.find(e => e.name === "Bite").dmgType, "?piercing");
   // qualified defenses: the keys plus the qualifier as note (like the text parser)
   const lichish = structuredClone(src);
   lichish.system.traits.dr = { value: ["bludgeoning", "piercing"], bypasses: ["mgc"], custom: "" };
-  const lm = d5.convertMonster(lichish, {});
+  const lm = d5.convertMonster(lichish, { mode: "ap" });
   assert.deepEqual(lm.system.resistances, ["bludgeoning", "piercing"]);
   assert.equal(lm.system.defenseNote, "Resistances: Bludgeoning, Piercing from nonmagical attacks");
   // PB: from the data, else from the CR table
@@ -3262,6 +3277,74 @@ ok("spell rule v5: spellslot = spell purchase, learn = extra known spell, prereq
   assert.deepEqual(convertAppExport({ ...old, v: 5 }).system.bought, old.bought);
   // migration step registered for 1.3.0
   assert.deepEqual(migration.stepsFor("1.2.1", "1.3.0").map(x => x.version), ["1.3.0"]);
+});
+
+/* Minimal Foundry stub so the data models' static migrateData can run in Node (no schema is built). */
+async function loadDataModels() {
+  if (!globalThis.foundry) {
+    class Field { constructor(...a) { this.args = a; } }
+    const fields = new Proxy({}, { get: () => Field });
+    globalThis.foundry = { data: { fields }, abstract: { TypeDataModel: class { static migrateData(s) { return s; } } } };
+  }
+  const items = await import("../module/data/items.mjs");
+  const npcM = await import("../module/data/npc.mjs");
+  return { ...items, ...npcM };
+}
+
+await okAsync("weapon damage types: both lists in turm mode, second damage line, typed apply, NPC not-assigned marks", async () => {
+  // grouped choices: turm both lists, ap D&D types only
+  assert.deepEqual(cfg.damageTypeGroups("turm").map(g => [g.label, g.options.length]), [["Damage types", 13], ["Elements", 20]]);
+  assert.deepEqual(cfg.damageTypeGroups("ap").map(g => g.label), ["Damage types"]);
+  const go = cfg.damageTypeGroupOptions("turm", "?fire", { none: true });
+  assert.deepEqual(go.extra.map(o => [o.value, o.label, o.selected]), [["", "— none —", false], ["?fire", "Fire (not assigned)", true]]);
+  assert.equal(cfg.damageTypeGroupOptions("turm", "slashing").groups[0].options.find(o => o.selected).value, "slashing");
+  assert.equal(cfg.damageTypeGroupOptions("ap", "feuer").extra[0].label, "Feuer");      // other-mode value stays readable
+  // second line: own part with its own type; crit doubles both, crit max maximizes both, +1d6 Elemental stays the third
+  const S = { ...APP.DEFAULTS(), mode: "turm", earnedAp: 150, abilities: { str: 16, dex: 10, con: 10, int: 10, wis: 10, cha: 10 },
+    bought: { eleDmg: 1 }, choices: { eleDmg: ["blitz"] } };
+  const d = rules.derived(S);
+  const w = { abil: "str", dice: "1d8", dtype: "slashing", dice2: "1d6", type2: "feuer", bonus: 0, prof: true };
+  let dmg = rolls.buildDamage(w, d, S, { crit: false });
+  assert.deepEqual(dmg.parts.map(p => [p.label, p.formula, p.type]), [["Weapon", "1d8 + 3", "slashing"], ["Weapon 2", "1d6", "feuer"], ["Elemental", "1d6", "blitz"]]);
+  dmg = rolls.buildDamage(w, d, S, { crit: true, critMax: false });
+  assert.deepEqual(dmg.parts.map(p => p.critFormula), ["1d8", "1d6", "1d6"]);
+  dmg = rolls.buildDamage(w, d, S, { crit: true, critMax: true });
+  assert.deepEqual(dmg.parts.map(p => p.critFlat), [8, 6, 6]);
+  assert.equal(rolls.buildDamage({ ...w, dice2: "" }, d, S).parts.length, 2);
+  assert.equal(rolls.buildDamage({ ...w, type2: "" }, d, S).parts[1].type, "slashing");   // empty second type = first type
+  // typed apply: 1d8 slashing + 1d6 feuer against fire resistance -> only the second line is halved
+  const parts = rolls.buildDamage({ ...w }, d, { ...S, bought: {} }).parts;
+  parts[0].rolled = 9; parts[1].rolled = 5;
+  const groups = rolls.damageGroups(parts);
+  assert.deepEqual(groups, [{ type: "slashing", amount: 9 }, { type: "feuer", amount: 5 }]);
+  const typed = rolls.typedDamage(groups, { resistances: ["feuer"] }, { mode: "turm" });
+  assert.deepEqual([typed.taken, typed.lines.map(l => [l.type, l.mult, l.taken])], [11, [["slashing", 1, 9], ["feuer", 0.5, 2]]]);
+  // D&D types count in turm mode now (character / item defenses); only "?" types are ignored
+  assert.equal(rolls.typedDamage(groups, { resistances: ["slashing"] }, { mode: "turm" }).taken, 4 + 5);
+  assert.equal(rolls.typedDamage(groups, { resistances: ["?slashing"] }, { mode: "turm" }).taken, 14);
+  assert.equal(rolls.typedDamage([{ type: "fire", amount: 7 }], { immunities: ["fire"] }, { mode: "ap" }).taken, 0);
+  // app: the weapon line shows both lines, the editor offers both groups in turm mode
+  const html = fs.readFileSync(new URL("../ap-character-sheet.html", import.meta.url), "utf8");
+  assert.ok(html.includes('<optgroup label="Damage types">') && html.includes('<optgroup label="Elements">'));
+  assert.ok(html.includes("${(w.dice2||\"\").trim()?` + ${escapeHtml(w.dice2.trim())} ${dmgTypeSpan(w.type2||w.dtype)}`:\"\"}"));
+  // import / export: dice2 + type2 1:1, absent fields stay absent
+  const raw = { ...APP.DEFAULTS(), mode: "turm", weapons: [{ id: "w1", name: "Flammenschwert", abil: "str", dice: "1d8", dtype: "slashing", dice2: "1d6", type2: "feuer", bonus: 1, prof: true, equipped: true, notes: "" },
+    { id: "w2", name: "Dolch", abil: "dex", dice: "1d4", dtype: "piercing", bonus: 0, prof: true, equipped: false, notes: "" }] };
+  const out = roundTrip(raw);
+  assert.deepEqual(out.weapons.map(x => [x.dice2, x.type2]), [["1d6", "feuer"], [undefined, undefined]]);
+  assert.deepEqual(convertAppExport(raw).items.filter(i => i.type === "weapon").map(i => [i.system.dice2, i.system.type2]), [["1d6", "feuer"], ["", ""]]);
+  // data models: old weapon -> defaults for the new fields, old turm NPC -> D&D keys marked once, new data untouched
+  const DM = await loadDataModels();
+  const ow = DM.WeaponData.migrateData({ dice: "1d8", dtype: "macht" });
+  assert.deepEqual([ow.dtype, ow.dice2, ow.type2], ["arch", undefined, undefined]);   // schema initial "" fills missing fields
+  const oldNpc = DM.NpcData.migrateData({ mode: "turm", resistances: ["fire", "eis"], immunities: [], vulnerabilities: [], entries: [{ name: "Bite", section: "actions", dmgType: "piercing" }] });
+  assert.deepEqual([oldNpc.resistances, oldNpc.entries[0].dmgType, oldNpc.typeMarks], [["?fire", "eis"], "?piercing", true]);
+  const newNpc = DM.NpcData.migrateData({ mode: "turm", typeMarks: true, resistances: ["fire"], entries: [{ name: "Claw", section: "actions", dmgType: "slashing" }] });
+  assert.deepEqual([newNpc.resistances, newNpc.entries[0].dmgType], [["fire"], "slashing"]);
+  const apNpc = DM.NpcData.migrateData({ mode: "ap", resistances: ["fire"], entries: [] });
+  assert.deepEqual([apNpc.resistances, apNpc.typeMarks], [["fire"], true]);
+  const partial = DM.NpcData.migrateData({ resistances: ["fire"] });                     // token delta: no mode -> untouched
+  assert.deepEqual([partial.resistances, partial.typeMarks], [["fire"], undefined]);
 });
 
 console.log(`All ${passed} test groups passed.`);

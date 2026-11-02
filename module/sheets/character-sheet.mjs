@@ -214,8 +214,9 @@ export class ApTurmCharacterSheet extends SheetSizeMixin(HandlebarsApplicationMi
       const dt = w.system.dtype;
       return {
         id: w.id, name: w.name, equipped: w.system.equipped, prof: w.system.prof, abil: WEP_ABIL[w.system.abil] || w.system.abil,
-        atk: fmtMod(st.atk), dmg: st.dmg + extraDmg,
-        dtype: damageTypeLabel(dt), dtypeColor: damageTypeColor(dt), notes: w.system.notes
+        atk: fmtMod(st.atk), dmg: st.dmg, extraDmg,
+        dtype: damageTypeLabel(dt), dtypeColor: damageTypeColor(dt), notes: w.system.notes,
+        dice2: String(w.system.dice2 ?? "").trim(), type2: damageTypeLabel(w.system.type2 || dt), type2Color: damageTypeColor(w.system.type2 || dt)
       };
     });
     const spells = actor.items.filter(i => i.type === "spell").sort((a, b) => (a.system.lvl - b.system.lvl) || a.name.localeCompare(b.name)).map(s => ({

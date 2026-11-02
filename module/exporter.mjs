@@ -87,7 +87,9 @@ export function exportAppData({ name, system: sys, items, dataVersion = 5 }) {
       id: appId(w, "w"), name: w.name, abil: w.system.abil, dice: w.system.dice, dtype: w.system.dtype,
       bonus: n(w.system.bonus), prof: !!w.system.prof, equipped: !!w.system.equipped, notes: w.system.notes ?? "",
       // Foundry only (the app ignores it): a reach other than the default 5 ft survives the round trip
-      ...(n(w.system.reach, 5) !== 5 ? { reach: n(w.system.reach) } : {})
+      ...(n(w.system.reach, 5) !== 5 ? { reach: n(w.system.reach) } : {}),
+      // optional second damage line: only written when set (the app treats a missing field as "none")
+      ...(String(w.system.dice2 ?? "").trim() ? { dice2: String(w.system.dice2).trim(), type2: String(w.system.type2 ?? "") } : {})
     })),
     spells: pick("spell").map(s => ({
       id: appId(s, "s"), lvl: n(s.system.lvl), name: s.name, notes: s.system.notes ?? "", prepared: !!s.system.prepared, elem: s.system.elem ?? ""

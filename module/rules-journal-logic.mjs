@@ -153,10 +153,10 @@ ${table(["Element", "Key", "Colour"], els.map(([k, e]) => [`<span style="display
 <h2>Mode rule</h2>
 ${list([
     `Mode <b>${esc(MODES.ap)}</b>: every damage type choice uses the ${Object.keys(DAMAGE_TYPES).length} D&amp;D damage types (${Object.values(DAMAGE_TYPES).map(esc).join(", ")}).`,
-    `Mode <b>${esc(MODES.turm)}</b>: every damage type choice uses the ${els.length} elements above.`,
-    `This applies to the weapon damage type, Resistance, +1d6 Elemental, Element Swap and the spell editor. Values stored under the other mode stay readable.`,
+    `Mode <b>${esc(MODES.turm)}</b>: Resistance, +1d6 Elemental, Element Swap and the spell editor use the ${els.length} elements above. Weapons, NPC actions and item defenses may use both lists (D&amp;D damage types and elements).`,
+    `Weapons may have a second damage line with its own type; every damage type is checked against resistances on its own. Values stored under the other mode stay readable.`,
     `+1d6 Elemental: the element is chosen at purchase; Element Swap replaces it (the last swap counts). The weapon's own element is not used for it.`,
-    `Statblock import in ${esc(MODES.turm)} mode: D&amp;D types are imported as "unassigned" until the GM sets an element; unassigned types never resist (multiplier × ${mUn}).`
+    `Statblock import in ${esc(MODES.turm)} mode: D&amp;D types are imported as "unassigned" until the GM sets a type; unassigned types never resist (multiplier × ${mUn}).`
   ])}
 <h2>Resistance, immunity, vulnerability</h2>
 ${table(["Target has", "Damage multiplier"], [

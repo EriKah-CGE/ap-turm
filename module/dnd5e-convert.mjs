@@ -11,6 +11,7 @@
  *   computed with dnd5e's own formulas; the proficiency bonus comes from the CR (dnd5e does the same).
  */
 import { pbFromCr } from "./statblock.mjs";
+import { markUnassignedTypes } from "./rolls.mjs";
 import { htmlToText } from "./exporter.mjs";
 
 /* ============================================================
@@ -615,7 +616,7 @@ export function convertMonster(doc, { source = "", mode = "turm", img = null, to
   ].join("");
   const legact = num(sys.resources?.legact?.max, 0), legres = num(sys.resources?.legres?.max, 0);
   const proto = doc.prototypeToken ?? {};
-  return {
+  const out = {
     name: doc.name,
     type: "npc",
     img: img || "icons/svg/mystery-man.svg",
@@ -651,6 +652,10 @@ export function convertMonster(doc, { source = "", mode = "turm", img = null, to
     },
     flags: { "ap-turm": { dnd5e: { source, id: doc._id ?? "", cr: Number(sys.details?.cr) || 0 } } }
   };
+  // mode turm: the D&D types are "not assigned" until the GM decides (prefix "?")
+  markUnassignedTypes(out.system, mode);
+  out.system.typeMarks = true;
+  return out;
 }
 
 /** CR band folder of a creature: "CR 0–4", "CR 5–10", "CR 11–16", "CR 17+". */
