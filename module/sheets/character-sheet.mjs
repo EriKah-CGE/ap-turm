@@ -6,7 +6,7 @@
 import { ABILITIES, ABBR, SKILLS, ELEMENTS, DAMAGE_TYPES, DMG_SHORT, CURRENCIES, ARMOR_WEAPON_PROFS, SHOP_DATA, SELECTORS,
   PREREQS, CREATURE_TYPES, FIGHT_STYLES, WEAPONS, ARMORS, CRYSTAL_LIMIT, TOWER_CARRY_LIMIT, WEP_ABIL, FEAT_EXTRA,
   findShopItem, damageTypeChoices, damageTypeLabel, damageTypeColor } from "../config.mjs";
-import { weaponStats, fmtMod, availableAp, totalAp, computeSpent, shopStatus, hitDieMax, eleElement } from "../rules.mjs";
+import { weaponStats, fmtMod, availableAp, totalAp, computeSpent, shopStatus, hitDieMax, eleElement, abilityBreakdown, itemActive, compactEffects, ITEM_BON } from "../rules.mjs";
 import { importAppJSONIntoActor } from "../importer.mjs";
 import { downloadActorExport } from "../exporter.mjs";
 import { rollAttack, rollDamage, rollCheck, rollInitiative, castSpell, rollHitDie, rollDeathSave, applyHpDelta } from "../chat.mjs";
@@ -69,6 +69,45 @@ export function portraitClick(sheet, ev, target) {
   }
   const { ImagePopout } = foundry.applications.apps;
   return new ImagePopout({ src: actor.img, uuid: actor.uuid, window: { title: actor.name } }).render({ force: true });
+}
+
+/* ---------- items with effects (1.3.0) ---------- */
+
+/** A / D marker data for a skill or save row: the item names go into the tooltip. */
+function adMarks(row) {
+  const adv = row?.adv ?? [], dis = row?.dis ?? [];
+  return { adv: adv.length ? `Advantage: ${adv.join(", ")}` : "", dis: dis.length ? `Disadvantage: ${dis.join(", ")}` : "" };
+}
+
+/** Short text of an item's effects for the inventory row ("+2 STR, Adv Stealth, Res Fire"). */
+export function effectSummary(effects) {
+  const e = compactEffects(effects);
+  if (!e) return "";
+  const out = [];
+  for (const [k, v] of Object.entries(e.bon ?? {})) out.push(`${fmtMod(v)} ${ITEM_BON[k] ?? k}`);
+  for (const [k, v] of Object.entries(e.saveBon ?? {})) out.push(`${fmtMod(v)} ${ABBR[k] ?? k} save`);
+  for (const [k, v] of Object.entries(e.skillBon ?? {})) out.push(`${fmtMod(v)} ${SKILLS[k]?.l ?? k}`);
+  if (e.prof?.skills?.length || e.prof?.saves?.length) out.push(`Prof ${[...(e.prof.skills ?? []).map(k => SKILLS[k]?.l ?? k), ...(e.prof.saves ?? []).map(a => `${ABBR[a] ?? a} save`)].join(", ")}`);
+  for (const [kind, word] of [["adv", "Adv"], ["dis", "Dis"]]) {
+    const x = e[kind]; if (!x) continue;
+    const l = [...(x.skills ?? []).map(k => SKILLS[k]?.l ?? k), ...(x.saves ?? []).map(a => `${ABBR[a] ?? a} save`), ...(x.attack ? ["attacks"] : []), ...(x.init ? ["initiative"] : []), ...(x.death ? ["death saves"] : [])];
+    if (l.length) out.push(`${word} ${l.join(", ")}`);
+  }
+  for (const [kind, word] of [["res", "Res"], ["imm", "Imm"], ["vuln", "Vuln"]]) if (e[kind]?.length) out.push(`${word} ${e[kind].map(damageTypeLabel).join(", ")}`);
+  if (e.senses) out.push(e.senses);
+  return out.join(" · ");
+}
+
+/** Resistances (purchases + items), immunities, vulnerabilities, senses and notes of active items for the overview. */
+function defenseLines(S, d) {
+  const fx = d.itemFx ?? { res: [], imm: [], vuln: [], senses: [], notes: [] };
+  const typed = (list) => list.map(x => ({ label: damageTypeLabel(x.key), src: x.src, color: damageTypeColor(x.key) }));
+  const res = [...(S.choices.res ?? []).map(k => ({ label: damageTypeLabel(k), src: "Resistance (shop)", color: damageTypeColor(k) })), ...typed(fx.res)];
+  const lines = [
+    { label: "Resistances", chips: res }, { label: "Immunities", chips: typed(fx.imm) }, { label: "Vulnerabilities", chips: typed(fx.vuln) }
+  ].filter(l => l.chips.length);
+  const texts = [...fx.senses.map(x => ({ label: "Senses", text: x.text, src: x.src })), ...fx.notes.map(x => ({ label: "Effect", text: x.text, src: x.src }))];
+  return lines.length || texts.length ? { lines, texts } : null;
 }
 
 export class ApTurmCharacterSheet extends SheetSizeMixin(HandlebarsApplicationMixin(ActorSheetV2), "character") {
@@ -197,12 +236,14 @@ export class ApTurmCharacterSheet extends SheetSizeMixin(HandlebarsApplicationMi
     /* overview */
     const abilities = Object.keys(ABILITIES).map(k => ({
       key: k, abbr: ABBR[k], label: ABILITIES[k], base: S.abilities[k], value: d.fin[k], mod: fmtMod(d.mods[k]),
-      save: fmtMod(d.saveData[k].mod), saveProf: d.saveData[k].prof
+      save: fmtMod(d.saveData[k].mod), saveProf: d.saveData[k].prof,
+      // "18 = 16 + 2 Gauntlets of Ogre Power"; A / D markers from active items (name in the tooltip)
+      breakdown: abilityBreakdown(S, k, d), ...adMarks(d.saveData[k])
     }));
     const skills = Object.keys(SKILLS).sort((a, b) => SKILLS[a].l.localeCompare(SKILLS[b].l)).map(k => {
       const s = d.skillData[k];
       let abK = SKILLS[k].a; if (k === "itm" && d.strIntim) abK = "str";
-      return { key: k, label: SKILLS[k].l, abbr: ABBR[abK], mod: fmtMod(s.mod), prof: s.prof, exp: s.exp };
+      return { key: k, label: SKILLS[k].l, abbr: ABBR[abK], mod: fmtMod(s.mod), prof: s.prof, exp: s.exp, ...adMarks(s) };
     });
     // +Nd6 in the chosen element (choices.eleDmg / changeEle); missing pick on old data -> hint
     const eleEl = eleElement(S);
@@ -318,6 +359,8 @@ export class ApTurmCharacterSheet extends SheetSizeMixin(HandlebarsApplicationMi
     /* inventory tab */
     const gearAll = actor.items.filter(i => i.type === "gear").sort((a, b) => a.sort - b.sort).map(g => ({
       id: g.id, name: g.name, qty: g.system.qty, notes: g.system.notes, attuned: g.system.attuned,
+      equipped: g.system.equipped, active: itemActive(g.system), needsAttune: g.system.equipped && g.system.attunement && !g.system.attuned,
+      effectText: effectSummary(g.system.effects),
       charges: g.system.charges, left: g.system.charges - g.system.used, origin: g.system.origin,
       pips: Array.from({ length: g.system.charges }, (_, i) => ({ i: i + 1, used: i < (g.system.used || 0) }))
     }));
@@ -358,6 +401,7 @@ export class ApTurmCharacterSheet extends SheetSizeMixin(HandlebarsApplicationMi
       history: (sys.history ?? []).map(e => ({ kind: e.kind, text: historyText(e), when: e.t ? new Date(e.t).toLocaleString() : "" })),
       historyCap: HISTORY_CAP, historyOpen: this.#historyOpen,
       notices: (this.actor.system.notices ?? []).map(n => ({ date: n.date, text: n.text })),
+      defenses: defenseLines(S, d),
       isGM: game.user.isGM, carryLimit: TOWER_CARRY_LIMIT, carried: carryCount(actor.items), crystalLimit: CRYSTAL_LIMIT, attuned: gearAll.filter(g => g.attuned).length,
       notesEnriched: await foundry.applications.ux.TextEditor.implementation.enrichHTML(sys.notes, { secrets: actor.isOwner, relativeTo: actor })
     });

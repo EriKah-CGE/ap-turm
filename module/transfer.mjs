@@ -13,7 +13,7 @@
  */
 import { CURRENCIES } from "./config.mjs";
 import { socketActions, cardActions, chatDecorators, requestGm } from "./chat.mjs";
-import { saveToLibrary } from "./library.mjs";
+import { saveToLibrary, getLibrary, findByName, libraryData } from "./library.mjs";
 import { STASH_TYPE, STASH_NAME, STASH_IMG, takePlan, takeLine, putLine, stashMode, currencyUpdate } from "./stash-logic.mjs";
 
 const SYSTEM_ID = "ap-turm";
@@ -391,11 +391,26 @@ export async function claimForActor(actor, text, { library = false, by = "" } = 
     await actor.update(currencyUpdate(actor.system.currency, res.amounts));
     return `${who} claims ${res.label}${into}.`;
   }
-  const [created] = await actor.createEmbeddedDocuments("Item", [{
-    name: res.name, type: "gear",
-    system: { qty: res.qty, origin: mode === "turm" ? "tower" : "city" }
-  }]);
-  if (created && library && game.user.isGM) {
+  // an item of the same name in the item library is created from there, with its effects (1.3.0); amount and
+  // origin come from the claim
+  const origin = mode === "turm" ? "tower" : "city";
+  let data = { name: res.name, type: "gear", system: { qty: res.qty, origin } };
+  let fromLibrary = false;
+  try {
+    const pack = getLibrary();
+    if (pack) {
+      const hit = findByName([...(await pack.getIndex())].filter(e => e.type === "gear"), res.name);
+      const doc = hit ? await pack.getDocument(hit._id ?? hit.id) : null;
+      if (doc) {
+        data = libraryData(doc.toObject());
+        data.system = { ...data.system, qty: res.qty, origin };
+        data._stats = { compendiumSource: doc.uuid };
+        fromLibrary = true;
+      }
+    }
+  } catch (err) { console.warn(`${SYSTEM_ID} | claim: library lookup failed`, err); }
+  const [created] = await actor.createEmbeddedDocuments("Item", [data]);
+  if (created && library && !fromLibrary && game.user.isGM) {
     await saveToLibrary(created).catch(err => console.error(`${SYSTEM_ID} | library`, err));
   }
   return `${who} claims ${res.name}${res.qty > 1 ? ` ×${res.qty}` : ""}${into}.`;

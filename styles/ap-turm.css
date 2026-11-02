@@ -1229,3 +1229,21 @@
   /* damage card: one verdict per damage type (weapon line, second line, elemental) */
   .ap-turm-chat .apt-card-def .lines { display: flex; flex-direction: column; gap: 1px; width: 100%; }
 }
+
+@layer system {
+  /* items with effects (1.3.0) */
+  .ap-turm .apt-ad { display: inline-block; margin-left: 4px; padding: 0 3px; border-radius: 3px; font-size: 10px; font-weight: 700; line-height: 14px; cursor: help; }
+  .ap-turm .apt-ad.a { background: #3f7a3a; color: #fff; }
+  .ap-turm .apt-ad.d { background: #9a3a20; color: #fff; }
+  .ap-turm .apt-itemrow .eqdot { flex: none; width: 12px; height: 12px; margin-right: 6px; border-radius: 50%; border: 1.5px solid var(--apt-line, #888); cursor: pointer; align-self: center; }
+  .ap-turm .apt-itemrow .eqdot.on { background: var(--apt-green-br, #5e9e34); border-color: var(--apt-green-br, #5e9e34); }
+  .ap-turm .apt-itemrow .ieffects { display: block; color: var(--apt-green-br, #5e9e34); }
+  .ap-turm .apt-itemrow .ieffects.off { color: var(--apt-ink-dim, #888); text-decoration: line-through; opacity: .8; }
+  .ap-turm .apt-defenses .chips { display: flex; flex-wrap: wrap; gap: 3px; }
+  .ap-turm details.apt-effects { margin-top: 6px; border-top: 1px solid var(--apt-line-soft, rgba(128, 128, 128, .4)); padding-top: 4px; }
+  .ap-turm details.apt-effects > summary { cursor: pointer; font-weight: 700; padding: 3px 0; }
+  .ap-turm details.apt-effects > summary small { font-weight: 400; opacity: .7; margin-left: 6px; }
+  .ap-turm details.apt-effects multi-checkbox { display: flex; flex-wrap: wrap; gap: 2px 10px; font-size: 12px; }
+  .ap-turm details.apt-effects .apt-fxflags { gap: 12px; }
+  .apt-preset-hint { margin: 0 0 6px; font-weight: 600; }
+}

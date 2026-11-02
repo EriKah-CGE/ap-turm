@@ -167,13 +167,14 @@ export const MIGRATIONS = [
  * Spell rule v5 for every character actor that does not carry flags["ap-turm"].dataVersion >= 5 yet: the first
  * "learn" purchase of each rank becomes a "spellslot" purchase (no AP refund or charge). Every converted actor
  * gets a notice in its Level tab and the GMs a whisper with name and AP difference. Idempotent via the flag.
+ * @param {Iterable<Actor>} [actors]  all world actors by default
  * @returns {Promise<{converted:{name:string, delta:number}[], flagged:number}>}
  */
-export async function migrateSpellRule() {
+export async function migrateSpellRule(actors = game.actors) {
   const res = { converted: [], flagged: 0 };
   const gms = game.users.filter(u => u.isGM).map(u => u.id);
   const esc = (s) => foundry.utils.escapeHTML(String(s ?? ""));
-  for (const actor of game.actors) {
+  for (const actor of actors) {
     if (actor.type !== "character" || (Number(actor.getFlag(SYSTEM_ID, "dataVersion")) || 0) >= DATA_VERSION) continue;
     try {
       const old = actor._source.system.bought ?? {};

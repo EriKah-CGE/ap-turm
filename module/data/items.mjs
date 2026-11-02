@@ -2,7 +2,8 @@
  * Item data models: weapon, spell, feat, gear. Field names match the app arrays
  * (S.weapons / S.spells / S.feats / S.items) so the importer and the later export are 1:1.
  */
-const { SchemaField, NumberField, StringField, BooleanField, HTMLField } = foundry.data.fields;
+const { SchemaField, NumberField, StringField, BooleanField, HTMLField, ArrayField, ObjectField } = foundry.data.fields;
+import { ITEM_BON, expandEffects } from "../rules.mjs";
 
 const int = (opts = {}) => new NumberField({ required: true, nullable: false, integer: true, initial: 0, ...opts });
 const str = (initial = "") => new StringField({ required: true, initial });
@@ -30,6 +31,8 @@ export class WeaponData extends foundry.abstract.TypeDataModel {
   static migrateData(source) {
     if (source.dtype === "macht") source.dtype = "arch";
     if (source.type2 === "macht") source.type2 = "arch";
+    // only a complete stored item (Foundry also runs migrateData on partial update data, which must stay partial)
+    if ("dice" in source && "dtype" in source && "abil" in source) { source.dice2 ??= ""; source.type2 ??= ""; }
     return super.migrateData(source);
   }
 }
@@ -73,6 +76,22 @@ export class GearData extends foundry.abstract.TypeDataModel {
       qty: int({ min: 1, initial: 1 }),
       notes: str(),
       attuned: new BooleanField({ initial: false }),
+      // items with effects (1.3.0): effects only work while equipped and - if attunement is required - attuned
+      equipped: new BooleanField({ initial: false }),
+      attunement: new BooleanField({ initial: false }),
+      effects: new SchemaField({
+        bon: new SchemaField(Object.fromEntries(Object.keys(ITEM_BON).map(k => [k, int()]))),
+        saveBon: new SchemaField(Object.fromEntries(["str", "dex", "con", "int", "wis", "cha"].map(k => [k, int()]))),
+        skillBon: new ObjectField(),                      // {<skill key>: bonus}
+        prof: new SchemaField({ skills: new ArrayField(new StringField({ blank: false })), saves: new ArrayField(new StringField({ blank: false })) }),
+        adv: rollEffects(),
+        dis: rollEffects(),
+        res: new ArrayField(new StringField({ blank: false })),
+        imm: new ArrayField(new StringField({ blank: false })),
+        vuln: new ArrayField(new StringField({ blank: false })),
+        senses: str(),
+        note: str()
+      }),
       charges: int({ min: 0, max: 20 }),
       used: int({ min: 0 }),
       recharge: new StringField({ required: true, blank: false, initial: "long",
@@ -81,4 +100,24 @@ export class GearData extends foundry.abstract.TypeDataModel {
       origin: new StringField({ required: true, blank: false, initial: "city", choices: ["city", "tower"] })
     };
   }
+
+  /** Items from before 1.3.0: not equipped, no attunement requirement, no effects. */
+  static migrateData(source) {
+    // only a complete stored item: Foundry also runs migrateData on partial update data ({effects: {bon: {str: 1}}}),
+    // which must never be expanded to defaults (that would reset every other effect)
+    if (source && typeof source === "object" && "qty" in source && "origin" in source && "recharge" in source) {
+      if (source.equipped === undefined) source.equipped = false;
+      if (source.attunement === undefined) source.attunement = false;
+      source.effects = expandEffects(source.effects);
+    }
+    return super.migrateData(source);
+  }
+}
+
+/** adv / dis of an item: skills, saves and the three single rolls. */
+function rollEffects() {
+  return new SchemaField({
+    skills: new ArrayField(new StringField({ blank: false })), saves: new ArrayField(new StringField({ blank: false })),
+    attack: new BooleanField({ initial: false }), init: new BooleanField({ initial: false }), death: new BooleanField({ initial: false })
+  });
 }

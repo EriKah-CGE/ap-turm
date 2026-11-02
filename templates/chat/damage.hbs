@@ -3,7 +3,7 @@
   <div class="apt-card-total"><span class="tot">{{total}}</span><span class="dt" style="{{#if dtypeColor}}color:{{dtypeColor}}{{/if}}">{{dtype}}</span></div>
   <table class="apt-card-table">
     {{#each parts}}
-    <tr><td class="lbl">{{label}}</td><td class="f">{{formula}}{{#if critText}} <span class="critx">{{critText}}</span>{{/if}}</td><td class="num">{{sum}}</td></tr>
+    <tr><td class="lbl">{{label}}{{#if @root.multiType}} <span class="dt" style="{{#if color}}color:{{color}}{{/if}}">{{type}}</span>{{/if}}</td><td class="f">{{formula}}{{#if critText}} <span class="critx">{{critText}}</span>{{/if}}</td><td class="num">{{sum}}</td></tr>
     {{/each}}
   </table>
   {{#if target}}

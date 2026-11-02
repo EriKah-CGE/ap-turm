@@ -89,6 +89,13 @@ Modus `turm` (Kampagnenmodus, Standard für diese Runde) vs. `ap` (Standard-D&D-
 - **Modusregel für Schadens-/Elementwahlen:** Waffen: im Turm-Modus beide Listen; res/eleDmg/changeEle/Zauber-Editor
   unverändert (Turm → Elemente). Modus `ap` überall nur `DAMAGE_TYPES`. NPC-Aktionen und Gegenstands-Resistenzen im
   Turm-Modus ebenfalls aus beiden Listen. Altwerte aus dem anderen Modus bleiben lesbar.
+- **Gegenstände mit Wirkung** (gear): wirken nur bei `equipped` und – falls `attunement` – `attuned`.
+  `effects`: `bon` {str..cha, ac, speed, hp, init, atk, dmg, spellDC, spellPoints} (wie Feats in `featBonuses` summiert;
+  atk/dmg auf alle Waffenangriffe, spellDC auf SG und Zauberangriff, spellPoints auf den Turm-Pool), `saveBon`, `skillBon`,
+  `prof` {skills, saves} (zählt nicht gegen das 6er-Limit, stapelt nicht), `adv`/`dis` {skills, saves, attack, init, death}
+  (in Foundry Vorauswahl im Wurf mit Quelle, änderbar), `res`/`imm`/`vuln` (Turm: beide Listen), `senses`, `note`.
+  Kein Active-Effect-Umweg. `migrateData` füllt Standardwerte nur bei vollständigen Quellen (Foundry ruft `migrateData`
+  auch für Teil-Updates auf).
 - **Statblock-Import:** im Modus `ap` D&D-Typen 1:1; im Modus `turm` keine automatische Zuordnung zu Elementen —
   Typen werden als „nicht zugeordnet" importiert und vom Spielleiter manuell gesetzt (gilt für Resistenzen/Immunitäten/
   Verwundbarkeiten und die Schadenstypen aller Aktionen; nicht zugeordnete Typen greifen bei Resistenzen nicht).
@@ -106,10 +113,10 @@ Der App-Zustand `S` (siehe `DEFAULTS()` in der HTML) wird so verteilt:
 | abilities, bought, choices, milestones, skills, profs | `system.*` gleichnamig |
 | hpRolls, play.*, spUsed, layUsed, slotsUsed | `system.hp.rolls`, `system.play.*`, `system.resources.*` |
 | armor {id, shield}, currency, crystals, turmwissen | `system.*` gleichnamig |
-| weapons[] | Items vom Typ `weapon` |
+| weapons[] (… dice2, type2 optional) | Items vom Typ `weapon` |
 | spells[] (lvl, name, elem) | Items vom Typ `spell` |
 | feats[] (name, desc, src, bon{}) | Items vom Typ `feat`; `bon` als Active Effect **oder** in `prepareDerivedData` summiert (einfacher: summieren wie die App) |
-| items[] (qty, notes, attunement, charges, used, recharge, origin) | Items vom Typ `gear` |
+| items[] (qty, notes, attuned, charges, used, recharge, origin; optional equipped, attunement, effects) | Items vom Typ `gear`; `effects` in der App kompakt (nur gesetzte Werte, `compactEffects`), im DataModel vollständig (`expandEffects`) |
 
 Der **Importer** (`module/importer.mjs`) liest den App-JSON-Export und erzeugt Actor + eingebettete
 Items. Alte Feldnamen (`macht` → `arch`, fehlende Felder) werden in `static migrateData()` abgefangen.

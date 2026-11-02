@@ -11,7 +11,7 @@
  *          Crit: every die is rolled twice; with critMax the extra dice are maximized instead.
  * Apply:   temp HP first, then HP; resistance halves (rounded down), immunity zeroes.
  */
-import { weaponStats, eleElement, hitDie } from "./rules.mjs";
+import { weaponStats, eleElement, hitDie, itemEffects } from "./rules.mjs";
 import { damageTypeLabel as configDamageTypeLabel, ELEMENTS, isUnassignedKey, UNASSIGNED_PREFIX } from "./config.mjs";
 
 /* ---------- dice strings ---------- */
@@ -129,6 +129,7 @@ export function buildAttack(w, d, { mode = "normal", situational = 0 } = {}) {
   parts.push({ label: st.abK.toUpperCase(), value: am });
   if (w.prof) parts.push({ label: "Prof", value: d.pb });
   if (Number(w.bonus)) parts.push({ label: "Weapon", value: Number(w.bonus) });
+  if (d.fb?.atk) parts.push({ label: "Items", value: d.fb.atk });
   if (d.exhPen) parts.push({ label: "Exhaustion", value: d.exhPen });
   if (Number(situational)) parts.push({ label: "Situational", value: Number(situational) });
   const bonus = st.atk + (Number(situational) || 0);
@@ -390,9 +391,29 @@ export function defenseVerdict(dtype, defenses = {}, { mode = "ap" } = {}) {
   return { mult, label, reason, chips };
 }
 
-/** Defenses of a character: the "res" purchases. Characters have no immunities. */
+/** Defenses of a character: the "res" purchases plus resistances / immunities / vulnerabilities of active items. */
 export function characterDefenses(S) {
-  return { resistances: [...(S.choices.res || [])], immunities: [] };
+  const fx = itemEffects(S.items);
+  return {
+    resistances: [...(S.choices.res || []), ...fx.res.map(r => r.key)],
+    immunities: fx.imm.map(r => r.key),
+    vulnerabilities: fx.vuln.map(r => r.key)
+  };
+}
+
+/**
+ * Advantage / disadvantage that active items give a roll, as the preselection of the roll (the player can still
+ * change it): type "skill" | "save" (with key), "attack", "init", "death". Both at once cancel out.
+ * @returns {{mode:string, adv:string[], dis:string[], label:string}}  label: "Advantage: Cloak of Elvenkind"
+ */
+export function itemRollPreset(d, type, key = null) {
+  const fx = d?.itemFx;
+  if (!fx) return { mode: "normal", adv: [], dis: [], label: "" };
+  const pick = (kind) => type === "skill" ? (fx[kind].skills[key] ?? []) : type === "save" ? (fx[kind].saves[key] ?? []) : (fx[kind][type] ?? []);
+  const adv = [...pick("adv")], dis = [...pick("dis")];
+  const mode = adv.length && dis.length ? "normal" : adv.length ? "advantage" : dis.length ? "disadvantage" : "normal";
+  const label = [adv.length ? `Advantage: ${adv.join(", ")}` : "", dis.length ? `Disadvantage: ${dis.join(", ")}` : ""].filter(Boolean).join(" · ");
+  return { mode, adv, dis, label };
 }
 
 /**

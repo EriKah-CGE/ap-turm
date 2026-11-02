@@ -5,6 +5,7 @@
  * (`actor.system.toObject()`), plain item data (`item.toObject()`) and the name. Tested in Node
  * for a lossless round trip app -> Foundry -> app.
  */
+import { compactEffects } from "./rules.mjs";
 
 const ABIL = ["str", "dex", "con", "int", "wis", "cha"];
 const FEAT_BON = [...ABIL, "ac", "speed", "hp", "init"];
@@ -102,7 +103,10 @@ export function exportAppData({ name, system: sys, items, dataVersion = 5 }) {
     }),
     items: pick("gear").map(g => ({
       id: appId(g, "i"), name: g.name, qty: n(g.system.qty, 1), notes: g.system.notes ?? "", attuned: !!g.system.attuned,
-      charges: n(g.system.charges), used: n(g.system.used), recharge: g.system.recharge ?? "long", origin: g.system.origin ?? "city"
+      charges: n(g.system.charges), used: n(g.system.used), recharge: g.system.recharge ?? "long", origin: g.system.origin ?? "city",
+      // items with effects: only what is set (the app reads a missing field as "off" / "none")
+      ...(g.system.equipped ? { equipped: true } : {}), ...(g.system.attunement ? { attunement: true } : {}),
+      ...(compactEffects(g.system.effects) ? { effects: compactEffects(g.system.effects) } : {})
     })),
     armor: { id: sys.armor?.id || "none", shield: !!sys.armor?.shield },
     notices: (sys.notices || []).map(x => ({ date: String(x?.date ?? ""), text: String(x?.text ?? "") })),

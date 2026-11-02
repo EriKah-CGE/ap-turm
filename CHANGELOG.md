@@ -15,6 +15,19 @@ Jede Version hat eine Sektion `## x.y.z`; `npm run release -- x.y.z` übernimmt 
   Würfel auf „Uncontrolled Landing", Log mit „Undo last". Spieler-HUD unter den Szene-Steuerungen (abschaltbar),
   Banner beim dritten Beben und beim Kollaps.
 
+- **Zauberkauf (Regelkorrektur):** „Spellslot Lvl N (+1 spell)" ist der eigentliche Zauberkauf (Rang N wirken, ein
+  bekannter Zauber, Turm: N Zauberpunkte je Kauf, AP-Modus: ein Slot je Kauf); „Extra Spell Lvl N" (früher Learn Spell)
+  gibt nur einen weiteren bekannten Zauber. Neue Kaufkette Spellslot N → N−1, Extra Spell N → Spellslot N. Zähler
+  „Rank N: x of y spells". Alte Bögen werden einmalig umgestellt (App: Datenversion 5, Meldung + Level-Tab;
+  Foundry: Weltmigration mit Flüsternachricht an den Spielleiter pro Charakter), ohne AP-Ausgleich.
+- **Waffen-Schadenstypen:** Im Turm-Modus auch D&D-Schadenstypen (gruppierte Auswahl), optionale zweite Schadenszeile
+  je Waffe; „Apply to target" rechnet jeden Typ getrennt gegen Resistenzen. NPC-Aktionen im Turm-Modus mit beiden
+  Listen; importierte Typen bleiben „nicht zugeordnet" (intern Präfix „?", alte NPCs werden beim Laden markiert).
+- **Gegenstände mit Wirkung:** Boni, Übung, Vorteil/Nachteil, Resistenzen/Immunitäten/Verwundbarkeiten, Sinne;
+  wirksam nur ausgerüstet (und eingestimmt, falls nötig). Equipped-Schalter in der Inventarliste, Abschnitt „Effects"
+  in App-Editor und Gegenstandsbogen, A/D-Marken, Vorauswahl im Wurfdialog, Bibliothek/Übergabe/Loot-Claim behalten
+  die Wirkungen.
+
 ## 1.2.1
 
 - Verteilung über GitHub: Installation und Updates per Manifest-URL im Foundry-Setup

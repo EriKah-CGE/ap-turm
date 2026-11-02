@@ -10,8 +10,8 @@
             <tr>
               <td><b>{{abbr}}</b> <small>{{label}}</small></td>
               <td class="num"><a class="apt-roll modbig draggable" data-action="rollAbility" data-key="{{key}}" data-drag-roll="ability:{{key}}" title="Roll {{label}} check (Shift: advantage, Ctrl: disadvantage, right-click: dialog)">{{mod}}</a></td>
-              <td class="num score">{{value}}{{#if (ne value base)}} <small>({{base}})</small>{{/if}}</td>
-              <td class="num"><a class="apt-roll draggable" data-action="rollSave" data-key="{{key}}" data-drag-roll="save:{{key}}" title="Roll {{label}} save (Shift: advantage, Ctrl: disadvantage, right-click: dialog)"><span class="dot {{#if saveProf}}prof{{/if}}"></span> {{save}}</a></td>
+              <td class="num score" data-tooltip="{{breakdown}}">{{value}}{{#if (ne value base)}} <small>({{base}})</small>{{/if}}</td>
+              <td class="num"><a class="apt-roll draggable" data-action="rollSave" data-key="{{key}}" data-drag-roll="save:{{key}}" title="Roll {{label}} save (Shift: advantage, Ctrl: disadvantage, right-click: dialog)"><span class="dot {{#if saveProf}}prof{{/if}}"></span> {{save}}</a>{{#if adv}}<span class="apt-ad a" data-tooltip="{{adv}}">A</span>{{/if}}{{#if dis}}<span class="apt-ad d" data-tooltip="{{dis}}">D</span>{{/if}}</td>
             </tr>
           {{/each}}
           </tbody>
@@ -23,11 +23,18 @@
         <div class="apt-kv"><b>Weapons</b><span>{{profs.weapons}}</span></div>
         <div class="apt-kv"><b>Languages/Tools</b><span>{{profs.custom}}</span></div>
       </div>
+      {{#if defenses}}
+      <div class="apt-box apt-defenses">
+        <h3>Defenses &amp; Senses</h3>
+        {{#each defenses.lines}}<div class="apt-kv"><b>{{label}}</b><span class="chips">{{#each chips}}<span class="tag def" style="{{#if color}}--el:{{color}}{{/if}}" data-tooltip="{{src}}">{{label}}</span>{{/each}}</span></div>{{/each}}
+        {{#each defenses.texts}}<div class="apt-kv"><b>{{label}}</b><span data-tooltip="{{src}}">{{text}} <small>({{src}})</small></span></div>{{/each}}
+      </div>
+      {{/if}}
       <div class="apt-box">
         <h3>Skills</h3>
         <div class="apt-rowlist">
         {{#each skills}}
-          <div class="r apt-roll draggable" data-action="rollSkill" data-key="{{key}}" data-drag-roll="skill:{{key}}" title="Roll {{label}} (Shift: advantage, Ctrl: disadvantage, right-click: dialog)"><span class="dot {{#if exp}}exp{{else if prof}}prof{{/if}}"></span><span class="val num">{{mod}}</span><span class="nm">{{label}} <small>{{abbr}}</small></span></div>
+          <div class="r apt-roll draggable" data-action="rollSkill" data-key="{{key}}" data-drag-roll="skill:{{key}}" title="Roll {{label}} (Shift: advantage, Ctrl: disadvantage, right-click: dialog)"><span class="dot {{#if exp}}exp{{else if prof}}prof{{/if}}"></span><span class="val num">{{mod}}</span><span class="nm">{{label}} <small>{{abbr}}</small>{{#if adv}}<span class="apt-ad a" data-tooltip="{{adv}}">A</span>{{/if}}{{#if dis}}<span class="apt-ad d" data-tooltip="{{dis}}">D</span>{{/if}}</span></div>
         {{/each}}
         </div>
       </div>

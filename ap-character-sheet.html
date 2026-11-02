@@ -293,6 +293,26 @@
   .grouphdr:first-child{margin-top:0}
   .cnt2{font-weight:700;color:var(--ink-dim)}
   .cnt2.over{color:var(--red-br)}
+  .admark{display:inline-block;margin-left:4px;padding:0 3px;border-radius:3px;font-size:9px;font-weight:700;line-height:13px;color:#fff;cursor:help}
+  .admark.a{background:#3f7a3a}.admark.d{background:#9a3a20}
+  .deflines{margin-top:4px;border-top:1px dotted var(--line-soft);padding-top:3px;font-size:10px;line-height:1.45;color:var(--ink)}
+  .deflines b{color:var(--ink-dim);font-weight:700;margin-right:3px}
+  .itemrow .eqdot{flex:none;margin-top:3px}
+  .itemrow .ifx{display:block;font-size:9.5px;color:var(--green-br)}
+  .itemrow .ifx.off{color:var(--ink-dim);text-decoration:line-through}
+  .fxbox{margin:8px 0;border-top:1px solid var(--line-soft);padding-top:4px}
+  .fxbox summary{cursor:pointer;font-weight:700;font-size:13px}
+  .fxbox summary small{font-weight:400;color:var(--ink-dim)}
+  .fxgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:4px}
+  .fxgrid .fxc{display:flex;flex-direction:column;font-size:10.5px}
+  .fxgrid input{width:100%}
+  .fxtab{width:100%;border-collapse:collapse;font-size:11.5px}
+  .fxtab th{font-size:10px;color:var(--ink-dim);text-align:center}
+  .fxtab td:not(:first-child){text-align:center}
+  .fxtab input[type=number]{width:52px}
+  .fxflags{display:flex;flex-wrap:wrap;gap:4px 14px}
+  .cbl{display:flex!important;align-items:center;gap:6px;text-transform:none!important;letter-spacing:0!important;font-size:13px!important}
+  .cbl input{width:16px;height:16px}
   .scard .shint{font-size:10.5px;color:var(--ink-dim);margin-top:2px;font-style:italic}
   .knownrow{display:flex;flex-wrap:wrap;gap:4px 10px;font-size:11.5px;color:var(--ink-dim);margin:2px 0 6px}
   .knownrow .kr.over{background:#f3d75a;color:#3a2e00;border-radius:3px;padding:0 4px}
@@ -517,7 +537,7 @@
     <button class="tbtn" id="btnPdf">🖨 Export PDF</button>
     <button class="tbtn" id="btnExport">⬇ Export JSON</button>
     <button class="tbtn" id="btnImport">⬆ Load</button>
-    <span class="buildtag" title="App-Version">v09-05o</span>
+    <span class="buildtag" title="App-Version">v09-05p</span>
     <input type="file" id="fileInput" accept=".json,application/json,text/plain,text/json" style="display:none">
     <span class="spacer"></span>
     <span class="saved-note" id="savedNote"></span>
@@ -771,9 +791,49 @@ const RECHARGE={long:"Long rest",short:"Short rest",dawn:"Dawn",none:"Never"};
 function newFeat(name){return {id:"f"+Date.now().toString(36)+Math.random().toString(36).slice(2,6),name:name||"New Feat",desc:"",src:"",bon:{}};}
 const FEAT_EXTRA={ac:"AC",speed:"Speed",hp:"Max HP",init:"Initiative"};
 /* sum of all feat bonuses: {str..cha, ac, speed, hp, init} */
+/* ---------- Items with effects (1.3.0) ----------
+   An item works only while equipped and, if it requires attunement, attuned. effects (all optional, missing = none):
+   bon {str..cha, ac, speed, hp, init, atk, dmg, spellDC, spellPoints}, saveBon {str..cha}, skillBon {<skill>},
+   prof {skills, saves} (proficiency, not counted against the limit of 6, never stacks), adv / dis {skills, saves,
+   attack, init, death}, res / imm / vuln [type keys], senses, note. Summed like feats (featBonuses). */
+const ITEM_BON={str:"STR",dex:"DEX",con:"CON",int:"INT",wis:"WIS",cha:"CHA",ac:"AC",speed:"Speed",hp:"Max HP",init:"Initiative",atk:"Attack",dmg:"Damage",spellDC:"Spell DC/Attack",spellPoints:"Spell Points"};
+const ITEM_ROLLS=["attack","init","death"];
+function itemActive(it){return !!(it&&it.equipped&&(!it.attunement||it.attuned));}
+/* effects without defaults (zero bonuses, empty lists, false flags): the shape that is stored and exported */
+function compactEffects(e){
+  e=e||{};const out={};const num=(o,keys)=>{const r={};for(const k of keys){const v=parseInt((o||{})[k]);if(v)r[k]=v;}return Object.keys(r).length?r:null;};
+  const list=(a)=>Array.isArray(a)?[...new Set(a.map(String).filter(Boolean))]:[];
+  const b=num(e.bon,Object.keys(ITEM_BON));if(b)out.bon=b;
+  const sb=num(e.saveBon,Object.keys(ABILITIES));if(sb)out.saveBon=sb;
+  const kb=num(e.skillBon,Object.keys(SKILLS));if(kb)out.skillBon=kb;
+  const pr={};const ps=list((e.prof||{}).skills).filter(k=>SKILLS[k]),pv=list((e.prof||{}).saves).filter(a=>ABILITIES[a]);if(ps.length)pr.skills=ps;if(pv.length)pr.saves=pv;if(Object.keys(pr).length)out.prof=pr;
+  for(const kind of ["adv","dis"]){const x=e[kind]||{};const r={};const sk=list(x.skills).filter(k=>SKILLS[k]),sv=list(x.saves).filter(a=>ABILITIES[a]);if(sk.length)r.skills=sk;if(sv.length)r.saves=sv;for(const f of ITEM_ROLLS)if(x[f])r[f]=true;if(Object.keys(r).length)out[kind]=r;}
+  for(const kind of ["res","imm","vuln"]){const l=list(e[kind]);if(l.length)out[kind]=l;}
+  for(const kind of ["senses","note"]){const t=String(e[kind]||"").trim();if(t)out[kind]=t;}
+  return Object.keys(out).length?out:null;
+}
+/* effects of all active items: sums, proficiencies, advantage/disadvantage sources, defenses, texts */
+function itemEffects(items){
+  const fx={bon:{},src:{},saveBon:{},skillBon:{},profSkills:[],profSaves:[],adv:{skills:{},saves:{},attack:[],init:[],death:[]},dis:{skills:{},saves:{},attack:[],init:[],death:[]},res:[],imm:[],vuln:[],senses:[],notes:[]};
+  (items||[]).forEach(it=>{
+    if(!itemActive(it))return;
+    const e=compactEffects(it.effects);if(!e)return;const nm=it.name||"Item";
+    for(const k in (e.bon||{})){fx.bon[k]=(fx.bon[k]||0)+e.bon[k];(fx.src[k]=fx.src[k]||[]).push({name:nm,v:e.bon[k]});}
+    for(const a in (e.saveBon||{}))fx.saveBon[a]=(fx.saveBon[a]||0)+e.saveBon[a];
+    for(const k in (e.skillBon||{}))fx.skillBon[k]=(fx.skillBon[k]||0)+e.skillBon[k];
+    ((e.prof||{}).skills||[]).forEach(k=>{if(!fx.profSkills.includes(k))fx.profSkills.push(k);});
+    ((e.prof||{}).saves||[]).forEach(a=>{if(!fx.profSaves.includes(a))fx.profSaves.push(a);});
+    for(const kind of ["adv","dis"]){const x=e[kind]||{};(x.skills||[]).forEach(k=>(fx[kind].skills[k]=fx[kind].skills[k]||[]).push(nm));(x.saves||[]).forEach(a=>(fx[kind].saves[a]=fx[kind].saves[a]||[]).push(nm));for(const f of ITEM_ROLLS)if(x[f])fx[kind][f].push(nm);}
+    for(const kind of ["res","imm","vuln"])(e[kind]||[]).forEach(k=>fx[kind].push({key:k,src:nm}));
+    if(e.senses)fx.senses.push({src:nm,text:e.senses});
+    if(e.note)fx.notes.push({src:nm,text:e.note});
+  });
+  return fx;
+}
 function featBonuses(){
-  const t={str:0,dex:0,con:0,int:0,wis:0,cha:0,ac:0,speed:0,hp:0,init:0};
+  const t={str:0,dex:0,con:0,int:0,wis:0,cha:0,ac:0,speed:0,hp:0,init:0,atk:0,dmg:0,spellDC:0,spellPoints:0};
   (S.feats||[]).forEach(f=>{const b=f.bon||{};for(const k in t){const v=parseInt(b[k]);if(v)t[k]+=v;}});
+  const ib=itemEffects(S.items).bon;for(const k in ib)if(k in t)t[k]+=ib[k];   /* active items, summed like feats */
   return t;
 }
 function featBonusLabel(f){
@@ -787,8 +847,8 @@ function weaponStats(w,d){
   if(w.abil==="fin") abK=(d.mods.dex>=d.mods.str)?"dex":"str";
   const am=d.mods[abK]||0;
   const bonus=Number(w.bonus)||0;
-  const atk=am+(w.prof?d.pb:0)+bonus+(d.exhPen||0);
-  const dmgMod=am+bonus;
+  const atk=am+(w.prof?d.pb:0)+bonus+(d.exhPen||0)+((d.fb&&d.fb.atk)||0);
+  const dmgMod=am+bonus+((d.fb&&d.fb.dmg)||0);
   const dmg=(w.dice||"")+(dmgMod?fmtMod(dmgMod):"");
   return {abK,atk,dmg,dmgMod};
 }
@@ -832,12 +892,13 @@ function derived(){
   const armStrLack=armWorn&&arm.str>0&&fin.str<arm.str;
   if(armStrLack)walk=Math.max(0,walk-10);
   if((S.bought.fightStyle||0)>0&&(S.choices.fightStyle||[]).includes("defense")&&armWorn)ac+=1;
-  const profSaves=new Set(S.choices.saveProf||[]);
-  const skillProfSet=new Set([...(S.selectedSkills||[]),...(S.choices.skillProf||[])]);
+  const ifx=itemEffects(S.items);
+  const profSaves=new Set([...(S.choices.saveProf||[]),...ifx.profSaves]);
+  const skillProfSet=new Set([...(S.selectedSkills||[]),...(S.choices.skillProf||[]),...ifx.profSkills]);
   const skillExpSet=new Set(S.choices.skillExp||[]);
   const strIntim=(S.bought.strintimidation||0)>0;
-  const skillData={};for(const k in SKILLS){let abK=SKILLS[k].a;if(k==="itm"&&strIntim)abK="str";const prof=skillProfSet.has(k),exp=skillExpSet.has(k);skillData[k]={prof,exp,mod:mods[abK]+(exp?pb*2:(prof?pb:0))+exhPen};}
-  const saveData={};for(const a in ABILITIES){const prof=profSaves.has(a);saveData[a]={prof,mod:mods[a]+(prof?pb:0)+exhPen};}
+  const skillData={};for(const k in SKILLS){let abK=SKILLS[k].a;if(k==="itm"&&strIntim)abK="str";const prof=skillProfSet.has(k),exp=skillExpSet.has(k);skillData[k]={prof,exp,mod:mods[abK]+(exp?pb*2:(prof?pb:0))+exhPen+(ifx.skillBon[k]||0),adv:ifx.adv.skills[k]||[],dis:ifx.dis.skills[k]||[]};}
+  const saveData={};for(const a in ABILITIES){const prof=profSaves.has(a);saveData[a]={prof,mod:mods[a]+(prof?pb:0)+exhPen+(ifx.saveBon[a]||0),adv:ifx.adv.saves[a]||[],dis:ifx.dis.saves[a]||[]};}
   const init=mods.dex+fb.init+exhPen;
   const passivePerc=10+skillData.prc.mod;
   /* Spell purchases (v5): spellslotN = the spell purchase (casting rank N, one known spell, a slot; Turm: N points per slot).
@@ -851,15 +912,47 @@ function derived(){
   }
   /* known spells per rank = spellslotN + learnN; have = spells of that rank on the sheet */
   const known=[];for(let L=1;L<=9;L++){const max=(S.bought["spellslot"+L]||0)+(S.bought["learn"+L]||0);const have=(S.spells||[]).filter(sp=>(parseInt(sp.lvl)||0)===L).length;if(max>0||have>0)known.push({L,max,have,over:have>max});}
+  spTotal+=fb.spellPoints;   /* items: + spell points (Turm pool) */
   const spUsed=Math.max(0,Math.min(parseInt(S.spUsed)||0,spTotal));
   const spLeft=spTotal-spUsed;
   const spellMod=Math.max(mods.cha,mods.wis,mods.int);
-  const spellDC=8+pb+spellMod+(S.bought.spellDC||0);
-  const spellAtk=pb+spellMod+(S.bought.spellDC||0)+exhPen;
-  const atkBonus=Math.max(mods.str,mods.dex)+pb+(S.bought.wepPlus1||0)+exhPen;
-  return {earned,level,pb,numMilestones,cantripTier,bonusStatPoints,fin,mods,maxCap,walk,hpSum,hpMax,ac,acNote,profSaves,skillProfSet,skillExpSet,strIntim,skillData,saveData,init,passivePerc,slots,known,spellMod,spellDC,spellAtk,atkBonus,exh,exhPen,fb,spTotal,spUsed,spLeft,spMaxRank,spBreak,arm,armWorn,shield,armStrLack};
+  const spellDC=8+pb+spellMod+(S.bought.spellDC||0)+fb.spellDC;
+  const spellAtk=pb+spellMod+(S.bought.spellDC||0)+exhPen+fb.spellDC;
+  const atkBonus=Math.max(mods.str,mods.dex)+pb+(S.bought.wepPlus1||0)+exhPen+fb.atk;
+  return {earned,level,pb,numMilestones,cantripTier,bonusStatPoints,fin,mods,maxCap,walk,hpSum,hpMax,ac,acNote,profSaves,skillProfSet,skillExpSet,strIntim,skillData,saveData,init,passivePerc,slots,known,spellMod,spellDC,spellAtk,atkBonus,exh,exhPen,fb,spTotal,spUsed,spLeft,spMaxRank,spBreak,arm,armWorn,shield,armStrLack,itemFx:ifx};
+}
+/* tooltip of a final ability score: "18 = 16 + 2 Gauntlets of Ogre Power" (cap noted when it bites) */
+function abilityBreakdown(k,d){
+  const parts=[];const fbF=(S.feats||[]).reduce((a,f)=>a+(parseInt((f.bon||{})[k])||0),0);if(fbF)parts.push([fbF,"Feats"]);
+  ((d.itemFx.src||{})[k]||[]).forEach(x=>parts.push([x.v,x.name]));
+  const asi=(S.choices.asi||[]).filter(a=>a===k).length;if(asi)parts.push([asi,"Ability Score"]);
+  let ms=0;for(const i in S.milestones){const m=S.milestones[i];if(m&&m.type==="asi"&&m.stats)ms+=(m.stats[k]||0);}if(ms)parts.push([ms,"Milestones"]);
+  const base=S.abilities[k];const sum=base+parts.reduce((a,p)=>a+p[0],0);
+  return `${d.fin[k]} = ${base}${parts.map(([v,n])=>` ${v<0?"-":"+"} ${Math.abs(v)} ${n}`).join("")}${sum>d.fin[k]?` (cap ${d.maxCap[k]})`:""}`;
 }
 function labelFor(id,t){const ty=SELECTORS[id]?.type;if(ty==="ability")return ABBR[t]||t;if(ty==="skill")return SKILLS[t]?.l||t;if(ty==="damage")return DAMAGE_TYPES[t]||(ELEMENTS[t]?ELEMENTS[t].l:t);if(ty==="creature")return CREATURE_TYPES[t]||t;if(ty==="fightStyle")return FIGHT_STYLES[t]||t;if(ty==="weapon")return WEAPONS[t]||t;return t;}
+/* A / D marker after a skill or save (item names in the tooltip) */
+function adHtml(r){return ((r.adv||[]).length?`<span class="admark a" title="Advantage: ${escapeHtml(r.adv.join(", "))}">A</span>`:"")+((r.dis||[]).length?`<span class="admark d" title="Disadvantage: ${escapeHtml(r.dis.join(", "))}">D</span>`:"");}
+/* short text of an item's effects ("+2 STR · Adv Stealth · Res Feuer") */
+function itemEffectText(e){
+  e=compactEffects(e);if(!e)return "";const out=[];const lab=(k)=>ELEMENTS[k]?ELEMENTS[k].l:(DAMAGE_TYPES[k]||k);
+  for(const k in (e.bon||{}))out.push(fmtMod(e.bon[k])+" "+ITEM_BON[k]);
+  for(const k in (e.saveBon||{}))out.push(fmtMod(e.saveBon[k])+" "+ABBR[k]+" save");
+  for(const k in (e.skillBon||{}))out.push(fmtMod(e.skillBon[k])+" "+SKILLS[k].l);
+  const pr=[...((e.prof||{}).skills||[]).map(k=>SKILLS[k].l),...((e.prof||{}).saves||[]).map(a=>ABBR[a]+" save")];if(pr.length)out.push("Prof "+pr.join(", "));
+  for(const [kind,w] of [["adv","Adv"],["dis","Dis"]]){const x=e[kind];if(!x)continue;const l=[...(x.skills||[]).map(k=>SKILLS[k].l),...(x.saves||[]).map(a=>ABBR[a]+" save"),...(x.attack?["attacks"]:[]),...(x.init?["initiative"]:[]),...(x.death?["death saves"]:[])];if(l.length)out.push(w+" "+l.join(", "));}
+  for(const [kind,w] of [["res","Res"],["imm","Imm"],["vuln","Vuln"]])if((e[kind]||[]).length)out.push(w+" "+e[kind].map(lab).join(", "));
+  if(e.senses)out.push(e.senses);
+  return out.join(" · ");
+}
+/* options for a multi-select of damage types: turm both lists (grouped), ap D&D types; other stored values stay */
+function typeMultiOptions(list){
+  const cur=new Set(list||[]);const o=(k,l)=>`<option value="${escapeHtml(k)}" ${cur.has(k)?"selected":""}>${escapeHtml(l)}</option>`;
+  const dnd=Object.keys(DAMAGE_TYPES).map(k=>o(k,DAMAGE_TYPES[k])).join("");
+  const known=new Set([...Object.keys(DAMAGE_TYPES),...(isTurm()?Object.keys(ELEMENTS):[])]);
+  const extra=[...cur].filter(k=>!known.has(k)).map(k=>o(k,ELEMENTS[k]?ELEMENTS[k].l:k)).join("");
+  return extra+(isTurm()?`<optgroup label="Damage types">${dnd}</optgroup><optgroup label="Elements">${Object.keys(ELEMENTS).map(k=>o(k,ELEMENTS[k].l)).join("")}</optgroup>`:dnd);
+}
 function escapeHtml(s){return (s==null?"":(""+s)).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
 
 /* ============================================================ RENDER ============================================================ */
@@ -878,9 +971,14 @@ function renderOverview(){
   const d=derived();const p=document.getElementById("panel-overview");
   const hpCur=(S.play.hpCurrent==null?d.hpMax:S.play.hpCurrent);
 
-  const abil=Object.keys(ABILITIES).map(k=>`<div class="abil"><span class="an">${ABBR[k]}</span><span class="am">${fmtMod(d.mods[k])}</span><span class="as">${d.fin[k]}</span></div>`).join("");
-  const saves=Object.keys(ABILITIES).map(k=>{const s=d.saveData[k];return `<div class="r"><span class="dot ${s.prof?'prof':''}"></span><span class="val num">${fmtMod(s.mod)}</span><span class="nm">${ABILITIES[k]}</span></div>`;}).join("");
-  const skills=Object.keys(SKILLS).sort((a,b)=>SKILLS[a].l.localeCompare(SKILLS[b].l)).map(k=>{const s=d.skillData[k];const cls=s.exp?'exp':(s.prof?'prof':'');let abK=SKILLS[k].a;if(k==="itm"&&d.strIntim)abK="str";return `<div class="r"><span class="dot ${cls}"></span><span class="val num">${fmtMod(s.mod)}</span><span class="nm">${SKILLS[k].l} <span class="abk">${ABBR[abK]}</span></span></div>`;}).join("");
+  const abil=Object.keys(ABILITIES).map(k=>`<div class="abil" title="${escapeHtml(abilityBreakdown(k,d))}"><span class="an">${ABBR[k]}</span><span class="am">${fmtMod(d.mods[k])}</span><span class="as">${d.fin[k]}</span></div>`).join("");
+  const saves=Object.keys(ABILITIES).map(k=>{const s=d.saveData[k];return `<div class="r"><span class="dot ${s.prof?'prof':''}"></span><span class="val num">${fmtMod(s.mod)}</span><span class="nm">${ABILITIES[k]}${adHtml(s)}</span></div>`;}).join("");
+  /* resistances (shop + items), immunities, vulnerabilities, senses and notes of active items: compact, under the saves */
+  const fx=d.itemFx,tl=(k)=>ELEMENTS[k]?ELEMENTS[k].l:(DAMAGE_TYPES[k]||k);
+  const defRows=[["Res",[...(S.choices.res||[]).map(k=>({key:k,src:"Resistance (shop)"})),...fx.res]],["Imm",fx.imm],["Vuln",fx.vuln]].filter(([,l])=>l.length)
+    .map(([w,l])=>`<div class="defline"><b>${w}</b> ${l.map(x=>`<span title="${escapeHtml(x.src)}">${escapeHtml(tl(x.key))}</span>`).join(", ")}</div>`).join("")
+    +[...fx.senses,...fx.notes].map(x=>`<div class="defline"><b>${escapeHtml(x.src)}</b> ${escapeHtml(x.text)}</div>`).join("");
+  const skills=Object.keys(SKILLS).sort((a,b)=>SKILLS[a].l.localeCompare(SKILLS[b].l)).map(k=>{const s=d.skillData[k];const cls=s.exp?'exp':(s.prof?'prof':'');let abK=SKILLS[k].a;if(k==="itm"&&d.strIntim)abK="str";return `<div class="r"><span class="dot ${cls}"></span><span class="val num">${fmtMod(s.mod)}</span><span class="nm">${SKILLS[k].l} <span class="abk">${ABBR[abK]}</span>${adHtml(s)}</span></div>`;}).join("");
 
   const death=`<div class="deathmini"><div class="drow">${[0,1,2].map(i=>`<span class="pip s ${S.play.deathSucc>i?'on':''}" data-death="succ" data-i="${i+1}"></span>`).join("")}</div><div class="drow">${[0,1,2].map(i=>`<span class="pip f ${S.play.deathFail>i?'on':''}" data-death="fail" data-i="${i+1}"></span>`).join("")}</div></div>`;
   const exh=`<div class="exh">${[1,2,3,4,5,6].map(i=>`<span class="dia ${S.play.exhaustion>=i?'on':''}" data-exh="${i}"></span>`).join("")}</div>`;
@@ -945,7 +1043,7 @@ function renderOverview(){
     `<div class="sprow" data-sid="${sp.id}"><span class="splvl">${sp.lvl===0?'C':sp.lvl}</span><input class="spname" data-sf="name" data-sid="${sp.id}" value="${escapeHtml(sp.name)}" placeholder="Spell name">${sp.elem?elemChip(sp.elem,true):""}<button class="wbtn" data-sedit="${sp.id}">✎</button></div>`
   ).join("");
   const itemRow=it=>
-    `<div class="itemrow" data-iid="${it.id}"><span class="iqty">${(parseInt(it.qty)||1)>1?"×"+parseInt(it.qty):""}</span><span class="inwrap"><input class="iname" data-if="name" data-iid="${it.id}" value="${escapeHtml(it.name)}" placeholder="Item name">${(parseInt(it.charges)||0)>0?`<span class="chwrap">${Array.from({length:parseInt(it.charges)},(_,i)=>`<span class="chpip ${i<(it.used||0)?'used':''}" data-ich="${it.id}" data-i="${i+1}"></span>`).join("")}<span class="chn">${parseInt(it.charges)-(it.used||0)}/${parseInt(it.charges)}</span></span>`:""}${it.notes?`<span class="inotes">${escapeHtml(it.notes)}</span>`:""}</span><span class="iright">${it.attuned?'<span class="tag atn">Attuned</span>':""}<button class="wbtn" data-iedit="${it.id}">✎</button></span></div>`
+    `<div class="itemrow" data-iid="${it.id}"><span class="eqdot ${it.equipped?'on':''}" data-ieq="${it.id}" title="${it.equipped?"Equipped (click: take off)":"Not equipped (click: equip)"}"></span><span class="iqty">${(parseInt(it.qty)||1)>1?"×"+parseInt(it.qty):""}</span><span class="inwrap"><input class="iname" data-if="name" data-iid="${it.id}" value="${escapeHtml(it.name)}" placeholder="Item name">${(parseInt(it.charges)||0)>0?`<span class="chwrap">${Array.from({length:parseInt(it.charges)},(_,i)=>`<span class="chpip ${i<(it.used||0)?'used':''}" data-ich="${it.id}" data-i="${i+1}"></span>`).join("")}<span class="chn">${parseInt(it.charges)-(it.used||0)}/${parseInt(it.charges)}</span></span>`:""}${it.notes?`<span class="inotes">${escapeHtml(it.notes)}</span>`:""}${itemEffectText(it.effects)?`<span class="ifx ${itemActive(it)?"":"off"}" title="${itemActive(it)?"Effects active":(it.equipped?"Requires attunement: not attuned, no effect":"Not equipped, no effect")}">${escapeHtml(itemEffectText(it.effects))}</span>`:""}</span><span class="iright">${it.attuned?'<span class="tag atn">Attuned</span>':""}<button class="wbtn" data-iedit="${it.id}">✎</button></span></div>`
   ;
   const allItems=(S.items||[]);
   const cityItems=allItems.filter(i=>(i.origin||"city")==="city");
@@ -1003,7 +1101,7 @@ function renderOverview(){
     <div class="cols">
       <div class="col">
         <div class="box"><div class="box-h">${icon("abil")}Ability Scores</div><div class="abilities">${abil}</div></div>
-        <div class="box"><div class="box-h">${icon("save")}Saving Throws</div><div class="rowlist">${saves}</div></div>
+        <div class="box"><div class="box-h">${icon("save")}Saving Throws</div><div class="rowlist">${saves}</div>${defRows?`<div class="deflines">${defRows}</div>`:""}</div>
         <div class="box"><div class="box-h">${icon("coin")}Currency${S.mode==="turm"?'<span class="cnt2" title="Umrechnung: 100 KU = 1 BR, 100 BR = 1 SI, 100 SI = 1 GO, 10 GO = 1 ED"> ×100 · GO→ED ×10</span>':""}</div><div class="coins">${(S.mode==="turm"?[["ku","KU","Kupfer (100 = 1 BR)"],["br","BR","Bronze (100 = 1 SI)"],["si","SI","Silber (100 = 1 GO)"],["go","GO","Gold (10 = 1 ED)"],["ed","ED","Edelsteine"]]:[["cp","CP","Copper"],["sp","SP","Silver"],["ep","EP","Electrum"],["gp","GP","Gold"],["pp","PP","Platinum"]]).map(([k,l,t])=>`<div class="coin" title="${t}"><label>${l}</label><input class="num" type="number" data-bind="currency.${k}" value="${S.currency[k]||0}"></div>`).join("")}</div></div>
       </div>
       <div class="col">
@@ -1090,6 +1188,7 @@ function wireOverview(){
 
   root.querySelectorAll("[data-if]").forEach(el=>el.addEventListener("change",()=>{const it=S.items.find(x=>x.id===el.dataset.iid);if(it){it[el.dataset.if]=el.value;save();}}));
   root.querySelectorAll("[data-iedit]").forEach(el=>el.onclick=()=>editItem(el.dataset.iedit));
+  root.querySelectorAll("[data-ieq]").forEach(el=>el.onclick=()=>{const it=S.items.find(x=>x.id===el.dataset.ieq);if(!it)return;if(it.equipped)delete it.equipped;else it.equipped=true;save();renderAll();});
   root.querySelectorAll("[data-ich]").forEach(el=>el.onclick=()=>{const it=S.items.find(x=>x.id===el.dataset.ich);if(!it)return;const i=+el.dataset.i;const cur=it.used||0;it.used=(cur===i?i-1:i);save();renderOverview();});
 }
 function setPath(obj,path,val){const p=path.split(".");let o=obj;for(let i=0;i<p.length-1;i++)o=o[p[i]]=o[p[i]]||{};o[p[p.length-1]]=val;}
@@ -1108,7 +1207,7 @@ function renderShop(){
 function renderAttrs(){
   const d=derived();const sum=Object.values(S.abilities).reduce((a,b)=>a+b,0),rem=72-sum;
   document.getElementById("pbCnt").innerHTML=`<span class="${rem<0?'bad':'ok'}">${rem} / 72 free</span>`;
-  document.getElementById("abilEditor").innerHTML=Object.keys(ABILITIES).map(k=>{const base=S.abilities[k],fin=d.fin[k],bonus=fin-base;return `<div class="abil-row"><span class="lab">${ABILITIES[k]}</span><div class="stepper"><button data-k="${k}" data-d="-1" ${base<=6?'disabled':''}>−</button><input type="number" class="abil-in field-in" data-k="${k}" value="${base}" min="6" max="18"><button data-k="${k}" data-d="1" ${base>=18||rem<=0?'disabled':''}>+</button></div><span class="final"><span class="fv num">${fin}</span><span class="fm">${fmtMod(d.mods[k])}</span></span><span class="final">${bonus>0?`<span class="fb">+${bonus} bonus</span>`:`<span class="fm" style="opacity:.4">—</span>`}</span></div>`;}).join("");
+  document.getElementById("abilEditor").innerHTML=Object.keys(ABILITIES).map(k=>{const base=S.abilities[k],fin=d.fin[k],bonus=fin-base;return `<div class="abil-row"><span class="lab">${ABILITIES[k]}</span><div class="stepper"><button data-k="${k}" data-d="-1" ${base<=6?'disabled':''}>−</button><input type="number" class="abil-in field-in" data-k="${k}" value="${base}" min="6" max="18"><button data-k="${k}" data-d="1" ${base>=18||rem<=0?'disabled':''}>+</button></div><span class="final"><span class="fv num">${fin}</span><span class="fm">${fmtMod(d.mods[k])}</span></span><span class="final">${bonus>0?`<span class="fb" title="${escapeHtml(abilityBreakdown(k,d))}">+${bonus} bonus</span>`:`<span class="fm" style="opacity:.4">—</span>`}</span></div>`;}).join("");
   document.querySelectorAll(".abil-in").forEach(inp=>inp.onchange=()=>setAbility(inp.dataset.k,+inp.value));
   document.querySelectorAll(".stepper button").forEach(b=>b.onclick=()=>setAbility(b.dataset.k,S.abilities[b.dataset.k]+(+b.dataset.d)));
   const sc=S.selectedSkills.length;document.getElementById("skillCnt").innerHTML=`<span class="${sc>6?'bad':'ok'}">${sc} / 6</span>`;
@@ -1176,6 +1275,9 @@ function editItem(id){
     <label>Charges (0 = none)</label><input type="text" id="i-ch" value="${parseInt(it.charges)||0}">
     <label>Recharges on</label><select id="i-rech">${Object.keys(RECHARGE).map(k=>`<option value="${k}" ${(it.recharge||"long")===k?"selected":""}>${RECHARGE[k]}</option>`).join("")}</select>
     <label style="display:flex;align-items:center;gap:8px;text-transform:none;letter-spacing:0;font-size:13px"><input type="checkbox" id="i-att" ${it.attuned?"checked":""} style="width:16px;height:16px"> Attuned magic item</label>
+    <label class="cbl"><input type="checkbox" id="i-eq" ${it.equipped?"checked":""}> Equipped</label>
+    <label class="cbl"><input type="checkbox" id="i-atreq" ${it.attunement?"checked":""}> Requires attunement</label>
+    ${itemEffectsEditor(it)}
     <div class="modal-acts"><button class="m-cancel" id="i-del" style="margin-right:auto;color:var(--red-br);border-color:var(--red-br)">Delete</button><button class="m-cancel" id="m-x">Cancel</button><button class="m-ok" id="m-ok">Save</button></div>`);
   document.getElementById("m-x").onclick=closeModal;
   document.getElementById("i-del").onclick=()=>{S.items=S.items.filter(x=>x.id!==id);closeModal();save();renderOverview();toast("Item deleted.");};
@@ -1184,12 +1286,49 @@ function editItem(id){
     it.qty=Math.max(1,parseInt(document.getElementById("i-qty").value)||1);
     it.notes=document.getElementById("i-notes").value.trim();
     it.attuned=document.getElementById("i-att").checked;
+    if(document.getElementById("i-eq").checked)it.equipped=true;else delete it.equipped;
+    if(document.getElementById("i-atreq").checked)it.attunement=true;else delete it.attunement;
+    const fx=readItemEffects();if(fx)it.effects=fx;else delete it.effects;
     const og=document.getElementById("i-origin"); if(og) it.origin=og.value;
     it.charges=Math.max(0,Math.min(20,parseInt(document.getElementById("i-ch").value)||0));
     it.recharge=document.getElementById("i-rech").value;
     if((it.used||0)>it.charges)it.used=it.charges;
     closeModal();save();renderOverview();
   };
+}
+/* "Effects" section of the item editor (collapsible); only stored fields that are set (compactEffects) */
+function itemEffectsEditor(it){
+  const e=compactEffects(it.effects)||{};const num=(o,k)=>parseInt((o||{})[k])||0;const has=(l,k)=>(l||[]).includes(k);
+  const bon=Object.keys(ITEM_BON).map(k=>`<div class="fxc"><span>${ITEM_BON[k]}</span><input type="number" data-fxbon="${k}" value="${num(e.bon,k)}"></div>`).join("");
+  const row=(key,label,kind)=>{const pr=kind==="skill"?(e.prof||{}).skills:(e.prof||{}).saves,ad=kind==="skill"?(e.adv||{}).skills:(e.adv||{}).saves,di=kind==="skill"?(e.dis||{}).skills:(e.dis||{}).saves;
+    const b=kind==="skill"?num(e.skillBon,key):num(e.saveBon,key);
+    return `<tr><td>${label}</td><td><input type="number" data-fx${kind}bon="${key}" value="${b}"></td><td><input type="checkbox" data-fxprof="${kind}" value="${key}" ${has(pr,key)?"checked":""}></td><td><input type="checkbox" data-fxadv="${kind}" value="${key}" ${has(ad,key)?"checked":""}></td><td><input type="checkbox" data-fxdis="${kind}" value="${key}" ${has(di,key)?"checked":""}></td></tr>`;};
+  const head=`<tr><th></th><th>Bonus</th><th>Prof</th><th>Adv</th><th>Dis</th></tr>`;
+  const saves=Object.keys(ABILITIES).map(a=>row(a,ABILITIES[a],"save")).join("");
+  const skills=Object.keys(SKILLS).sort((a,b)=>SKILLS[a].l.localeCompare(SKILLS[b].l)).map(k=>row(k,SKILLS[k].l,"skill")).join("");
+  const flags=(kind)=>["attack","init","death"].map(f=>`<label class="cbl"><input type="checkbox" data-fx${kind}flag="${f}" ${(e[kind]||{})[f]?"checked":""}> ${({attack:"Attacks",init:"Initiative",death:"Death saves"})[f]}</label>`).join("");
+  return `<details class="fxbox" ${Object.keys(e).length?"open":""}><summary>Effects <small>only while equipped (and attuned, if required)</small></summary>
+    <label>Bonuses</label><div class="fxgrid">${bon}</div>
+    <label>Saving throws</label><table class="fxtab">${head}${saves}</table>
+    <label>Skills <small>(proficiency here does not count against the limit of 6)</small></label><table class="fxtab">${head}${skills}</table>
+    <label>Advantage on</label><div class="fxflags">${flags("adv")}</div>
+    <label>Disadvantage on</label><div class="fxflags">${flags("dis")}</div>
+    <label>Resistances</label><select multiple size="5" id="fx-res">${typeMultiOptions(e.res)}</select>
+    <label>Immunities</label><select multiple size="5" id="fx-imm">${typeMultiOptions(e.imm)}</select>
+    <label>Vulnerabilities</label><select multiple size="5" id="fx-vuln">${typeMultiOptions(e.vuln)}</select>
+    <label>Senses</label><input type="text" id="fx-senses" value="${escapeHtml(e.senses||"")}" placeholder="e.g. Darkvision 60 ft">
+    <label>Other effect (no mechanics)</label><input type="text" id="fx-note" value="${escapeHtml(e.note||"")}" placeholder="what the item does beyond the numbers"></details>`;
+}
+function readItemEffects(){
+  const q=(sel)=>[...document.querySelectorAll("#modalBox "+sel)];const e={bon:{},saveBon:{},skillBon:{},prof:{skills:[],saves:[]},adv:{skills:[],saves:[]},dis:{skills:[],saves:[]}};
+  q("[data-fxbon]").forEach(i=>e.bon[i.dataset.fxbon]=i.value);
+  q("[data-fxsavebon]").forEach(i=>e.saveBon[i.dataset.fxsavebon]=i.value);
+  q("[data-fxskillbon]").forEach(i=>e.skillBon[i.dataset.fxskillbon]=i.value);
+  for(const kind of ["prof","adv","dis"])q(`[data-fx${kind}]:checked`).forEach(i=>e[kind][i.dataset["fx"+kind]==="skill"?"skills":"saves"].push(i.value));
+  for(const kind of ["adv","dis"])q(`[data-fx${kind}flag]:checked`).forEach(i=>e[kind][i.dataset["fx"+kind+"flag"]]=true);
+  for(const kind of ["res","imm","vuln"]){const el=document.getElementById("fx-"+kind);e[kind]=el?[...el.selectedOptions].map(o=>o.value):[];}
+  e.senses=(document.getElementById("fx-senses")||{}).value||"";e.note=(document.getElementById("fx-note")||{}).value||"";
+  return compactEffects(e);
 }
 function editFeat(id){
   const f=S.feats.find(x=>x.id===id); if(!f) return;

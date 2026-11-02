@@ -108,11 +108,72 @@ export function hitDie(S){const n=Math.min(S.bought.hitDie||0,HIT_DICE.length-1)
 export function hitDieMax(S){return hitDie(S).dice.reduce((a,b)=>a+b,0);}
 
 /* ---------- Feats: sum of all feat bonuses {str..cha, ac, speed, hp, init} ---------- */
-export function featBonuses(feats){
-  const t={str:0,dex:0,con:0,int:0,wis:0,cha:0,ac:0,speed:0,hp:0,init:0};
+/* ---------- Items with effects (1.3.0) ----------
+   An item works only while equipped and, if it requires attunement, attuned. effects (all optional, missing = none):
+   bon {str..cha, ac, speed, hp, init, atk, dmg, spellDC, spellPoints}, saveBon {str..cha}, skillBon {<skill>},
+   prof {skills, saves} (proficiency, not counted against the limit of 6, never stacks), adv / dis {skills, saves,
+   attack, init, death}, res / imm / vuln [type keys], senses, note. Summed like feats (featBonuses). */
+export const ITEM_BON={str:"STR",dex:"DEX",con:"CON",int:"INT",wis:"WIS",cha:"CHA",ac:"AC",speed:"Speed",hp:"Max HP",init:"Initiative",atk:"Attack",dmg:"Damage",spellDC:"Spell DC/Attack",spellPoints:"Spell Points"};
+export const ITEM_ROLLS=["attack","init","death"];
+export function itemActive(it){return !!(it&&it.equipped&&(!it.attunement||it.attuned));}
+/* effects without defaults (zero bonuses, empty lists, false flags): the shape that is stored and exported */
+export function compactEffects(e){
+  e=e||{};const out={};const num=(o,keys)=>{const r={};for(const k of keys){const v=parseInt((o||{})[k]);if(v)r[k]=v;}return Object.keys(r).length?r:null;};
+  const list=(a)=>Array.isArray(a)?[...new Set(a.map(String).filter(Boolean))]:[];
+  const b=num(e.bon,Object.keys(ITEM_BON));if(b)out.bon=b;
+  const sb=num(e.saveBon,Object.keys(ABILITIES));if(sb)out.saveBon=sb;
+  const kb=num(e.skillBon,Object.keys(SKILLS));if(kb)out.skillBon=kb;
+  const pr={};const ps=list((e.prof||{}).skills).filter(k=>SKILLS[k]),pv=list((e.prof||{}).saves).filter(a=>ABILITIES[a]);if(ps.length)pr.skills=ps;if(pv.length)pr.saves=pv;if(Object.keys(pr).length)out.prof=pr;
+  for(const kind of ["adv","dis"]){const x=e[kind]||{};const r={};const sk=list(x.skills).filter(k=>SKILLS[k]),sv=list(x.saves).filter(a=>ABILITIES[a]);if(sk.length)r.skills=sk;if(sv.length)r.saves=sv;for(const f of ITEM_ROLLS)if(x[f])r[f]=true;if(Object.keys(r).length)out[kind]=r;}
+  for(const kind of ["res","imm","vuln"]){const l=list(e[kind]);if(l.length)out[kind]=l;}
+  for(const kind of ["senses","note"]){const t=String(e[kind]||"").trim();if(t)out[kind]=t;}
+  return Object.keys(out).length?out:null;
+}
+/* effects of all active items: sums, proficiencies, advantage/disadvantage sources, defenses, texts */
+export function itemEffects(items){
+  const fx={bon:{},src:{},saveBon:{},skillBon:{},profSkills:[],profSaves:[],adv:{skills:{},saves:{},attack:[],init:[],death:[]},dis:{skills:{},saves:{},attack:[],init:[],death:[]},res:[],imm:[],vuln:[],senses:[],notes:[]};
+  (items||[]).forEach(it=>{
+    if(!itemActive(it))return;
+    const e=compactEffects(it.effects);if(!e)return;const nm=it.name||"Item";
+    for(const k in (e.bon||{})){fx.bon[k]=(fx.bon[k]||0)+e.bon[k];(fx.src[k]=fx.src[k]||[]).push({name:nm,v:e.bon[k]});}
+    for(const a in (e.saveBon||{}))fx.saveBon[a]=(fx.saveBon[a]||0)+e.saveBon[a];
+    for(const k in (e.skillBon||{}))fx.skillBon[k]=(fx.skillBon[k]||0)+e.skillBon[k];
+    ((e.prof||{}).skills||[]).forEach(k=>{if(!fx.profSkills.includes(k))fx.profSkills.push(k);});
+    ((e.prof||{}).saves||[]).forEach(a=>{if(!fx.profSaves.includes(a))fx.profSaves.push(a);});
+    for(const kind of ["adv","dis"]){const x=e[kind]||{};(x.skills||[]).forEach(k=>(fx[kind].skills[k]=fx[kind].skills[k]||[]).push(nm));(x.saves||[]).forEach(a=>(fx[kind].saves[a]=fx[kind].saves[a]||[]).push(nm));for(const f of ITEM_ROLLS)if(x[f])fx[kind][f].push(nm);}
+    for(const kind of ["res","imm","vuln"])(e[kind]||[]).forEach(k=>fx[kind].push({key:k,src:nm}));
+    if(e.senses)fx.senses.push({src:nm,text:e.senses});
+    if(e.note)fx.notes.push({src:nm,text:e.note});
+  });
+  return fx;
+}
+/** Full effects shape (data model / sheet) from the compact app shape; unknown keys dropped. */
+export function expandEffects(e){
+  const c=compactEffects(e)||{};
+  const nums=(o,keys)=>Object.fromEntries(keys.map(k=>[k,Number(o?.[k])||0]));
+  const rollFx=(x)=>({skills:[...(x?.skills||[])],saves:[...(x?.saves||[])],attack:!!x?.attack,init:!!x?.init,death:!!x?.death});
+  return {
+    bon:nums(c.bon,Object.keys(ITEM_BON)), saveBon:nums(c.saveBon,Object.keys(ABILITIES)), skillBon:{...(c.skillBon||{})},
+    prof:{skills:[...(c.prof?.skills||[])],saves:[...(c.prof?.saves||[])]}, adv:rollFx(c.adv), dis:rollFx(c.dis),
+    res:[...(c.res||[])], imm:[...(c.imm||[])], vuln:[...(c.vuln||[])], senses:c.senses||"", note:c.note||""
+  };
+}
+export function featBonuses(feats,items){
+  const t={str:0,dex:0,con:0,int:0,wis:0,cha:0,ac:0,speed:0,hp:0,init:0,atk:0,dmg:0,spellDC:0,spellPoints:0};
   (feats||[]).forEach(f=>{const b=f.bon||{};for(const k in t){const v=parseInt(b[k]);if(v)t[k]+=v;}});
+  const ib=itemEffects(items).bon;for(const k in ib)if(k in t)t[k]+=ib[k];   /* active items, summed like feats */
   return t;
 }
+/* tooltip of a final ability score: "18 = 16 + 2 Gauntlets of Ogre Power" (cap noted when it bites) */
+export function abilityBreakdown(S,k,d){
+  const parts=[];const fbF=(S.feats||[]).reduce((a,f)=>a+(parseInt((f.bon||{})[k])||0),0);if(fbF)parts.push([fbF,"Feats"]);
+  ((d.itemFx.src||{})[k]||[]).forEach(x=>parts.push([x.v,x.name]));
+  const asi=(S.choices.asi||[]).filter(a=>a===k).length;if(asi)parts.push([asi,"Ability Score"]);
+  let ms=0;for(const i in S.milestones){const m=S.milestones[i];if(m&&m.type==="asi"&&m.stats)ms+=(m.stats[k]||0);}if(ms)parts.push([ms,"Milestones"]);
+  const base=S.abilities[k];const sum=base+parts.reduce((a,p)=>a+p[0],0);
+  return `${d.fin[k]} = ${base}${parts.map(([v,n])=>` ${v<0?"-":"+"} ${Math.abs(v)} ${n}`).join("")}${sum>d.fin[k]?` (cap ${d.maxCap[k]})`:""}`;
+}
+
 
 /* ---------- Weapons ---------- */
 export function weaponStats(w,d){
@@ -120,8 +181,8 @@ export function weaponStats(w,d){
   if(w.abil==="fin") abK=(d.mods.dex>=d.mods.str)?"dex":"str";
   const am=d.mods[abK]||0;
   const bonus=Number(w.bonus)||0;
-  const atk=am+(w.prof?d.pb:0)+bonus+(d.exhPen||0);
-  const dmgMod=am+bonus;
+  const atk=am+(w.prof?d.pb:0)+bonus+(d.exhPen||0)+((d.fb&&d.fb.atk)||0);
+  const dmgMod=am+bonus+((d.fb&&d.fb.dmg)||0);
   const dmg=(w.dice||"")+(dmgMod?fmtMod(dmgMod):"");
   return {abK,atk,dmg,dmgMod};
 }
@@ -136,7 +197,7 @@ export function derived(S){
   const numMilestones=Math.floor(earned/75);
   const cantripTier=1+Math.floor(earned/100);
   const bonusStatPoints=numMilestones*2;
-  const fb=featBonuses(S.feats);
+  const fb=featBonuses(S.feats,S.items);
   const fin={...S.abilities};
   for(const a in ABILITIES) if(fb[a]) fin[a]+=fb[a];
   (S.choices.asi||[]).forEach(ab=>{if(fin[ab]!==undefined)fin[ab]+=1;});
@@ -167,12 +228,13 @@ export function derived(S){
   const armStrLack=armWorn&&arm.str>0&&fin.str<arm.str;
   if(armStrLack)walk=Math.max(0,walk-10);
   if((S.bought.fightStyle||0)>0&&(S.choices.fightStyle||[]).includes("defense")&&armWorn)ac+=1;
-  const profSaves=new Set(S.choices.saveProf||[]);
-  const skillProfSet=new Set([...(S.selectedSkills||[]),...(S.choices.skillProf||[])]);
+  const ifx=itemEffects(S.items);
+  const profSaves=new Set([...(S.choices.saveProf||[]),...ifx.profSaves]);
+  const skillProfSet=new Set([...(S.selectedSkills||[]),...(S.choices.skillProf||[]),...ifx.profSkills]);
   const skillExpSet=new Set(S.choices.skillExp||[]);
   const strIntim=(S.bought.strintimidation||0)>0;
-  const skillData={};for(const k in SKILLS){let abK=SKILLS[k].a;if(k==="itm"&&strIntim)abK="str";const prof=skillProfSet.has(k),exp=skillExpSet.has(k);skillData[k]={prof,exp,mod:mods[abK]+(exp?pb*2:(prof?pb:0))+exhPen};}
-  const saveData={};for(const a in ABILITIES){const prof=profSaves.has(a);saveData[a]={prof,mod:mods[a]+(prof?pb:0)+exhPen};}
+  const skillData={};for(const k in SKILLS){let abK=SKILLS[k].a;if(k==="itm"&&strIntim)abK="str";const prof=skillProfSet.has(k),exp=skillExpSet.has(k);skillData[k]={prof,exp,mod:mods[abK]+(exp?pb*2:(prof?pb:0))+exhPen+(ifx.skillBon[k]||0),adv:ifx.adv.skills[k]||[],dis:ifx.dis.skills[k]||[]};}
+  const saveData={};for(const a in ABILITIES){const prof=profSaves.has(a);saveData[a]={prof,mod:mods[a]+(prof?pb:0)+exhPen+(ifx.saveBon[a]||0),adv:ifx.adv.saves[a]||[],dis:ifx.dis.saves[a]||[]};}
   const init=mods.dex+fb.init+exhPen;
   const passivePerc=10+skillData.prc.mod;
   /* Spell purchases (v5): spellslotN = the spell purchase (casting rank N, one known spell, a slot; Turm: N points per slot).
@@ -186,13 +248,14 @@ export function derived(S){
   }
   /* known spells per rank = spellslotN + learnN; have = spells of that rank on the sheet */
   const known=[];for(let L=1;L<=9;L++){const max=(S.bought["spellslot"+L]||0)+(S.bought["learn"+L]||0);const have=(S.spells||[]).filter(sp=>(parseInt(sp.lvl)||0)===L).length;if(max>0||have>0)known.push({L,max,have,over:have>max});}
+  spTotal+=fb.spellPoints;   /* items: + spell points (Turm pool) */
   const spUsed=Math.max(0,Math.min(parseInt(S.spUsed)||0,spTotal));
   const spLeft=spTotal-spUsed;
   const spellMod=Math.max(mods.cha,mods.wis,mods.int);
-  const spellDC=8+pb+spellMod+(S.bought.spellDC||0);
-  const spellAtk=pb+spellMod+(S.bought.spellDC||0)+exhPen;
-  const atkBonus=Math.max(mods.str,mods.dex)+pb+(S.bought.wepPlus1||0)+exhPen;
-  return {earned,level,pb,numMilestones,cantripTier,bonusStatPoints,fin,mods,maxCap,walk,hpSum,hpMax,ac,acNote,profSaves,skillProfSet,skillExpSet,strIntim,skillData,saveData,init,passivePerc,slots,known,spellMod,spellDC,spellAtk,atkBonus,exh,exhPen,fb,spTotal,spUsed,spLeft,spMaxRank,spBreak,arm,armWorn,shield,armStrLack};
+  const spellDC=8+pb+spellMod+(S.bought.spellDC||0)+fb.spellDC;
+  const spellAtk=pb+spellMod+(S.bought.spellDC||0)+exhPen+fb.spellDC;
+  const atkBonus=Math.max(mods.str,mods.dex)+pb+(S.bought.wepPlus1||0)+exhPen+fb.atk;
+  return {earned,level,pb,numMilestones,cantripTier,bonusStatPoints,fin,mods,maxCap,walk,hpSum,hpMax,ac,acNote,profSaves,skillProfSet,skillExpSet,strIntim,skillData,saveData,init,passivePerc,slots,known,spellMod,spellDC,spellAtk,atkBonus,exh,exhPen,fb,spTotal,spUsed,spLeft,spMaxRank,spBreak,arm,armWorn,shield,armStrLack,itemFx:ifx};
 }
 
 /* ============================================================

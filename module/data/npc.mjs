@@ -127,8 +127,9 @@ export class NpcData extends foundry.abstract.TypeDataModel {
       }
     }
     delete source.attacks; delete source.traits; delete source.actions;
-    // stored data from before 1.3.0 (full source: has "mode", lacks "typeMarks"): mode turm marks non-element keys
-    if ("mode" in source && source.typeMarks === undefined) {
+    // stored data from before 1.3.0 (complete source without "typeMarks"; partial update data is left alone):
+    // mode turm marks non-element keys
+    if ("mode" in source && "entries" in source && "resistances" in source && source.typeMarks === undefined) {
       markUnassignedTypes(source, source.mode);
       source.typeMarks = true;
     }

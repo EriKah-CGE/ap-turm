@@ -5,7 +5,7 @@
  * against the app's own load()/migrate*() functions. `importAppJSON` is the Foundry UI entry.
  */
 import { ARMORS, WEAPONS } from "./config.mjs";
-import { DATA_VERSION, convertSpellPurchases, spellRuleNotice } from "./rules.mjs";
+import { DATA_VERSION, convertSpellPurchases, spellRuleNotice, expandEffects } from "./rules.mjs";
 import { isNpcExport, validateNpcExport, createNpcFromExport, importNpcIntoActor, NPC_FORMAT } from "./npc-transfer.mjs";
 
 /* ---------- App defaults + migrations (ported 1:1 from ap-character-sheet.html) ---------- */
@@ -220,7 +220,8 @@ export function convertAppExport(data) {
       qty: Math.max(1, i(g.qty, 1)), notes: String(g.notes ?? ""), attuned: !!g.attuned,
       charges: Math.max(0, Math.min(20, i(g.charges))), used: Math.max(0, i(g.used)),
       recharge: ["long", "short", "dawn", "none"].includes(g.recharge) ? g.recharge : "long",
-      origin: g.origin === "tower" ? "tower" : "city"
+      origin: g.origin === "tower" ? "tower" : "city",
+      equipped: !!g.equipped, attunement: !!g.attunement, effects: expandEffects(g.effects)
     }
   });
 

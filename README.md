@@ -103,6 +103,25 @@ vermerkt danach die neue Version.
 - NPC-Aktionen bieten im Turm-Modus dieselbe gruppierte Auswahl; „nicht zugeordnet" bleibt für importierte Typen
   möglich.
 
+## Gegenstände mit Wirkung (ab 1.3.0)
+
+- Jeder Gegenstand kann Wirkungen tragen: Boni auf Attribute, AC, Tempo, HP, Initiative, Angriff, Schaden, Zauber-SG/
+  Zauberangriff und Zauberpunkte; Boni auf einzelne Rettungswürfe und Fertigkeiten; Übung in Fertigkeiten/Rettungswürfen
+  (zählt nicht gegen das Limit von 6, stapelt nicht mit vorhandener Übung); Vorteil/Nachteil auf Fertigkeiten,
+  Rettungswürfe, Angriffe, Initiative und Todesrettungswürfe (Nachteil z. B. für verfluchte Gegenstände);
+  Resistenzen, Immunitäten, Verwundbarkeiten (im Turm-Modus D&D-Typen und Elemente); Sinne und freier Text.
+- Wirkungen gelten nur, wenn der Gegenstand **ausgerüstet** ist und – falls er Einstimmung verlangt – eingestimmt.
+  Der Schalter „Equipped" sitzt direkt in der Inventarliste (Punkt links); ausgeschaltete Wirkungen stehen
+  durchgestrichen unter dem Namen.
+- Anzeige: kleines „A"/„D" neben Fertigkeit und Rettungswurf (Tooltip nennt den Gegenstand), Resistenzen und Sinne
+  in der Übersicht, Attribut-Tooltip „18 = 16 + 2 Gauntlets of Ogre Power".
+- Foundry: Im Wurf ist Vorteil/Nachteil aus Gegenständen vorausgewählt („Advantage: Cloak of Elvenkind"); Shift/Ctrl
+  oder der Dialog (Rechtsklick) ändern das. „Apply to target" berücksichtigt die Resistenzen aus Gegenständen auch für
+  D&D-Typen.
+- Bearbeiten: App im Gegenstands-Editor (Abschnitt „Effects"), Foundry im Gegenstandsbogen (Abschnitt „Effects").
+- Gegenstände mit Wirkung lassen sich in die Item-Bibliothek legen und übergeben; ein Loot-Claim mit dem Namen eines
+  Bibliothekseintrags legt den Gegenstand mit seinen Wirkungen an. Export/Import App ↔ Foundry übertragen alle Felder.
+
 ## Manuelle Installation (Zip, ohne Updates)
 
 Nur nötig, wenn die Manifest-URL nicht genutzt werden kann:

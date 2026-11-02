@@ -1,9 +1,11 @@
-<div class="apt-itemrow" data-item-id="{{id}}">
+<div class="apt-itemrow {{#if active}}active{{/if}}" data-item-id="{{id}}">
+  <span class="eqdot {{#if equipped}}on{{/if}}" data-action="toggleEquipped" data-tooltip="{{#if equipped}}Equipped (click: take off){{else}}Not equipped (click: equip){{/if}}"></span>
   <span class="iqty">{{#if (gt qty 1)}}×{{qty}}{{/if}}</span>
   <span class="inwrap">
     <input type="text" name="items.{{id}}.name" value="{{name}}" placeholder="Item name">
     {{#if charges}}<span class="chwrap">{{#each pips}}<span class="chpip {{#if used}}used{{/if}}" data-action="gearCharge" data-i="{{i}}"></span>{{/each}}<span class="chn">{{left}}/{{charges}}</span></span>{{/if}}
     {{#if notes}}<small class="inotes">{{notes}}</small>{{/if}}
+    {{#if effectText}}<small class="ieffects {{#unless active}}off{{/unless}}" data-tooltip="{{#if active}}Effects active{{else if needsAttune}}Requires attunement: not attuned, no effect{{else}}Not equipped, no effect{{/if}}">{{effectText}}</small>{{/if}}
   </span>
   <span class="iright">{{#if attuned}}<span class="tag atn">Attuned</span>{{/if}}<span class="apt-rowbtns">{{#if @root.isGM}}<a data-action="saveToLibrary" title="Save to library"><i class="fa-solid fa-book-bookmark"></i></a>{{/if}}<a data-action="giveItem" title="Give to…"><i class="fa-solid fa-hand-holding"></i></a><a data-action="editItem" title="Edit"><i class="fa-solid fa-pen-to-square"></i></a><a data-action="deleteItem" title="Delete"><i class="fa-solid fa-trash"></i></a></span></span>
 </div>

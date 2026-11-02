@@ -44,7 +44,7 @@ const end = js.indexOf("function labelFor(");
 const block = js.slice(start, end);
 const APP = new Function(block + `
   return {
-    setState:(s)=>{S=s;}, getState:()=>S, DEFAULTS, DATA_VERSION, migrateSpellRule, derived, computeSpent, availableAp, totalAp, layPool, hitDie, hitDieMax,
+    setState:(s)=>{S=s;}, getState:()=>S, DEFAULTS, DATA_VERSION, migrateSpellRule, compactEffects, itemEffects, abilityBreakdown, derived, computeSpent, availableAp, totalAp, layPool, hitDie, hitDieMax,
     weaponStats, featBonuses, isLocked, isMaxed, costOfRank, totalSpentForItem, findItem,
     migrateWeapons, migrateFeats, migrateInsp, migrateItems, migrateCrystals,
     SHOP_DATA, PREREQS, SELECTORS, ARMORS, ELEMENTS, HIT_DICE, SKILLS, ABILITIES, ABBR, DAMAGE_TYPES, CREATURE_TYPES,
@@ -1127,7 +1127,7 @@ ok("item transfer: stack split and carry limit at the receiver", () => {
   assert.equal(transfer.carryCount(full, { extra: 1 }) > cfg.TOWER_CARRY_LIMIT, true);
 
   // against the app: build tag, tooltip and counting rule of v09-05o
-  assert.match(html, /class="buildtag"[^>]*>v09-05o</);
+  assert.match(html, /class="buildtag"[^>]*>v09-05p</);
   const appTower = new Function("allItems", js.match(/const towerItems=allItems\.filter\([^;]*\);/)[0] + "return towerItems.length;");
   assert.match(js, /Inside the tower: unlimited\. Only \$\{TOWER_CARRY_LIMIT\} tower finds may be carried back in on re-entry \(circlet crystals exempt\)\./);
   const tpl = fs.readFileSync(new URL("../templates/actor/character/inventory.hbs", import.meta.url), "utf8");
@@ -1931,11 +1931,14 @@ ok("item library: name conflicts and field round trip", () => {
   // round trip item -> library -> item: every gear field of the data model stays identical
   const gearSrc = fs.readFileSync(new URL("../module/data/items.mjs", import.meta.url), "utf8").match(/class GearData[\s\S]*?return \{([\s\S]*?)\n    \};/)[1];
   const gearFields = [...gearSrc.matchAll(/^\s{6}(\w+):/gm)].map(m => m[1]);
-  assert.deepEqual(gearFields, ["qty", "notes", "attuned", "charges", "used", "recharge", "origin"]);
+  assert.deepEqual(gearFields, ["qty", "notes", "attuned", "equipped", "attunement", "effects", "charges", "used", "recharge", "origin"]);
   const onActor = {
     _id: "itm1", name: "Kristalllampe", type: "gear", img: "icons/lamp.webp", sort: 300000, folder: null,
     ownership: { default: 0, u1: 3 }, _stats: { createdTime: 1, modifiedTime: 2, compendiumSource: null },
-    system: { qty: 3, notes: "Leuchtet 30 ft\nzweite Zeile", attuned: true, charges: 4, used: 1, recharge: "dawn", origin: "tower" },
+    // items with effects keep them through the library (1.3.0)
+    system: { qty: 3, notes: "Leuchtet 30 ft\nzweite Zeile", attuned: true, equipped: true, attunement: true,
+      effects: rules.expandEffects({ bon: { str: 2 }, adv: { skills: ["ste"] }, res: ["feuer"], senses: "Darkvision 60 ft" }),
+      charges: 4, used: 1, recharge: "dawn", origin: "tower" },
     flags: { "ap-turm": { note: "x" } }, effects: [{ _id: "e1", name: "Glow", changes: [], _stats: {} }]
   };
   const inLib = lib.libraryData(onActor);
@@ -3335,16 +3338,92 @@ await okAsync("weapon damage types: both lists in turm mode, second damage line,
   assert.deepEqual(convertAppExport(raw).items.filter(i => i.type === "weapon").map(i => [i.system.dice2, i.system.type2]), [["1d6", "feuer"], ["", ""]]);
   // data models: old weapon -> defaults for the new fields, old turm NPC -> D&D keys marked once, new data untouched
   const DM = await loadDataModels();
-  const ow = DM.WeaponData.migrateData({ dice: "1d8", dtype: "macht" });
-  assert.deepEqual([ow.dtype, ow.dice2, ow.type2], ["arch", undefined, undefined]);   // schema initial "" fills missing fields
+  const ow = DM.WeaponData.migrateData({ abil: "str", dice: "1d8", dtype: "macht" });
+  assert.deepEqual([ow.dtype, ow.dice2, ow.type2], ["arch", "", ""]);
   const oldNpc = DM.NpcData.migrateData({ mode: "turm", resistances: ["fire", "eis"], immunities: [], vulnerabilities: [], entries: [{ name: "Bite", section: "actions", dmgType: "piercing" }] });
   assert.deepEqual([oldNpc.resistances, oldNpc.entries[0].dmgType, oldNpc.typeMarks], [["?fire", "eis"], "?piercing", true]);
   const newNpc = DM.NpcData.migrateData({ mode: "turm", typeMarks: true, resistances: ["fire"], entries: [{ name: "Claw", section: "actions", dmgType: "slashing" }] });
   assert.deepEqual([newNpc.resistances, newNpc.entries[0].dmgType], [["fire"], "slashing"]);
   const apNpc = DM.NpcData.migrateData({ mode: "ap", resistances: ["fire"], entries: [] });
+  const modeOnly = DM.NpcData.migrateData({ mode: "turm" });                            // partial update: untouched
+  assert.equal(modeOnly.typeMarks, undefined);
   assert.deepEqual([apNpc.resistances, apNpc.typeMarks], [["fire"], true]);
   const partial = DM.NpcData.migrateData({ resistances: ["fire"] });                     // token delta: no mode -> untouched
   assert.deepEqual([partial.resistances, partial.typeMarks], [["fire"], undefined]);
+});
+
+await okAsync("items with effects: equipped / attuned, bonuses, proficiency, A/D, defenses, round trip, data models", async () => {
+  const raw = JSON.parse(fs.readFileSync(new URL("./fixtures/items-effects.json", import.meta.url), "utf8"));
+  const S = appLoad(raw);
+  compareAll(S, "items-effects");                                          // app == rules, item by item
+  const d = rules.derived(S);
+  const off = (pred) => { const c = structuredClone(S); c.items = c.items.filter(i => !pred(i)); return rules.derived(c); };
+  // Gauntlets (str +2, equipped, attuned): STR 14 -> 16, mod +2 -> +3, attack +1
+  const w = S.weapons[0];
+  const noG = off(i => i.id === "igaunt");
+  assert.deepEqual([d.fin.str, d.mods.str, noG.fin.str, noG.mods.str], [16, 3, 14, 2]);
+  assert.equal(rules.weaponStats(w, d).atk - rules.weaponStats(w, noG).atk, 1);
+  // not equipped -> no effect; attunement required but not attuned -> no effect
+  const unequip = structuredClone(S); delete unequip.items[0].equipped;
+  assert.equal(rules.derived(unequip).fin.str, 14);
+  const unattuned = structuredClone(S); unattuned.items[0].attuned = false;
+  assert.equal(rules.derived(unattuned).fin.str, 14);
+  assert.equal(rules.itemActive(unattuned.items[0]), false);
+  assert.equal(rules.itemActive({ equipped: true }), true);
+  // the Cursed Ring is not equipped: no AC -2, no disadvantage
+  assert.deepEqual([d.saveData.wis.dis, d.itemFx.dis.death], [[], []]);
+  const cursed = structuredClone(S); cursed.items[3].equipped = true;
+  const dc = rules.derived(cursed);
+  assert.deepEqual([dc.ac, dc.saveData.wis.dis, dc.itemFx.dis.death], [d.ac - 2, ["Cursed Ring"], ["Cursed Ring"]]);
+  // Ring: adv Stealth (marker with the item name), prof Stealth + Athletics (no stacking, not counted against 6),
+  // +1 Stealth, DEX save proficiency, +1 spell DC / attack, +2 spell points, advantage on initiative
+  assert.deepEqual([d.skillData.ste.adv, d.skillData.ste.prof, d.skillData.ath.prof], [["Ring of Shadows"], true, true]);
+  assert.equal(d.skillData.ste.mod, d.mods.dex + d.pb + 1);
+  assert.equal(d.skillData.ath.mod, d.mods.str + d.pb);                   // already proficient: no double PB
+  assert.equal(S.selectedSkills.length, 1);
+  assert.deepEqual([d.saveData.dex.prof, d.saveData.dex.mod], [true, d.mods.dex + d.pb]);
+  assert.deepEqual([d.spellDC, d.spellAtk, d.spTotal], [8 + d.pb + d.spellMod + 1, d.pb + d.spellMod + 1, 1 + 2]);
+  assert.deepEqual(rolls.itemRollPreset(d, "skill", "ste"), { mode: "advantage", adv: ["Ring of Shadows"], dis: [], label: "Advantage: Ring of Shadows" });
+  assert.equal(rolls.itemRollPreset(d, "init").mode, "advantage");
+  assert.equal(rolls.itemRollPreset(dc, "save", "wis").label, "Disadvantage: Cursed Ring");
+  assert.equal(rolls.itemRollPreset(d, "attack").mode, "normal");
+  // Cloak: +2 WIS save, res feuer + slashing (with the shop resistance eis), senses and note
+  assert.equal(d.saveData.wis.mod, d.mods.wis + 2);
+  assert.deepEqual(d.itemFx.res.map(r => [r.key, r.src]), [["feuer", "Cloak of the Tower"], ["slashing", "Cloak of the Tower"]]);
+  assert.deepEqual(rolls.characterDefenses(S), { resistances: ["eis", "feuer", "slashing"], immunities: [], vulnerabilities: [] });
+  assert.deepEqual([d.itemFx.senses[0].text, d.itemFx.notes[0].text], ["Darkvision 60 ft", "Glows in the dark"]);
+  // attribute tooltip
+  assert.equal(rules.abilityBreakdown(S, "str", d), "16 = 14 + 2 Gauntlets of Ogre Power");
+  // weapon 1d8 slashing + 1d6 feuer against a target with fire resistance: only the second line halves;
+  // against this character a D&D type counts in turm mode as well (slashing resisted by the cloak)
+  const typed = rolls.typedDamage([{ type: "slashing", amount: 8 }, { type: "feuer", amount: 5 }], { resistances: ["feuer"] }, { mode: "turm" });
+  assert.deepEqual(typed.lines.map(l => l.taken), [8, 2]);
+  assert.equal(rolls.typedDamage([{ type: "slashing", amount: 8 }, { type: "feuer", amount: 5 }], rolls.characterDefenses(S), { mode: "turm" }).taken, 4 + 2);
+  // export -> import -> same state (app shape, compact effects, missing fields stay missing)
+  const out = roundTrip(raw);
+  assert.deepEqual(out.items, raw.items);
+  assert.deepEqual(out.weapons, raw.weapons);
+  // Foundry pipeline: import -> data -> app state -> derived identical to the app
+  const fs1 = foundryState(convertAppExport(raw));
+  assert.deepEqual(norm(rules.derived(fs1)), appDerived(S));
+  const gear = convertAppExport(raw).items.filter(i => i.type === "gear");
+  assert.equal(gear[0].system.effects.bon.str, 2);
+  assert.deepEqual(gear[4].system.effects, rules.expandEffects(undefined));
+  assert.equal(rules.compactEffects(gear[4].system.effects), null);
+  // app and rules use the same helpers
+  APP.setState(S);
+  for (const it of S.items) assert.deepEqual(rules.compactEffects(it.effects), APP.compactEffects(it.effects), it.name);
+  assert.deepEqual(norm(rules.itemEffects(S.items)), norm(APP.itemEffects(S.items)));
+  assert.equal(APP.abilityBreakdown("str", APP.derived()), "16 = 14 + 2 Gauntlets of Ogre Power");
+  // data models: old gear item -> defaults (not equipped, no attunement requirement, empty effects)
+  const DM = await loadDataModels();
+  const og = DM.GearData.migrateData({ qty: 1, notes: "", attuned: true, charges: 0, used: 0, recharge: "long", origin: "city" });
+  assert.deepEqual([og.equipped, og.attunement, og.effects], [false, false, rules.expandEffects(undefined)]);
+  const keep = DM.GearData.migrateData({ qty: 1, origin: "city", recharge: "long", equipped: true, effects: { bon: { str: 2 } } });
+  assert.deepEqual([keep.equipped, keep.effects.bon.str, keep.effects.bon.dex], [true, 2, 0]);
+  // partial update data stays partial (Foundry runs migrateData on updates too)
+  assert.deepEqual(DM.GearData.migrateData({ effects: { bon: { str: 1 } } }), { effects: { bon: { str: 1 } } });
+  assert.deepEqual(DM.WeaponData.migrateData({ dtype: "fire" }), { dtype: "fire" });
 });
 
 console.log(`All ${passed} test groups passed.`);

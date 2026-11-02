@@ -8,7 +8,7 @@
  */
 import { ABILITIES, SKILLS, damageTypeColor } from "./config.mjs";
 import { fmtMod } from "./rules.mjs";
-import { buildAttack, buildDamage, buildNpcAttack, buildNpcDamage, entryAttackData, manualAdvantages, isUnassignedType, damageTotal, damageGroups, typedDamage, critRange, attackOutcome, damageTypeLabel, damageMultiplier,
+import { buildAttack, itemRollPreset, buildDamage, buildNpcAttack, buildNpcDamage, entryAttackData, manualAdvantages, isUnassignedType, damageTotal, damageGroups, typedDamage, critRange, attackOutcome, damageTypeLabel, damageMultiplier,
   characterDefenses, defenseVerdict, applyDamage, adjustHp, ADV_FORMULA, MODE_LABEL, rollModeFromEvent, d20Formula, abilityCheckBonus,
   deathSaveOutcome, hitDieHealFormula, downedStatusId, downedTransition, downedPlan, downedLine, checkSuccess } from "./rolls.mjs";
 import { rollModifiers, resolveMode, statusIdsOf, exhaustionLevel, exhaustionId, stepExhaustion, EXHAUSTION_MAX, EXHAUSTION_IDS } from "./conditions.mjs";
@@ -80,10 +80,11 @@ const advOptions = (mode = "normal") => `
   <div class="form-group"><label>Situational bonus</label><div class="form-fields"><input type="number" name="situational" value="0" step="1" autofocus></div></div>`;
 
 /** Advantage / situational (+ optional DC) prompt. Returns null when cancelled. */
-async function promptD20({ title, mode = "normal", dc = null, withDc = false } = {}) {
+async function promptD20({ title, mode = "normal", dc = null, withDc = false, hint = "" } = {}) {
   const dcField = withDc ? `<div class="form-group"><label>DC</label><div class="form-fields"><input type="number" name="dc" value="${dc ?? ""}" placeholder="—" step="1"></div></div>` : "";
+  const hintRow = hint ? `<p class="hint apt-preset-hint">${esc(hint)}</p>` : "";
   const res = await DialogV2().prompt({
-    window: { title }, content: advOptions(mode) + dcField, rejectClose: false,
+    window: { title }, content: hintRow + advOptions(mode) + dcField, rejectClose: false,
     ok: { label: "Roll", icon: "fa-solid fa-dice-d20", callback: (ev, button) => {
       const f = button.form.elements;
       return { mode: f.mode.value, situational: parseInt(f.situational.value) || 0, dc: withDc && f.dc.value !== "" ? parseInt(f.dc.value) : null };
@@ -96,10 +97,15 @@ async function promptD20({ title, mode = "normal", dc = null, withDc = false } =
  * Roll options from a click event: modifier keys pick the mode directly, right-click opens the dialog.
  * Without an event (macro without keys, chat button) the dialog opens. Returns null when cancelled.
  */
-export async function d20Options(event, { title, dc = null, withDc = false } = {}) {
+export async function d20Options(event, { title, dc = null, withDc = false, preset = null } = {}) {
   const { mode, dialog } = rollModeFromEvent(event ?? { button: 2 });
-  if (!dialog) return { mode, situational: 0, dc };
-  return promptD20({ title, mode, dc, withDc });
+  // items (adv / dis) preselect the mode; Shift / Ctrl on the click or the dialog choice still decide
+  const keyed = !!(event && (event.shiftKey || event.ctrlKey || event.altKey || event.metaKey));
+  const base = keyed ? mode : (preset?.mode ?? mode);
+  const presetLabel = preset?.label ?? "";
+  if (!dialog) return { mode: base, situational: 0, dc, presetLabel: keyed ? "" : presetLabel };
+  const res = await promptD20({ title, mode: base, dc, withDc, hint: presetLabel });
+  return res ? { ...res, presetLabel: res.mode === preset?.mode ? presetLabel : "" } : null;
 }
 
 /* ---------- conditions ---------- */
@@ -165,10 +171,11 @@ export function d20Results(roll) {
 export async function rollAttack(actor, item, { event = null, target: targetToken = undefined, opts: preset = null } = {}) {
   if (item?.type !== "weapon") return null;
   const S = actor.system.appState, d = actor.system.derived;
-  const opts = preset ?? await d20Options(event, { title: `Attack: ${item.name}` });
+  const opts = preset ?? await d20Options(event, { title: `Attack: ${item.name}`, preset: itemRollPreset(d, "attack") });
   if (!opts) return null;
   const target = targetToken === undefined ? targetInfo() : targetInfo(targetToken);
   const cm = conditionMods(actor, { type: "attack", targetToken: target?.token ?? null });
+  if (opts.presetLabel) cm.notes.push(opts.presetLabel);
   const mode = resolveMode(opts.mode, cm);
   const atk = buildAttack(item.system, d, { ...opts, mode });
   const roll = await new Roll(atk.formula).evaluate();
@@ -371,7 +378,9 @@ async function postDamageCard(actor, { name, dmg, flags = {} }) {
   }));
   const html = await render("damage", {
     actorName: actor.name, weapon: name, total, parts: cardParts, crit: dmg.crit, critMax: dmg.critMax && dmg.crit,
-    dtype: damageTypeLabel(dmg.dtype), dtypeColor: damageTypeColor(dmg.dtype), warnings: dmg.warnings,
+    // several damage types (second line, elemental): all of them in the header, the type on every row
+    dtype: groups.length > 1 ? groups.map(g => damageTypeLabel(g.type)).join(" + ") : damageTypeLabel(dmg.dtype),
+    dtypeColor: groups.length > 1 ? "" : damageTypeColor(dmg.dtype), multiType: groups.length > 1, warnings: dmg.warnings,
     target: targetDefenseView(targetInfo(), groups)
   });
   return ChatMessage.implementation.create({
@@ -999,8 +1008,10 @@ export async function rollCheck(actor, { kind, key }, { event = null, dc: preset
   let roll = null, formula = "", mode = "normal", d20 = null, dice = [];
   if (!auto) {
     const target = targetInfo();
-    opts = await d20Options(event, { title: `${who ?? actor.name}: ${label}`, dc: presetDc ?? target?.dc ?? null, withDc: true });
+    const itemPreset = isChar && (kind === "skill" || kind === "save") ? itemRollPreset(d, kind, key) : null;
+    opts = await d20Options(event, { title: `${who ?? actor.name}: ${label}`, dc: presetDc ?? target?.dc ?? null, withDc: true, preset: itemPreset });
     if (!opts) return null;
+    if (opts.presetLabel) cm.notes.push(opts.presetLabel);
     if (presetDc !== null && opts.dc === null) opts.dc = presetDc;
     mode = resolveMode(opts.mode, cm);
     formula = d20Formula(mod, { ...opts, mode }).formula;
@@ -1031,7 +1042,7 @@ export async function rollCheck(actor, { kind, key }, { event = null, dc: preset
 
 /** Initiative via Combat (creates combatants); modifier keys pick advantage/disadvantage. Without a scene: plain roll. */
 export async function rollInitiative(actor, { event = null } = {}) {
-  const opts = await d20Options(event, { title: "Initiative" });
+  const opts = await d20Options(event, { title: "Initiative", preset: actor.type === "character" ? itemRollPreset(actor.system.derived, "init") : null });
   if (!opts) return null;
   const cm = conditionMods(actor, { type: "initiative", ability: "dex" });
   opts.mode = resolveMode(opts.mode, cm);
@@ -1044,7 +1055,7 @@ export async function rollInitiative(actor, { event = null } = {}) {
     console.warn("ap-turm | rollInitiative via Combat failed, rolling plain", err);
   }
   const roll = await new Roll(formula, actor.getRollData()).evaluate();
-  return roll.toMessage({ speaker: speakerFor(actor), flavor: `Initiative${MODE_LABEL[opts.mode] ? " · " + MODE_LABEL[opts.mode] : ""}` });
+  return roll.toMessage({ speaker: speakerFor(actor), flavor: `Initiative${MODE_LABEL[opts.mode] ? " · " + MODE_LABEL[opts.mode] : ""}${opts.presetLabel ? " · " + opts.presetLabel : ""}` });
 }
 
 /* ---------- hit dice / death saves ---------- */
@@ -1077,7 +1088,7 @@ export async function rollHitDie(actor) {
 export async function rollDeathSave(actor, { event = null } = {}) {
   if (actor.type !== "character") return null;
   const d = actor.system.derived, play = actor.system.play;
-  const opts = await d20Options(event, { title: "Death Save" });
+  const opts = await d20Options(event, { title: "Death Save", preset: itemRollPreset(d, "death") });
   if (!opts) return null;
   const bonus = d.exhPen || 0;
   const { formula } = d20Formula(bonus, opts);
