@@ -1185,13 +1185,14 @@ ok("migration: version compare, decision, step selection", () => {
   assert.deepEqual(migration.stepsFor("0.1.5", "0.3.0", steps).map(s => s.version), ["0.2.0", "0.3.0"]);   // above stored, up to current, ascending
   assert.deepEqual(migration.stepsFor("0.1.0", "0.2.0", steps).map(s => s.version), ["0.1.5", "0.2.0"]);
   assert.deepEqual(migration.stepsFor("", "0.1.0", steps), []);
-  // steps: 1.0.0 (legacy shapes) and 1.3.0 (spell rule); each runs once for worlds stored below its version
-  assert.deepEqual(migration.MIGRATIONS.map(s => s.version), ["1.0.0", "1.3.0"]);
+  // steps: 1.0.0 (legacy shapes) and 1.3.0 (spell rule), 1.4.2 (character vision); each runs once for worlds stored below its version
+  assert.deepEqual(migration.MIGRATIONS.map(s => s.version), ["1.0.0", "1.3.0", "1.4.2"]);
   assert.deepEqual(migration.stepsFor("0.1.0", "1.0.0").map(s => s.version), ["1.0.0"]);
   assert.deepEqual(migration.stepsFor("1.0.0", "1.0.0").map(s => s.version), []);
   assert.deepEqual(migration.stepsFor("1.0.0", "1.1.0").map(s => s.version), []);
   assert.deepEqual(migration.stepsFor("1.2.1", "1.3.0").map(s => s.version), ["1.3.0"]);
   assert.deepEqual(migration.stepsFor("1.3.0", "1.3.0").map(s => s.version), []);
+  assert.deepEqual(migration.stepsFor("1.4.1", "1.4.2").map(s => s.version), ["1.4.2"]);   // character vision
 });
 
 /* ---------- 9. Phase 4 rest: every condition rule on its own, exhaustion ladder, chips, quick-bar targeting ---------- */

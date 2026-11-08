@@ -161,8 +161,40 @@ export const MIGRATIONS = [
       if (!r.converted.length) return "no character had Learn Spell purchases to convert";
       return `${r.converted.length} character(s) converted: ${r.converted.map(c => `${c.name} (${c.delta} AP)`).join(", ")}`;
     }
+  },
+  {
+    version: "1.4.2",
+    label: "Character tokens: vision on",
+    run: async () => {
+      const r = await enableCharacterVision();
+      if (!r.actors && !r.tokens) return "all character tokens already had vision";
+      return `vision turned on for ${r.actors} character(s) and ${r.tokens} placed token(s)`;
+    }
   }
 ];
+
+/**
+ * Characters created before 1.4.1 have vision off on their prototype token (new ones get it in APTActor._preCreate).
+ * Turns sight on for every character prototype token and every placed character token on all scenes. Only
+ * sight.enabled is written; link, disposition and the rest of the token stay as they are.
+ * @returns {Promise<{actors:number, tokens:number}>}
+ */
+export async function enableCharacterVision() {
+  const res = { actors: 0, tokens: 0 };
+  for (const actor of game.actors) {
+    if (actor.type !== "character" || actor.prototypeToken.sight.enabled) continue;
+    try { await actor.update({ "prototypeToken.sight.enabled": true }); res.actors++; }
+    catch (err) { console.error(`${SYSTEM_ID} | vision: actor "${actor.name}"`, err); }
+  }
+  for (const scene of game.scenes) {
+    const updates = scene.tokens.filter(t => t.actor?.type === "character" && !t.sight.enabled)
+      .map(t => ({ _id: t.id, "sight.enabled": true }));
+    if (!updates.length) continue;
+    try { await scene.updateEmbeddedDocuments("Token", updates); res.tokens += updates.length; }
+    catch (err) { console.error(`${SYSTEM_ID} | vision: scene "${scene.name}"`, err); }
+  }
+  return res;
+}
 
 /**
  * Spell point table (1.4.0): the pool is computed from the purchases, so nothing is converted. Once per character

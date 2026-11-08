@@ -2,6 +2,12 @@
 
 Jede Version hat eine Sektion `## x.y.z`; `npm run release -- x.y.z` übernimmt sie als Release-Notes auf GitHub.
 
+## 1.4.2
+
+- Migration: Bestehende Charaktere bekommen ebenfalls Sicht – Prototyp-Token aller Charaktere und alle schon
+  platzierten Charakter-Tokens auf allen Szenen. Läuft einmal beim nächsten Start des Spielleiters (mit
+  Backup-Hinweis); nur die Sicht wird eingeschaltet, Verknüpfung und Gesinnung bleiben, wie sie sind.
+
 ## 1.4.1
 
 - Neue Charaktere bekommen ein Spieler-Token wie in dnd5e: Sicht an, mit dem Actor verknüpft, freundlich. Gilt beim
