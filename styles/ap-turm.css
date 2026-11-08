@@ -292,6 +292,7 @@
   .ap-turm .apt-progress .apt-coin label { font-size: 8.5px; }
   .ap-turm .apt-sprow { display: flex; align-items: center; gap: 5px; padding: 1.5px 0; }
   .ap-turm .apt-sprow + .apt-sprow { border-top: 1px dotted var(--apt-line-soft); }
+  .ap-turm .apt-sprow .spcost { flex: none; font-size: 9.5px; color: var(--apt-ink-dim); white-space: nowrap; }
   .ap-turm .apt-sprow input { flex: 1; min-width: 0; font-size: 10.5px; }
   .ap-turm .splvl { flex: none; width: 15px; height: 15px; border-radius: 4px; background: var(--apt-field); border: 1px solid var(--apt-field-dk); font-size: 8.5px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; color: var(--apt-ink-dim); }
   .ap-turm .elchip { display: inline-flex; align-items: center; gap: 3px; font-size: 9px; font-weight: 600; color: var(--apt-ink-dim); white-space: nowrap; flex: none; }

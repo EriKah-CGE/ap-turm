@@ -12,7 +12,7 @@ function grab(name) {
 // SHOP_DATA / ARMORS / ELEMENTS / HIT_DICE span several lines; the non-greedy regex stops at the
 // first line ending in ";" which is the closing "};" / "];" of those blocks.
 const names = ["PREREQS","SELECTORS","SHOP_DATA","ARMOR_WEAPON_PROFS","ABILITIES","ABBR","SKILLS","DAMAGE_TYPES",
-  "CREATURE_TYPES","FIGHT_STYLES","WEAPONS","DMG_SHORT","HIT_DICE","WEP_ABIL","ARMORS","ELEMENTS","RECHARGE","FEAT_EXTRA"];
+  "CREATURE_TYPES","FIGHT_STYLES","SPELL_POINT_COST","WEAPONS","DMG_SHORT","HIT_DICE","WEP_ABIL","ARMORS","ELEMENTS","RECHARGE","FEAT_EXTRA"];
 let out = `/**
  * AP-Turm rule tables.
  * GENERATED from ap-character-sheet.html by test/gen-config.mjs -- do not edit the tables by hand;

@@ -8,7 +8,7 @@
  */
 import {
   SHOP_DATA, PREREQS, SELECTORS, ABILITIES, ELEMENTS, DAMAGE_TYPES, ARMORS, HIT_DICE, TOWER_CARRY_LIMIT, CRYSTAL_LIMIT,
-  CURRENCIES, GEAR_ORIGINS, MODES, RECHARGE, findShopItem
+  CURRENCIES, GEAR_ORIGINS, MODES, RECHARGE, SPELL_POINT_COST, findShopItem
 } from "./config.mjs";
 import { derived, clampAbility, costOfRank, isMaxed, prereqList, layPool, REST_RULES, mod } from "./rules.mjs";
 import { CONDITIONS, EXHAUSTION_MAX, EXHAUSTION_PENALTY, rollModifiers, resolveMode, exhaustedSpeed, statusEffects } from "./conditions.mjs";
@@ -92,10 +92,12 @@ ${list([
     `Spell save DC = 8 + PB + spell modifier + Spell Attack/DC purchases (e.g. PB +2, modifier +3: DC ${derived(baseState({ abilities: { str: 10, dex: 10, con: 10, int: 16, wis: 10, cha: 10 } })).spellDC}).`,
     `Spell attack = PB + spell modifier + Spell Attack/DC purchases (+ exhaustion penalty).`,
     `Lay on Hands pool = earned AP / 5, at least 1 (e.g. 150 earned AP: ${layPool(150)}).`,
-    `"Spellslot Lvl N" is the spell purchase: it allows casting rank N, gives one known spell of rank N and one slot (mode ap) or N spell points (mode Turm). It requires Spellslot Lvl N−1. "Extra Spell Lvl N" only gives one more known spell of rank N (requires Spellslot Lvl N).`,
+    `"Spellslot Lvl N" is the spell purchase: it allows casting rank N, gives one known spell of rank N and one slot (mode ap) or the spell points of rank N from the table below (mode Turm). It requires Spellslot Lvl N−1. "Extra Spell Lvl N" only gives one more known spell of rank N (requires Spellslot Lvl N).`,
     `Known spells of rank N = Spellslot Lvl N + Extra Spell Lvl N purchases.`,
-    `Turm mode spell points = Σ rank × Spellslot purchases of that rank; max rank = highest rank with a Spellslot. Ranks 1-5 cast as often as the points allow; ranks 6-9 additionally at most (Spellslot purchases of that rank) casts per long rest, and still cost points.`
+    `Turm mode spell points = Σ (spell point cost of the rank × Spellslot purchases of that rank), plus spell point bonuses of active items; max rank = highest rank with a Spellslot. A cast of rank N costs the same points (cantrips are free). Ranks 1-5 cast as often as the points allow; ranks 6-9 additionally at most (Spellslot purchases of that rank) casts per long rest, and still cost points.`,
+    `Example: Spellslot Lvl 1-4 once each = ${derived(baseState({ bought: { spellslot1: 1, spellslot2: 1, spellslot3: 1, spellslot4: 1 } })).spTotal} points, max rank 4.`
   ])}
+${table(["Rank", "Spell points per Spellslot purchase / per cast"], Object.entries(SPELL_POINT_COST).map(([r, c]) => [esc(r), String(c)]))}
 <h3>Hit dice and HP</h3>
 <p>HP max = sum of the hit die rolls up to the current level + level × CON modifier. Every "Hit Die" purchase steps the die up; a 1 on any component die is rerolled.</p>
 ${table(["Hit Die purchases", "Hit die"], HIT_DICE.map((h, i) => [String(i), esc(h.l)]))}

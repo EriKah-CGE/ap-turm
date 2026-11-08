@@ -22,7 +22,7 @@ import { statusEffects } from "./conditions.mjs";
 import * as statblock from "./statblock.mjs";
 import * as loot from "./loot.mjs";
 import { registerLootHooks, importLootTableDialog } from "./loot-dialog.mjs";
-import { registerMigrationSetting, checkMigration, migrateWorld, migrateSpellRule, settleSpellRule } from "./migration.mjs";
+import { registerMigrationSetting, checkMigration, migrateWorld, migrateSpellRule, settleSpellRule, migrateSpellPoints, settleSpellPoints } from "./migration.mjs";
 import { APTActor } from "./actor.mjs";
 import { registerConditionBarSettings, registerConditionBarHooks, refreshConditionBar, conditionBar } from "./condition-bar.mjs";
 import { award, awardApDialog, awardTurmwissenDialog } from "./award.mjs";
@@ -54,7 +54,7 @@ const SYSTEM_ID = "ap-turm";
 
 Hooks.once("init", () => {
   CONFIG.AP_TURM = AP_TURM;
-  game.apturm = { config: AP_TURM, rules, importAppJSON, importAppJSONIntoActor, createActorFromAppExport, importAppExportIntoActor, convertAppExport, exportActor, exportAppData, downloadActorExport, exportNpc, exportNpcData, downloadNpcExport, createNpcFromExport, importNpcIntoActor, isNpcExport, rolls, chat, macros, statblock, loot: { ...loot, importLootTableDialog }, migrateWorld, migrateSpellRule, conditionBar, refreshConditionBar, award, requestRoll, transfer, library, fx: { playAttackFx, playCastFx, fxAvailable, showHitFeedback }, qol: { breakConcentration, rollNpcInitiative, undoApplied: chat.undoApplied }, jukebox, customShop: { ...customShop, openShopEditor }, overview, openCombatOverview, area, rulesJournal: { ...rulesJournalLogic, ensureRulesJournal, rebuildRulesJournal }, backup, spawn: { placeCopies, placeCopiesDialog }, libraries5e: { ...libraries5e, convert: dnd5eConvert }, reachRing: { refresh: refreshReachRing, state: reachRingState }, diceTray, tower: towerTracker };
+  game.apturm = { config: AP_TURM, rules, importAppJSON, importAppJSONIntoActor, createActorFromAppExport, importAppExportIntoActor, convertAppExport, exportActor, exportAppData, downloadActorExport, exportNpc, exportNpcData, downloadNpcExport, createNpcFromExport, importNpcIntoActor, isNpcExport, rolls, chat, macros, statblock, loot: { ...loot, importLootTableDialog }, migrateWorld, migrateSpellRule, migrateSpellPoints, conditionBar, refreshConditionBar, award, requestRoll, transfer, library, fx: { playAttackFx, playCastFx, fxAvailable, showHitFeedback }, qol: { breakConcentration, rollNpcInitiative, undoApplied: chat.undoApplied }, jukebox, customShop: { ...customShop, openShopEditor }, overview, openCombatOverview, area, rulesJournal: { ...rulesJournalLogic, ensureRulesJournal, rebuildRulesJournal }, backup, spawn: { placeCopies, placeCopiesDialog }, libraries5e: { ...libraries5e, convert: dnd5eConvert }, reachRing: { refresh: refreshReachRing, state: reachRingState }, diceTray, tower: towerTracker };
   chat.registerSettings();
   registerHitFeedbackSetting();
   registerFxSetting();
@@ -156,7 +156,7 @@ Hooks.on("renderActorDirectory", (app, html) => {
    memory (load, compendium, bundle, duplicate, "Import Data"); the client that created or replaced the actor stores
    the result and whispers the AP difference to the GMs, the active GM settles everything else on ready. */
 Hooks.on("createActor", (actor, options, userId) => {
-  if (userId === game.user.id) settleSpellRule(actor).catch(err => console.error(`${SYSTEM_ID} | spell rule`, err));
+  if (userId === game.user.id) settleSpellRule(actor).then(() => settleSpellPoints(actor)).catch(err => console.error(`${SYSTEM_ID} | spell rule`, err));
 });
 Hooks.on("updateActor", (actor, changes, options, userId) => {
   if (userId === game.user.id && changes?.flags?.[SYSTEM_ID]?.spellRulePending) settleSpellRule(actor).catch(err => console.error(`${SYSTEM_ID} | spell rule`, err));
@@ -176,7 +176,7 @@ Hooks.once("ready", () => {
   chat.registerSocket();
   ensureSystemMacros().catch(err => console.error(`${SYSTEM_ID} | ensureSystemMacros`, err));
   checkMigration().catch(err => console.error(`${SYSTEM_ID} | migration`, err));
-  if (game.user.isActiveGM) migrateSpellRule().catch(err => console.error(`${SYSTEM_ID} | spell rule`, err));
+  if (game.user.isActiveGM) migrateSpellRule().then(() => migrateSpellPoints()).catch(err => console.error(`${SYSTEM_ID} | spell rule`, err));
   refreshConditionBar().catch(err => console.error(`${SYSTEM_ID} | condition bar`, err));
   ensureRulesJournal().catch(err => console.error(`${SYSTEM_ID} | rules journal`, err));
 });

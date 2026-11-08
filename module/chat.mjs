@@ -7,7 +7,7 @@
  * exhaustion penalty (derived().exhPen) and is a real Roll object (Dice So Nice).
  */
 import { ABILITIES, SKILLS, damageTypeColor } from "./config.mjs";
-import { fmtMod } from "./rules.mjs";
+import { fmtMod, castSpellPoints } from "./rules.mjs";
 import { buildAttack, itemRollPreset, buildDamage, buildNpcAttack, buildNpcDamage, entryAttackData, manualAdvantages, isUnassignedType, damageTotal, damageGroups, typedDamage, critRange, attackOutcome, damageTypeLabel, damageMultiplier,
   characterDefenses, defenseVerdict, applyDamage, adjustHp, ADV_FORMULA, MODE_LABEL, rollModeFromEvent, d20Formula, abilityCheckBonus,
   deathSaveOutcome, hitDieHealFormula, downedStatusId, downedTransition, downedPlan, downedLine, checkSuccess } from "./rolls.mjs";
@@ -1120,7 +1120,7 @@ export async function rollDeathSave(actor, { event = null } = {}) {
 /* ---------- spells ---------- */
 
 /**
- * Cast a spell item: deduct spell points (rank) and, for rank 6+, one cast of that rank; then post the card.
+ * Cast a spell item: deduct spell points (SPELL_POINT_COST of the rank) and, for rank 6+, one cast of that rank; then post the card.
  * Mode "ap": one slot of the rank. Cantrips are free. No save/damage automation.
  * @param {Actor} actor
  * @param {Item} item  spell
@@ -1135,16 +1135,12 @@ export async function castSpell(actor, item) {
     const slot = d.slots.find(s => s.L === lvl);
     const used = S.slotsUsed[lvl] || 0;
     if (S.mode === "turm") {
-      if (lvl > d.spMaxRank) { ui.notifications.warn(`Rank ${lvl} exceeds your max rank (${d.spMaxRank || 0}).`); return null; }
-      if (d.spLeft < lvl) { ui.notifications.warn(`Not enough spell points (${d.spLeft}/${d.spTotal}, need ${lvl}).`); return null; }
-      update["system.resources.spUsed"] = S.spUsed + lvl;
-      cost = `${lvl} spell point${lvl > 1 ? "s" : ""} (${d.spLeft - lvl}/${d.spTotal} left)`;
-      if (lvl >= 6) {
-        const total = slot?.total ?? 0;
-        if (used >= total) { ui.notifications.warn(`No rank ${lvl} casts left until a long rest (${used}/${total}).`); return null; }
-        update[`system.resources.slotsUsed.${lvl}`] = used + 1;
-        cost += ` · rank ${lvl} cast ${used + 1}/${total}`;
-      }
+      // same check and text as the app's Cast button (rules.castSpellPoints)
+      const r = castSpellPoints(S, d, lvl);
+      if (!r.ok) { ui.notifications.warn(r.msg); return null; }
+      update["system.resources.spUsed"] = r.spUsed;
+      if (r.slotUsed !== null) update[`system.resources.slotsUsed.${lvl}`] = r.slotUsed;
+      cost = r.msg;
     } else {
       const total = slot?.total ?? 0;
       if (used >= total) { ui.notifications.warn(`No level ${lvl} slots left (${used}/${total}).`); return null; }

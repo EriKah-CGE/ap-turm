@@ -112,7 +112,8 @@ export function exportAppData({ name, system: sys, items, dataVersion = 5 }) {
     notices: (sys.notices || []).map(x => ({ date: String(x?.date ?? ""), text: String(x?.text ?? "") })),
     _wepMigrated: true,
     _featMigrated: true,
-    _itemMigrated: true
+    _itemMigrated: true,
+    _spCostTable: true
   };
   return out;
 }

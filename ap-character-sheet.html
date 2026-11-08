@@ -363,6 +363,9 @@
   .bcell input:focus{outline:none;color:var(--green)}
   .sprow{display:flex;align-items:center;gap:5px;padding:1.5px 0}
   .sprow+.sprow{border-top:1px dotted var(--line-soft)}
+  .sprow .spcost{flex:none;font-size:9.5px;color:var(--ink-dim);white-space:nowrap}
+  .sprow .spcast{font-size:9.5px;padding:1px 5px}
+  @media print{ .spcast{display:none} }
   .splvl{flex:none;width:15px;height:15px;border-radius:4px;background:var(--field);border:1px solid var(--field-dk);font-size:8.5px;font-weight:700;display:flex;align-items:center;justify-content:center;color:var(--ink-dim)}
   .spname{flex:1;min-width:0;background:transparent;border:none;color:var(--ink);font-size:10.5px;font-weight:600;padding:1px 2px;border-radius:3px}
   .spname:focus{outline:none;background:var(--field)}
@@ -541,7 +544,7 @@
     <button class="tbtn" id="btnPdf">🖨 Export PDF</button>
     <button class="tbtn" id="btnExport">⬇ Export JSON</button>
     <button class="tbtn" id="btnImport">⬆ Load</button>
-    <span class="buildtag" title="App-Version">v09-05r</span>
+    <span class="buildtag" title="App-Version">v09-05s</span>
     <input type="file" id="fileInput" accept=".json,application/json,text/plain,text/json" style="display:none">
     <span class="spacer"></span>
     <span class="saved-note" id="savedNote"></span>
@@ -621,6 +624,8 @@ const SKILLS={acr:{l:"Acrobatics",a:"dex"},ani:{l:"Animal Handling",a:"wis"},arc
 const DAMAGE_TYPES={acid:"Acid",bludgeoning:"Bludgeoning",cold:"Cold",fire:"Fire",force:"Force",lightning:"Lightning",necrotic:"Necrotic",piercing:"Piercing",poison:"Poison",psychic:"Psychic",radiant:"Radiant",slashing:"Slashing",thunder:"Thunder"};
 const CREATURE_TYPES={aberration:"Aberration",beast:"Beast",celestial:"Celestial",construct:"Construct",dragon:"Dragon",elemental:"Elemental",fey:"Fey",fiend:"Fiend",giant:"Giant",humanoid:"Humanoid",monstrosity:"Monstrosity",ooze:"Ooze",plant:"Plant",undead:"Undead"};
 const FIGHT_STYLES={archery:"Archery",defense:"Defense",dueling:"Dueling",gwf:"Great Weapon",protection:"Protection",twf:"Two-Weapon",blind:"Blind Fighting",interception:"Interception",thrown:"Thrown Weapon",unarmed:"Unarmed"};
+/* Turm mode: spell points a rank gives per Spellslot purchase and costs per cast (D&D spell point table) */
+const SPELL_POINT_COST={1:2,2:3,3:5,4:6,5:7,6:9,7:10,8:11,9:13};
 const WEAPONS={longsword:"Longsword",dagger:"Dagger",greatsword:"Greatsword",shortsword:"Shortsword",bow:"Shortbow/Longbow",axe:"Battleaxe",other:"Other"};
 
 /* ---------- STATE ---------- */
@@ -647,7 +652,17 @@ function migrateState(){
   if(!S.bought||typeof S.bought!=="object")S.bought={};if(!S.choices||typeof S.choices!=="object")S.choices={};
   if(!Array.isArray(S.weapons))S.weapons=[];if(!Array.isArray(S.spells))S.spells=[];if(!S.slotsUsed)S.slotsUsed={};if(!Array.isArray(S.feats))S.feats=[];if(!Array.isArray(S.items))S.items=[];if(!Array.isArray(S.crystals))S.crystals=[];if(!Array.isArray(S.turmwissen))S.turmwissen=[];if(!S.mode)S.mode="ap";if(!S.armor||!ARMORS[S.armor.id])S.armor={id:"none",shield:false};
   migrateWeapons();migrateFeats();migrateInsp();migrateItems();migrateCrystals();if(!Array.isArray(S.notices))S.notices=[];
-  return migrateSpellRule();
+  const notes=[migrateSpellRule(),migrateSpellPoints()].filter(Boolean);
+  return notes.length?notes.join(" "):null;
+}
+/* spell point table (build v09-05s): the pool follows from the purchases, nothing to convert. spUsed stays within the
+   pool; Turm sheets with a pool get the new total once (flag _spCostTable). */
+function migrateSpellPoints(){
+  const d=derived();
+  if((parseInt(S.spUsed)||0)>d.spTotal)S.spUsed=d.spTotal;
+  if(S._spCostTable)return null;
+  S._spCostTable=true;
+  return S.mode==="turm"&&d.spTotal>0?spellPointNotice(d.spTotal):null;
 }
 /* Raw sheet data (storage, file) -> S, migrated. The data version is the one the data came with (missing = old). */
 function adoptState(data){const ver=Number(data&&data.v)||0;S=Object.assign(DEFAULTS(),data);S.v=ver;return migrateState();}
@@ -888,6 +903,24 @@ function passiveTip(p){
   const tail=p.adj>0?` + 5 advantage${src(p.adv)}`:p.adj<0?` - 5 disadvantage${src(p.dis)}`:(p.adv.length&&p.dis.length?" (advantage and disadvantage cancel out)":"");
   return `10 ${p.mod<0?"-":"+"} ${Math.abs(p.mod)}${tail}`;
 }
+/* spell points a cast of rank L costs (cantrips 0) */
+function spellPointCost(L){return SPELL_POINT_COST[parseInt(L)||0]||0;}
+/* Turm mode cast of rank lvl: checks max rank, points and (rank 6+) casts per long rest. Returns {ok,msg} and, when ok,
+   the new spUsed and slotsUsed[lvl] (null when unchanged). Cantrips are free. */
+function castSpellPoints(S,d,lvl){
+  lvl=parseInt(lvl)||0;
+  if(lvl<=0)return {ok:true,cost:0,spUsed:d.spUsed,slotUsed:null,msg:"cantrip"};
+  const cost=spellPointCost(lvl);
+  if(lvl>d.spMaxRank)return {ok:false,msg:`Rank ${lvl} exceeds your max rank (${d.spMaxRank||0}).`};
+  if(d.spLeft<cost)return {ok:false,msg:`Not enough spell points (${d.spLeft}/${d.spTotal}, need ${cost}).`};
+  let slotUsed=null,tail="";
+  if(lvl>=6){const total=(d.slots.find(s=>s.L===lvl)||{}).total||0;const used=(S.slotsUsed||{})[lvl]||0;
+    if(used>=total)return {ok:false,msg:`No rank ${lvl} casts left until a long rest (${used}/${total}).`};
+    slotUsed=used+1;tail=` · rank ${lvl} cast ${used+1}/${total}`;}
+  return {ok:true,cost,spUsed:d.spUsed+cost,slotUsed,msg:`${cost} spell point${cost>1?"s":""} (${d.spLeft-cost}/${d.spTotal} left)${tail}`};
+}
+/* one-time notice after the spell point table change (app: toast, Foundry: GM whisper) */
+function spellPointNotice(total){return `Spell point costs updated to the standard table. Your pool is now ${total} points.`;}
 /* ---------- Derived ---------- */
 function mod(s){return Math.floor((s-10)/2);}
 function fmtMod(m){return (m>=0?"+":"")+m;}
@@ -937,14 +970,14 @@ function derived(){
   const init=mods.dex+fb.init+exhPen;
   const passive=passiveScores(skillData,S.choices.advSkill);
   const passivePerc=passive.prc.value,passiveIns=passive.ins.value,passiveInv=passive.inv.value;
-  /* Spell purchases (v5): spellslotN = the spell purchase (casting rank N, one known spell, a slot; Turm: N points per slot).
+  /* Spell purchases (v5): spellslotN = the spell purchase (casting rank N, one known spell, a slot; Turm: SPELL_POINT_COST[N] points per slot).
      learnN = "Extra Spell": one more known spell of rank N only. Mode ap: slots of rank N = spellslotN. */
   const slots=[];for(let L=1;L<=9;L++){const tot=S.bought["spellslot"+L]||0;if(tot>0)slots.push({L,total:tot,extra:S.bought["learn"+L]||0});}
-  /* Turm: spell points = sum of rank x spellslot purchases of that rank; max rank = highest rank with a spellslot */
+  /* Turm: spell points = sum of SPELL_POINT_COST[rank] x spellslot purchases of that rank; max rank = highest rank with a spellslot */
   let spTotal=0, spMaxRank=0, spBreak=[];
   for(let L=1;L<=9;L++){
     const units=S.bought["spellslot"+L]||0;
-    if(units){ spMaxRank=Math.max(spMaxRank,L); spTotal+=L*units; spBreak.push({L,units,pts:L*units}); }
+    if(units){ const cost=spellPointCost(L); spMaxRank=Math.max(spMaxRank,L); spTotal+=cost*units; spBreak.push({L,units,cost,pts:cost*units}); }
   }
   /* known spells per rank = spellslotN + learnN; have = spells of that rank on the sheet */
   const known=[];for(let L=1;L<=9;L++){const max=(S.bought["spellslot"+L]||0)+(S.bought["learn"+L]||0);const have=(S.spells||[]).filter(sp=>(parseInt(sp.lvl)||0)===L).length;if(max>0||have>0)known.push({L,max,have,over:have>max});}
@@ -1067,7 +1100,7 @@ function renderOverview(){
   const spBox=`<div class="box"><div class="box-h">${icon("magic")}Spell Points</div>
       <div class="slotrow"><b>Points</b><span class="pipwrap">${spPips||'<span class="empty">—</span>'}</span><span class="slotn num">${d.spLeft}/${d.spTotal}</span></div>
       <div class="kv"><b>Max Rank</b><span class="num">${d.spMaxRank||"—"}</span></div>
-      ${d.spBreak.length?`<div class="spbreak">${d.spBreak.map(s=>`Rank ${s.L}: ${s.units}×${s.L} = ${s.pts}`).join(" · ")}</div>`:""}
+      ${d.spBreak.length?`<div class="spbreak">${d.spBreak.map(s=>`Rank ${s.L}: ${s.units} × ${s.cost} = ${s.pts}`).join(" · ")}</div>`:""}
       <div class="spbreak">Rank 1–5: unlimited (points only)${highRanks.length?" · Rank 6+: casts per rest, still cost points":""}</div>
       ${highRows}
       ${layRowHtml(d)}
@@ -1077,7 +1110,7 @@ function renderOverview(){
   const hdUsed=Math.min(S.play.spentHitDice||0,d.level);
   const hdPips=hdPipsTmp;
   const spellRows=(S.spells||[]).slice().sort((a,b)=>(a.lvl-b.lvl)||a.name.localeCompare(b.name)).map(sp=>
-    `<div class="sprow" data-sid="${sp.id}"><span class="splvl">${sp.lvl===0?'C':sp.lvl}</span><input class="spname" data-sf="name" data-sid="${sp.id}" value="${escapeHtml(sp.name)}" placeholder="Spell name">${sp.elem?elemChip(sp.elem,true):""}<button class="wbtn" data-sedit="${sp.id}">✎</button></div>`
+    `<div class="sprow" data-sid="${sp.id}"><span class="splvl">${sp.lvl===0?'C':sp.lvl}</span><input class="spname" data-sf="name" data-sid="${sp.id}" value="${escapeHtml(sp.name)}" placeholder="Spell name">${sp.elem?elemChip(sp.elem,true):""}${isTurm()&&sp.lvl>0?`<span class="spcost num" title="Spell point cost of a rank ${sp.lvl} cast">${spellPointCost(sp.lvl)} pts</span><button class="wbtn spcast" data-scast="${sp.id}" title="Cast: deduct ${spellPointCost(sp.lvl)} spell points">Cast</button>`:""}<button class="wbtn" data-sedit="${sp.id}">✎</button></div>`
   ).join("");
   const itemRow=it=>
     `<div class="itemrow" data-iid="${it.id}"><span class="eqdot ${it.equipped?'on':''}" data-ieq="${it.id}" title="${it.equipped?"Equipped (click: take off)":"Not equipped (click: equip)"}"></span><span class="iqty">${(parseInt(it.qty)||1)>1?"×"+parseInt(it.qty):""}</span><span class="inwrap"><input class="iname" data-if="name" data-iid="${it.id}" value="${escapeHtml(it.name)}" placeholder="Item name">${(parseInt(it.charges)||0)>0?`<span class="chwrap">${Array.from({length:parseInt(it.charges)},(_,i)=>`<span class="chpip ${i<(it.used||0)?'used':''}" data-ich="${it.id}" data-i="${i+1}"></span>`).join("")}<span class="chn">${parseInt(it.charges)-(it.used||0)}/${parseInt(it.charges)}</span></span>`:""}${it.notes?`<span class="inotes">${escapeHtml(it.notes)}</span>`:""}${itemEffectText(it.effects)?`<span class="ifx ${itemActive(it)?"":"off"}" title="${itemActive(it)?"Effects active":(it.equipped?"Requires attunement: not attuned, no effect":"Not equipped, no effect")}">${escapeHtml(itemEffectText(it.effects))}</span>`:""}</span><span class="iright">${it.attuned?'<span class="tag atn">Attuned</span>':""}<button class="wbtn" data-iedit="${it.id}">✎</button></span></div>`
@@ -1208,6 +1241,7 @@ function wireOverview(){
   const asp=document.getElementById("addSpell");if(asp)asp.onclick=()=>{S.spells.push(newSpell());save();renderOverview();};
   root.querySelectorAll("[data-sf]").forEach(el=>el.addEventListener("change",()=>{const sp=S.spells.find(x=>x.id===el.dataset.sid);if(sp){sp[el.dataset.sf]=el.value;save();}}));
   root.querySelectorAll("[data-sedit]").forEach(el=>el.onclick=()=>editSpell(el.dataset.sedit));
+  root.querySelectorAll("[data-scast]").forEach(el=>el.onclick=()=>{const sp=(S.spells||[]).find(x=>x.id===el.dataset.scast);if(!sp)return;const r=castSpellPoints(S,derived(),sp.lvl);if(!r.ok){toast(r.msg);return;}S.spUsed=r.spUsed;if(r.slotUsed!==null)S.slotsUsed[parseInt(sp.lvl)]=r.slotUsed;save();renderOverview();toast(`${sp.name||"Spell"}: ${r.msg}`);});
   const af=document.getElementById("addFeat");if(af)af.onclick=()=>{S.feats.push(newFeat());save();renderOverview();};
   root.querySelectorAll("[data-ff]").forEach(el=>el.addEventListener("change",()=>{const f=S.feats.find(x=>x.id===el.dataset.fid);if(f){f[el.dataset.ff]=el.value;save();}}));
   root.querySelectorAll("[data-fedit]").forEach(el=>el.onclick=()=>editFeat(el.dataset.fedit));

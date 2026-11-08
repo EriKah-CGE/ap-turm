@@ -20,6 +20,7 @@
   {{/if}}
   {{#if isSpell}}
     <div class="form-group"><label>Level</label><div class="form-fields"><select name="system.lvl">{{#each lvlOptions}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}</select></div></div>
+    {{#if isTurm}}<div class="form-group"><label>Spell point cost</label><div class="form-fields"><span class="apt-spcost num">{{#if spCost}}{{spCost}} points per cast{{else}}free (cantrip){{/if}}</span></div></div>{{/if}}
     <div class="form-group"><label>{{#if isTurm}}Element{{else}}Damage type{{/if}}</label><div class="form-fields"><select name="system.elem">{{#each elemOptions}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}</select></div></div>
     <div class="form-group"><label>Prepared</label><div class="form-fields"><input type="checkbox" name="system.prepared" {{checked system.prepared}}></div></div>
     <div class="form-group"><label>Concentration</label><div class="form-fields"><input type="checkbox" name="system.concentration" {{checked system.concentration}}></div></div>

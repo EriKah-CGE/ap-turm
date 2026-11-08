@@ -6,7 +6,7 @@
 import { ABILITIES, ABBR, SKILLS, ELEMENTS, DAMAGE_TYPES, DMG_SHORT, CURRENCIES, ARMOR_WEAPON_PROFS, SHOP_DATA, SELECTORS,
   PREREQS, CREATURE_TYPES, FIGHT_STYLES, WEAPONS, ARMORS, CRYSTAL_LIMIT, TOWER_CARRY_LIMIT, WEP_ABIL, FEAT_EXTRA,
   findShopItem, damageTypeChoices, damageTypeLabel, damageTypeColor } from "../config.mjs";
-import { weaponStats, fmtMod, availableAp, totalAp, computeSpent, shopStatus, hitDieMax, eleElement, abilityBreakdown, itemActive, compactEffects, ITEM_BON, PASSIVE_SKILLS, passiveTip } from "../rules.mjs";
+import { weaponStats, fmtMod, availableAp, totalAp, computeSpent, shopStatus, hitDieMax, eleElement, abilityBreakdown, itemActive, compactEffects, ITEM_BON, PASSIVE_SKILLS, passiveTip, spellPointCost } from "../rules.mjs";
 import { importAppJSONIntoActor } from "../importer.mjs";
 import { downloadActorExport } from "../exporter.mjs";
 import { rollAttack, rollDamage, rollCheck, rollInitiative, castSpell, rollHitDie, rollDeathSave, applyHpDelta } from "../chat.mjs";
@@ -265,7 +265,8 @@ export class ApTurmCharacterSheet extends SheetSizeMixin(HandlebarsApplicationMi
     const spells = actor.items.filter(i => i.type === "spell").sort((a, b) => (a.system.lvl - b.system.lvl) || a.name.localeCompare(b.name)).map(s => ({
       id: s.id, name: s.name, lvl: s.system.lvl === 0 ? "C" : s.system.lvl,
       elem: s.system.elem ? damageTypeLabel(s.system.elem) : "", elemColor: damageTypeColor(s.system.elem), notes: s.system.notes,
-      concentration: !!s.system.concentration
+      concentration: !!s.system.concentration,
+      spCost: S.mode === "turm" && s.system.lvl > 0 ? spellPointCost(s.system.lvl) : 0
     }));
     const feats = actor.items.filter(i => i.type === "feat").sort((a, b) => a.sort - b.sort).map(f => {
       const b = f.system.bon; const out = [];
@@ -290,7 +291,7 @@ export class ApTurmCharacterSheet extends SheetSizeMixin(HandlebarsApplicationMi
       return { cat, lines };
     }).filter(c => c.lines.length);
     const turmwissen = S.turmwissen.map((t, i) => ({ index: i, rank: i + 1, trigger: t.trigger, last: i === S.turmwissen.length - 1 }));
-    const spBreak = d.spBreak.map(s => `Rank ${s.L}: ${s.units}×${s.L} = ${s.pts}`).join(" · ");
+    const spBreak = d.spBreak.map(s => `Rank ${s.L}: ${s.units} × ${s.cost} = ${s.pts}`).join(" · ");
     const spPips = d.spTotal <= 20 ? Array.from({ length: d.spTotal }, (_, i) => ({ i: i + 1, used: i < d.spUsed })) : null;
     const slotRow = (s) => {
       const used = S.slotsUsed[s.L] || 0;

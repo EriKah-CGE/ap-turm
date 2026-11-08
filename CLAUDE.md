@@ -49,8 +49,8 @@ Progression (alles aus **verdienten AP** `earnedAp`; `startAp` ist nur Kaufbudge
 
 Zauberkauf (Datenversion 5, App `v:5`, Foundry-Flag `flags.ap-turm.dataVersion`):
 - **`spellslotN` („Spellslot Lvl N (+1 spell)") ist der Zauberkauf:** berechtigt zum Wirken von Rang N, gibt einen
-  bekannten Zauber von Rang N und einen Slot (Modus `ap`: Slots Rang N = `spellslotN`; Modus `turm`: N Zauberpunkte
-  je Kauf). Kette: `spellslotN` setzt `spellslot(N-1)` voraus, `spellslot1` ohne Voraussetzung.
+  bekannten Zauber von Rang N und einen Slot (Modus `ap`: Slots Rang N = `spellslotN`; Modus `turm`: `SPELL_POINT_COST[N]`
+  Zauberpunkte je Kauf). Kette: `spellslotN` setzt `spellslot(N-1)` voraus, `spellslot1` ohne Voraussetzung.
 - **`learnN` („Extra Spell Lvl N")** gibt nur einen weiteren bekannten Zauber von Rang N; setzt `spellslotN` voraus.
   Keine Punkte, kein Slot, kein Einfluss auf den Max-Rang.
 - **Bekannte Zauber Rang N** = `spellslotN + learnN` (Zähler „Rank N: x of y spells", Überschreitung nur gelb).
@@ -61,7 +61,12 @@ Zauberkauf (Datenversion 5, App `v:5`, Foundry-Flag `flags.ap-turm.dataVersion`)
   Hinweis). Altbestand auch ohne Versionsmarke erkannt: `learnN ≥ 1` ohne `spellslotN` (`hasPreV5Spells`).
 
 Modus `turm` (Kampagnenmodus, Standard für diese Runde) vs. `ap` (Standard-D&D-Slots):
-- **Zauberpunkte** = Σ über Ränge r: `r × spellslot_r`; Max-Rang = höchster Rang mit `spellslot_r > 0`
+- **Zauberpunkte** (D&D-Spellpoint-Tabelle `SPELL_POINT_COST` in `config.mjs`/HTML: Rang 1 = 2, 2 = 3, 3 = 5, 4 = 6,
+  5 = 7, 6 = 9, 7 = 10, 8 = 11, 9 = 13) = Σ über Ränge r: `SPELL_POINT_COST[r] × spellslot_r` (+ `effects.bon.spellPoints`);
+  ein Zauber von Rang r kostet beim Wirken `SPELL_POINT_COST[r]` (Cantrips frei; App-Knopf „Cast", Foundry `castSpell`,
+  beide über `castSpellPoints`). Max-Rang = höchster Rang mit `spellslot_r > 0`. `spUsed` wird beim Laden auf den Pool
+  begrenzt; einmaliger Hinweis „Your pool is now X points" (App: Toast, Flag `_spCostTable`; Foundry: Flüsternachricht
+  an den GM, Flag `flags.ap-turm.spCostTable`)
 - **Rang 1–5:** beliebig oft wirkbar, kosten nur Punkte
 - **Rang 6–9:** zusätzlich begrenzt auf `spellslot_r` Wirkungen pro langer Rast
   (eigener Zähler, `slotsUsed[r]`), kosten **trotzdem** Punkte

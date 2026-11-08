@@ -44,7 +44,7 @@ const end = js.indexOf("function labelFor(");
 const block = js.slice(start, end);
 const APP = new Function(block + `
   return {
-    setState:(s)=>{S=s;}, getState:()=>S, DEFAULTS, DATA_VERSION, migrateSpellRule, migrateState, adoptState, hasPreV5Spells, compactEffects, itemEffects, abilityBreakdown, derived, computeSpent, availableAp, totalAp, layPool, hitDie, hitDieMax,
+    setState:(s)=>{S=s;}, getState:()=>S, DEFAULTS, DATA_VERSION, migrateSpellRule, migrateSpellPoints, spellPointCost, castSpellPoints, spellPointNotice, SPELL_POINT_COST, migrateState, adoptState, hasPreV5Spells, compactEffects, itemEffects, abilityBreakdown, derived, computeSpent, availableAp, totalAp, layPool, hitDie, hitDieMax,
     weaponStats, featBonuses, isLocked, isMaxed, costOfRank, totalSpentForItem, findItem,
     migrateWeapons, migrateFeats, migrateInsp, migrateItems, migrateCrystals,
     SHOP_DATA, PREREQS, SELECTORS, ARMORS, ELEMENTS, HIT_DICE, SKILLS, ABILITIES, ABBR, DAMAGE_TYPES, CREATURE_TYPES,
@@ -64,7 +64,7 @@ function ok(name, fn) { try { fn(); passed++; } catch (e) { console.error("FAIL:
 /* ---------- 1. tables identical ---------- */
 ok("tables", () => {
   for (const k of ["SHOP_DATA", "PREREQS", "ARMORS", "ELEMENTS", "HIT_DICE", "SKILLS", "ABILITIES", "ABBR", "DAMAGE_TYPES",
-    "CREATURE_TYPES", "FIGHT_STYLES", "WEAPONS", "ARMOR_WEAPON_PROFS", "RECHARGE", "FEAT_EXTRA", "WEP_ABIL", "DMG_SHORT"]) {
+    "CREATURE_TYPES", "FIGHT_STYLES", "SPELL_POINT_COST", "WEAPONS", "ARMOR_WEAPON_PROFS", "RECHARGE", "FEAT_EXTRA", "WEP_ABIL", "DMG_SHORT"]) {
     assert.deepEqual(cfg[k], APP[k], "table differs: " + k);
   }
   // SELECTORS: everything the app defines must match; eleDmg/changeEle are defaulted when the app lacks them (v09-05k rule)
@@ -1115,7 +1115,7 @@ ok("item transfer: stack split and carry limit at the receiver", () => {
   assert.equal(transfer.carryCount(full, { extra: 1 }) > cfg.TOWER_CARRY_LIMIT, true);
 
   // against the app: build tag, tooltip and counting rule of v09-05o
-  assert.match(html, /class="buildtag"[^>]*>v09-05r</);
+  assert.match(html, /class="buildtag"[^>]*>v09-05s</);
   const appTower = new Function("allItems", js.match(/const towerItems=allItems\.filter\([^;]*\);/)[0] + "return towerItems.length;");
   assert.match(js, /Inside the tower: unlimited\. Only \$\{TOWER_CARRY_LIMIT\} tower finds may be carried back in on re-entry \(circlet crystals exempt\)\./);
   const tpl = fs.readFileSync(new URL("../templates/actor/character/inventory.hbs", import.meta.url), "utf8");
@@ -1286,13 +1286,13 @@ ok("export round trip: gades.json field by field, deviations documented", () => 
   const out = roundTrip(raw);
   // Allowed deviations for a v4 export of the app: the data version (v4 -> v5, spell rule) and the new field
   // "notices" (empty: gades has no Learn Spell purchases). Field order is compared separately,
-  // the _wepMigrated/_featMigrated/_itemMigrated flags are written back because the app sets them too.
-  const ALLOWED = ["v", "notices"];
+  // the _wepMigrated/_featMigrated/_itemMigrated flags are written back because the app sets them too, and so is _spCostTable (spell point table, app v09-05s).
+  const ALLOWED = ["v", "notices", "_spCostTable"];
   const diffs = diffPaths(raw, out).filter(p => !ALLOWED.includes(p));
   assert.deepEqual(diffs, [], "gades round trip changed fields: " + diffs.join(", "));
   assert.deepEqual([out.v, out.notices], [5, []]);
-  assert.deepEqual(Object.keys(out).filter(k => k !== "notices"), Object.keys(raw), "field order differs");
-  for (const k of ["_wepMigrated", "_featMigrated", "_itemMigrated"]) assert.equal(out[k], true, "migration flag missing: " + k);
+  assert.deepEqual(Object.keys(out).filter(k => k !== "notices" && k !== "_spCostTable"), Object.keys(raw), "field order differs");
+  for (const k of ["_wepMigrated", "_featMigrated", "_itemMigrated", "_spCostTable"]) assert.equal(out[k], true, "migration flag missing: " + k);
   // and the app reads it back to the same character
   assert.deepEqual(appDerived(appLoad(out)), appDerived(appLoad(raw)), "derived after round trip");
 });
@@ -3206,18 +3206,18 @@ ok("spell rule v5: spellslot = spell purchase, learn = extra known spell, prereq
   const base = (bought, extra = {}) => ({ ...APP.DEFAULTS(), mode: "turm", startAp: 200, earnedAp: 0, bought, ...extra });
   const both = (S) => { APP.setState(structuredClone(S)); const a = norm(APP.derived()); const r = norm(rules.derived(structuredClone(S))); assert.deepEqual(r, a); return a; };
   const spent = (S) => { APP.setState(structuredClone(S)); const a = APP.computeSpent(); assert.equal(rules.computeSpent(S), a); return a; };
-  // (a) spellslot1-5 x1: 33 AP, 15 points, max rank 5, 5 known spells
+  // (a) spellslot1-5 x1: 33 AP, 2+3+5+6+7 = 23 points (spell point table), max rank 5, 5 known spells
   const a = base({ spellslot1: 1, spellslot2: 1, spellslot3: 1, spellslot4: 1, spellslot5: 1 });
   let d = both(a);
-  assert.deepEqual([spent(a), d.spTotal, d.spMaxRank, d.known.reduce((x, k) => x + k.max, 0)], [33, 15, 5, 5]);
-  assert.deepEqual(d.spBreak.map(b => b.pts), [1, 2, 3, 4, 5]);
-  // (b) plus a second spellslot5: 51 AP, 20 points, 6 known
+  assert.deepEqual([spent(a), d.spTotal, d.spMaxRank, d.known.reduce((x, k) => x + k.max, 0)], [33, 23, 5, 5]);
+  assert.deepEqual(d.spBreak.map(b => [b.L, b.units, b.cost, b.pts]), [[1, 1, 2, 2], [2, 1, 3, 3], [3, 1, 5, 5], [4, 1, 6, 6], [5, 1, 7, 7]]);
+  // (b) plus a second spellslot5: 51 AP, 30 points, 6 known
   const b = base({ ...a.bought, spellslot5: 2 });
   d = both(b);
-  assert.deepEqual([spent(b), d.spTotal, d.spMaxRank, d.known.reduce((x, k) => x + k.max, 0)], [51, 20, 5, 6]);
+  assert.deepEqual([spent(b), d.spTotal, d.spMaxRank, d.known.reduce((x, k) => x + k.max, 0)], [51, 30, 5, 6]);
   // learn adds a known spell only (no points, no max rank, no slot)
   d = both(base({ ...b.bought, learn3: 2 }));
-  assert.deepEqual([d.spTotal, d.spMaxRank, d.known.find(k => k.L === 3).max, d.slots.find(s => s.L === 3).total], [20, 5, 3, 1]);
+  assert.deepEqual([d.spTotal, d.spMaxRank, d.known.find(k => k.L === 3).max, d.slots.find(s => s.L === 3).total], [30, 5, 3, 1]);
   // mode ap: slots of rank N = spellslotN
   d = both({ ...base({ spellslot1: 3, spellslot2: 1, learn1: 2 }), mode: "ap" });
   assert.deepEqual(d.slots.map(s => [s.L, s.total]), [[1, 3], [2, 1]]);
@@ -3241,7 +3241,7 @@ ok("spell rule v5: spellslot = spell purchase, learn = extra known spell, prereq
   assert.equal(rules.findItem("spellslot4").name, "Spellslot Lvl 4 (+1 spell)");
   // selling spellslot2 removes what depends on it (spellslot3.., learn2..)
   assert.deepEqual(rules.sellRank(base({ spellslot1: 1, spellslot2: 1, spellslot3: 1, learn2: 1, learn1: 1 }), "spellslot2").bought, { spellslot1: 1, learn1: 1 });
-  // (e) migration: learn1-5 + spellslot5 x1 (old 42 AP) -> spellslot1-5 x1 + second spellslot5, -9 AP, still 20 points
+  // (e) migration: learn1-5 + spellslot5 x1 (old 42 AP) -> spellslot1-5 x1 + second spellslot5, -9 AP, 30 points
   const old = { v: 4, mode: "turm", startAp: 200, earnedAp: 0, abilities: { str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10 },
     bought: { learn1: 1, learn2: 1, learn3: 1, learn4: 1, learn5: 1, spellslot5: 1 } };
   APP.setState(structuredClone({ ...APP.DEFAULTS(), ...old }));
@@ -3251,7 +3251,7 @@ ok("spell rule v5: spellslot = spell purchase, learn = extra known spell, prereq
   assert.equal(S.v, 5);
   assert.equal(S.notices.length, 1);
   assert.match(S.notices[0].text, /^Spellcasting rule change: your purchases were converted\. AP balance changed by -9\. Please settle with your GM\.$/);
-  APP.setState(S); assert.deepEqual([APP.computeSpent(), APP.derived().spTotal], [51, 20]);
+  APP.setState(S); assert.deepEqual([APP.computeSpent(), APP.derived().spTotal], [51, 30]);
   // idempotent: loading the migrated sheet again changes nothing
   const S2 = appLoad(JSON.parse(JSON.stringify(S)));
   assert.deepEqual([S2.bought, S2.notices.length], [S.bought, 1]);
@@ -3280,7 +3280,7 @@ ok("spell rule migration on every entry path: app import, Foundry importer, Acto
   const S = appLoad(old);
   assert.deepEqual(S.bought, want);
   assert.ok(Object.keys(S.bought).every(k => !k.startsWith("learn")));
-  APP.setState(S); assert.equal(APP.derived().spTotal, 20);
+  APP.setState(S); assert.equal(APP.derived().spTotal, 30);
   assert.deepEqual([S.v, S.notices.length, S.notices[0].text], [5, 1, text]);
   // the export (JSON of S after migrateState) imported again changes nothing
   APP.setState(S); assert.equal(APP.migrateState(), null);
@@ -3307,7 +3307,7 @@ ok("spell rule migration on every entry path: app import, Foundry importer, Acto
   const c = convertAppExport(old);
   assert.deepEqual([c.system.bought, c.flags["ap-turm"].dataVersion, c.notice, c.system.notices.length], [want, 5, text, 1]);
   const st = foundryState(c);
-  assert.deepEqual(norm(rules.derived(st)).spTotal, 20);
+  assert.deepEqual(norm(rules.derived(st)).spTotal, 30);
   assert.deepEqual(convertAppExport({ ...old, v: 5 }).system.bought, want);
   assert.deepEqual([convertAppExport(exportAppData({ name: c.name, system: c.system, items: [], dataVersion: 5 })).system.bought, convertAppExport(exportAppData({ name: c.name, system: c.system, items: [], dataVersion: 5 })).notice], [want, ""]);
 
@@ -3444,7 +3444,7 @@ await okAsync("items with effects: equipped / attuned, bonuses, proficiency, A/D
   assert.equal(d.skillData.ath.mod, d.mods.str + d.pb);                   // already proficient: no double PB
   assert.equal(S.selectedSkills.length, 1);
   assert.deepEqual([d.saveData.dex.prof, d.saveData.dex.mod], [true, d.mods.dex + d.pb]);
-  assert.deepEqual([d.spellDC, d.spellAtk, d.spTotal], [8 + d.pb + d.spellMod + 1, d.pb + d.spellMod + 1, 1 + 2]);
+  assert.deepEqual([d.spellDC, d.spellAtk, d.spTotal], [8 + d.pb + d.spellMod + 1, d.pb + d.spellMod + 1, 2 + 2]);
   assert.deepEqual(rolls.itemRollPreset(d, "skill", "ste"), { mode: "advantage", adv: ["Ring of Shadows"], dis: [], label: "Advantage: Ring of Shadows" });
   assert.equal(rolls.itemRollPreset(d, "init").mode, "advantage");
   assert.equal(rolls.itemRollPreset(dc, "save", "wis").label, "Disadvantage: Cursed Ring");
@@ -3564,6 +3564,69 @@ ok("passive scores: Foundry custom shop recomputes all three; NPC passive Percep
   const q = statblock.parseStatblock("Goblin\nSmall humanoid\nArmor Class 15\nSenses darkvision 60 ft.");
   assert.equal(q.passivePerception, null);
   assert.equal("passivePerc" in statblock.statblockToUpdate(q).system, false);
+});
+
+
+/* ---------- spell point table (1.4.0, app v09-05s) ---------- */
+ok("spell points: D&D table for pool and cast cost, app and Foundry identical", () => {
+  assert.deepEqual(cfg.SPELL_POINT_COST, { 1: 2, 2: 3, 3: 5, 4: 6, 5: 7, 6: 9, 7: 10, 8: 11, 9: 13 });
+  assert.deepEqual(APP.SPELL_POINT_COST, cfg.SPELL_POINT_COST);
+  for (let L = 0; L <= 10; L++) assert.equal(rules.spellPointCost(L), APP.spellPointCost(L), "cost " + L);
+  assert.deepEqual([rules.spellPointCost(0), rules.spellPointCost(4), rules.spellPointCost(9)], [0, 6, 13]);
+  const base = (bought, extra = {}) => ({ ...APP.DEFAULTS(), mode: "turm", startAp: 400, earnedAp: 0, bought, ...extra });
+  const both = (S) => { APP.setState(structuredClone(S)); const a = norm(APP.derived()); const r = norm(rules.derived(structuredClone(S))); assert.deepEqual(r, a); return a; };
+  const cast = (S, lvl) => { APP.setState(structuredClone(S)); const a = APP.castSpellPoints(S, APP.derived(), lvl); const r = rules.castSpellPoints(S, rules.derived(structuredClone(S)), lvl); assert.deepEqual(r, a, "cast " + lvl); return r; };
+  // spellslot1-4 x1: pool 2+3+5+6 = 16, max rank 4; breakdown "Rank 3: 1 x 5 = 5"
+  const a = base({ spellslot1: 1, spellslot2: 1, spellslot3: 1, spellslot4: 1 });
+  let d = both(a);
+  assert.deepEqual([d.spTotal, d.spMaxRank], [16, 4]);
+  assert.deepEqual(d.spBreak.find(b => b.L === 3), { L: 3, units: 1, cost: 5, pts: 5 });
+  // spellslot5 x2 adds 14
+  assert.equal(both(base({ ...a.bought, spellslot5: 2 })).spTotal - 16, 14);
+  assert.equal(both(base({ spellslot5: 2 })).spTotal, 14);
+  // item bonus on top, unchanged
+  // casting rank 4 deducts 6
+  let r = cast(a, 4);
+  assert.deepEqual([r.ok, r.cost, r.spUsed, r.slotUsed, r.msg], [true, 6, 6, null, "6 spell points (10/16 left)"]);
+  // not enough points: message names the real numbers
+  r = cast({ ...a, spUsed: 12 }, 4);
+  assert.deepEqual([r.ok, r.msg], [false, "Not enough spell points (4/16, need 6)."]);
+  // cantrips are free, ranks above the max rank refused
+  assert.deepEqual(cast(a, 0).cost, 0);
+  assert.equal(cast(a, 5).msg, "Rank 5 exceeds your max rank (4).");
+  // rank 9 costs 13 and one of its casts per long rest (unchanged rule for 6+)
+  const nine = base(Object.fromEntries(Array.from({ length: 9 }, (_, i) => ["spellslot" + (i + 1), 1])));
+  d = both(nine);
+  assert.equal(d.spTotal, 2 + 3 + 5 + 6 + 7 + 9 + 10 + 11 + 13);
+  r = cast(nine, 9);
+  assert.deepEqual([r.ok, r.cost, r.spUsed, r.slotUsed], [true, 13, 13, 1]);
+  assert.equal(r.msg, "13 spell points (53/66 left) · rank 9 cast 1/1");
+  r = cast({ ...nine, slotsUsed: { 9: 1 } }, 9);
+  assert.deepEqual([r.ok, r.msg], [false, "No rank 9 casts left until a long rest (1/1)."]);
+  // existing character with spUsed above the pool: capped on load (app), on import (Foundry), notice once (Turm)
+  const over = { ...base({ spellslot1: 1 }), spUsed: 40 };
+  delete over._spCostTable;
+  APP.setState(structuredClone(over));
+  const S = APP.getState();
+  const note = APP.migrateState();
+  assert.deepEqual([S.spUsed, S._spCostTable, note], [2, true, "Spell point costs updated to the standard table. Your pool is now 2 points."]);
+  assert.equal(APP.migrateState(), null);                                   // only once
+  assert.equal(rules.spellPointNotice(2), note);
+  const c = convertAppExport(over);
+  assert.equal(c.system.resources.spUsed, 2);
+  assert.equal(norm(rules.derived(foundryState(c))).spUsed, 2);
+  // no notice without a pool or in mode ap; the flag is set anyway
+  for (const s of [{ ...base({}), spUsed: 0 }, { ...base({ spellslot1: 1 }), mode: "ap" }]) {
+    APP.setState(structuredClone(s)); assert.equal(APP.migrateState(), null); assert.equal(APP.getState()._spCostTable, true);
+  }
+  // rules journal lists the table from the constant
+  const pages = rj.buildRulesPages();
+  const prog = pages.find(p => p.name === "Progression").content;
+  for (const [rank, cost] of Object.entries(cfg.SPELL_POINT_COST)) assert.ok(prog.includes(`<tr><td>${rank}</td><td>${cost}</td></tr>`), "journal rank " + rank);
+  assert.ok(prog.includes("= 16 points, max rank 4"));
+  // no rank-as-points formula left in the app or rules.mjs
+  assert.ok(!js.includes("spTotal+=L*units"));
+  assert.ok(!fs.readFileSync(new URL("../module/rules.mjs", import.meta.url), "utf8").includes("spTotal+=L*units"));
 });
 
 console.log(`All ${passed} test groups passed.`);

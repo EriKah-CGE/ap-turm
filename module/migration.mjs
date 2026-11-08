@@ -7,7 +7,7 @@
  * is ever broken - a migration only persists that result, so the stored data matches the final shape.
  * The pure helpers (compareVersions, needsMigration, stepsFor, legacyMarkers) are tested in Node.
  */
-import { DATA_VERSION } from "./rules.mjs";
+import { DATA_VERSION, spellPointNotice } from "./rules.mjs";
 import { whisperGmNotice } from "./importer.mjs";
 
 const SYSTEM_ID = "ap-turm";
@@ -163,6 +163,37 @@ export const MIGRATIONS = [
     }
   }
 ];
+
+/**
+ * Spell point table (1.4.0): the pool is computed from the purchases, so nothing is converted. Once per character
+ * (flag spCostTable): stored used points above the new pool are capped, and a Turm character with a pool gets one
+ * whisper to the GMs with its new total. Independent of the world version, like the spell rule: runs on ready of the
+ * active GM and for every newly created character (import, compendium, duplicate).
+ * @param {Actor} actor
+ * @returns {Promise<{name:string,total:number,clamped:boolean,notified:boolean}|null>}  null: nothing to do
+ */
+export async function settleSpellPoints(actor) {
+  if (actor?.type !== "character" || actor._source.flags?.[SYSTEM_ID]?.spCostTable) return null;
+  const d = actor.system.derived;
+  const used = Number(actor._source.system?.resources?.spUsed) || 0;
+  const clamped = used > d.spTotal;
+  const update = { [`flags.${SYSTEM_ID}.spCostTable`]: true };
+  if (clamped) update["system.resources.spUsed"] = d.spTotal;
+  await actor.update(update);
+  const notified = actor.system.mode === "turm" && d.spTotal > 0;
+  if (notified) await whisperGmNotice(actor.name, spellPointNotice(d.spTotal));
+  return { name: actor.name, total: d.spTotal, clamped, notified };
+}
+
+/** settleSpellPoints for every character actor (ready of the active GM). */
+export async function migrateSpellPoints(actors = game.actors) {
+  const res = [];
+  for (const actor of actors) {
+    try { const r = await settleSpellPoints(actor); if (r) res.push(r); }
+    catch (err) { console.error(`${SYSTEM_ID} | spell point table: "${actor.name}"`, err); }
+  }
+  return res;
+}
 
 /**
  * Store a spell rule conversion and tell the GMs once. The conversion itself already happened in memory when the

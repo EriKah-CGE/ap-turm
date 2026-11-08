@@ -2,7 +2,7 @@
  * Item sheet (weapon / spell / feat / gear), editable. Fields mirror the app's edit modals.
  */
 import { ABILITIES, ABBR, SKILLS, RECHARGE, GEAR_ORIGINS, WEAPON_ABILITY_LABELS, FEAT_EXTRA, SPELL_LEVELS, damageTypeOptions, damageTypeGroupOptions, damageTypeGroups, damageTypeLabel } from "../config.mjs";
-import { ITEM_BON, compactEffects } from "../rules.mjs";
+import { ITEM_BON, compactEffects, spellPointCost } from "../rules.mjs";
 
 import { SheetSizeMixin } from "./sizing.mjs";
 import { saveToLibrary } from "../library.mjs";
@@ -88,6 +88,7 @@ export class ApTurmItemSheet extends SheetSizeMixin(HandlebarsApplicationMixin(I
       ctx.abilOptions = opt(WEAPON_ABILITY_LABELS, sys.abil);
     }
     if (ctx.isSpell) {
+      ctx.spCost = isTurm && Number(sys.lvl) > 0 ? spellPointCost(sys.lvl) : 0;
       ctx.lvlOptions = SPELL_LEVELS.map(l => ({ value: l, label: l === 0 ? "Cantrip" : "Level " + l, selected: Number(sys.lvl) === l }));
       ctx.elemOptions = [{ value: "", label: "— none —", selected: !sys.elem }, ...damageTypeOptions(mode, sys.elem)];
       ctx.descriptionField = sys.schema.fields.description;

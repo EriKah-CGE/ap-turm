@@ -5,7 +5,7 @@
  * against the app's own load()/migrate*() functions. `importAppJSON` is the Foundry UI entry.
  */
 import { ARMORS, WEAPONS } from "./config.mjs";
-import { DATA_VERSION, convertSpellPurchases, spellRuleNotice, needsSpellRule, expandEffects } from "./rules.mjs";
+import { DATA_VERSION, convertSpellPurchases, spellRuleNotice, needsSpellRule, expandEffects, derived } from "./rules.mjs";
 import { isNpcExport, validateNpcExport, createNpcFromExport, importNpcIntoActor, NPC_FORMAT } from "./npc-transfer.mjs";
 
 /* ---------- App defaults + migrations (ported 1:1 from ap-character-sheet.html) ---------- */
@@ -125,6 +125,10 @@ export function normalizeAppExport(data) {
     }
   }
   S.v = DATA_VERSION;
+  // app migrateSpellPoints(): used spell points stay within the pool of the spell point table
+  const spTotal = derived(S).spTotal;
+  if ((parseInt(S.spUsed) || 0) > spTotal) S.spUsed = spTotal;
+  S._spCostTable = true;
   return S;
 }
 

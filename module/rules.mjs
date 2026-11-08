@@ -6,7 +6,7 @@
  * ap-character-sheet.html) instead of reading a global. Bodies are copied from the app; only the
  * `S` parameter and imports were added.
  */
-import { SHOP_DATA, PREREQS, ABILITIES, SKILLS, HIT_DICE, ARMORS, ABBR, findShopItem } from "./config.mjs";
+import { SHOP_DATA, PREREQS, ABILITIES, SKILLS, HIT_DICE, ARMORS, ABBR, SPELL_POINT_COST, findShopItem } from "./config.mjs";
 
 /* ---------- Data version / spell rule (app DATA_VERSION, migrateSpellRule) ---------- */
 /** App data version: 5 = spell rule with spellslotN as the spell purchase and learnN as "Extra Spell". */
@@ -231,6 +231,24 @@ export function passiveTip(p){
   const flat=p.flat?` ${p.flat<0?"-":"+"} ${Math.abs(p.flat)} custom shop`:"";   /* Foundry only: custom shop "Passive Perception" bonus */
   return `10 ${p.mod<0?"-":"+"} ${Math.abs(p.mod)}${flat}${tail}`;
 }
+/* spell points a cast of rank L costs (cantrips 0) */
+export function spellPointCost(L){return SPELL_POINT_COST[parseInt(L)||0]||0;}
+/* Turm mode cast of rank lvl: checks max rank, points and (rank 6+) casts per long rest. Returns {ok,msg} and, when ok,
+   the new spUsed and slotsUsed[lvl] (null when unchanged). Cantrips are free. */
+export function castSpellPoints(S,d,lvl){
+  lvl=parseInt(lvl)||0;
+  if(lvl<=0)return {ok:true,cost:0,spUsed:d.spUsed,slotUsed:null,msg:"cantrip"};
+  const cost=spellPointCost(lvl);
+  if(lvl>d.spMaxRank)return {ok:false,msg:`Rank ${lvl} exceeds your max rank (${d.spMaxRank||0}).`};
+  if(d.spLeft<cost)return {ok:false,msg:`Not enough spell points (${d.spLeft}/${d.spTotal}, need ${cost}).`};
+  let slotUsed=null,tail="";
+  if(lvl>=6){const total=(d.slots.find(s=>s.L===lvl)||{}).total||0;const used=(S.slotsUsed||{})[lvl]||0;
+    if(used>=total)return {ok:false,msg:`No rank ${lvl} casts left until a long rest (${used}/${total}).`};
+    slotUsed=used+1;tail=` · rank ${lvl} cast ${used+1}/${total}`;}
+  return {ok:true,cost,spUsed:d.spUsed+cost,slotUsed,msg:`${cost} spell point${cost>1?"s":""} (${d.spLeft-cost}/${d.spTotal} left)${tail}`};
+}
+/* one-time notice after the spell point table change (app: toast, Foundry: GM whisper) */
+export function spellPointNotice(total){return `Spell point costs updated to the standard table. Your pool is now ${total} points.`;}
 /* ---------- Derived ---------- */
 export function mod(s){return Math.floor((s-10)/2);}
 export function fmtMod(m){return (m>=0?"+":"")+m;}
@@ -282,14 +300,14 @@ export function derived(S){
   const init=mods.dex+fb.init+exhPen;
   const passive=passiveScores(skillData,S.choices.advSkill);
   const passivePerc=passive.prc.value,passiveIns=passive.ins.value,passiveInv=passive.inv.value;
-  /* Spell purchases (v5): spellslotN = the spell purchase (casting rank N, one known spell, a slot; Turm: N points per slot).
+  /* Spell purchases (v5): spellslotN = the spell purchase (casting rank N, one known spell, a slot; Turm: SPELL_POINT_COST[N] points per slot).
      learnN = "Extra Spell": one more known spell of rank N only. Mode ap: slots of rank N = spellslotN. */
   const slots=[];for(let L=1;L<=9;L++){const tot=S.bought["spellslot"+L]||0;if(tot>0)slots.push({L,total:tot,extra:S.bought["learn"+L]||0});}
-  /* Turm: spell points = sum of rank x spellslot purchases of that rank; max rank = highest rank with a spellslot */
+  /* Turm: spell points = sum of SPELL_POINT_COST[rank] x spellslot purchases of that rank; max rank = highest rank with a spellslot */
   let spTotal=0, spMaxRank=0, spBreak=[];
   for(let L=1;L<=9;L++){
     const units=S.bought["spellslot"+L]||0;
-    if(units){ spMaxRank=Math.max(spMaxRank,L); spTotal+=L*units; spBreak.push({L,units,pts:L*units}); }
+    if(units){ const cost=spellPointCost(L); spMaxRank=Math.max(spMaxRank,L); spTotal+=cost*units; spBreak.push({L,units,cost,pts:cost*units}); }
   }
   /* known spells per rank = spellslotN + learnN; have = spells of that rank on the sheet */
   const known=[];for(let L=1;L<=9;L++){const max=(S.bought["spellslot"+L]||0)+(S.bought["learn"+L]||0);const have=(S.spells||[]).filter(sp=>(parseInt(sp.lvl)||0)===L).length;if(max>0||have>0)known.push({L,max,have,over:have>max});}

@@ -30,6 +30,8 @@ export const CREATURE_TYPES={aberration:"Aberration",beast:"Beast",celestial:"Ce
 
 export const FIGHT_STYLES={archery:"Archery",defense:"Defense",dueling:"Dueling",gwf:"Great Weapon",protection:"Protection",twf:"Two-Weapon",blind:"Blind Fighting",interception:"Interception",thrown:"Thrown Weapon",unarmed:"Unarmed"};
 
+export const SPELL_POINT_COST={1:2,2:3,3:5,4:6,5:7,6:9,7:10,8:11,9:13};
+
 export const WEAPONS={longsword:"Longsword",dagger:"Dagger",greatsword:"Greatsword",shortsword:"Shortsword",bow:"Shortbow/Longbow",axe:"Battleaxe",other:"Other"};
 
 export const DMG_SHORT={slashing:"slashing",piercing:"piercing",bludgeoning:"bludgeoning",fire:"fire",cold:"cold",acid:"acid",force:"force",lightning:"lightning",necrotic:"necrotic",poison:"poison",psychic:"psychic",radiant:"radiant",thunder:"thunder"};

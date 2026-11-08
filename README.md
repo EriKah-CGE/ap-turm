@@ -80,10 +80,22 @@ vermerkt danach die neue Version.
 ## Zauberkauf (ab 1.3.0)
 
 - **Spellslot Lvl N (+1 spell)** ist der eigentliche Zauberkauf: Er erlaubt das Wirken von Rang N, gibt einen bekannten
-  Zauber von Rang N und einen Slot (Modus AP) bzw. N Zauberpunkte (Modus Turm). Er setzt Spellslot Lvl N−1 voraus.
+  Zauber von Rang N und einen Slot (Modus AP) bzw. die Zauberpunkte von Rang N laut Tabelle (Modus Turm). Er setzt
+  Spellslot Lvl N−1 voraus.
 - **Extra Spell Lvl N** (früher „Learn Spell") gibt nur einen weiteren bekannten Zauber von Rang N und setzt
   Spellslot Lvl N voraus. Keine Zauberpunkte, kein Slot, kein Einfluss auf den Max-Rang.
 - Im Zauberbereich steht pro Rang „Rank N: x of y spells"; mehr Zauber als erlaubt werden nur gelb markiert.
+- **Zauberpunkte (Modus Turm, ab 1.4.0)** nach der D&D-Spellpoint-Tabelle: Pool = Σ (Punkte des Rangs × Spellslot-Käufe
+  des Rangs) plus Punkte-Boni aktiver Gegenstände; ein Zauber kostet beim Wirken dieselben Punkte seines Rangs,
+  Cantrips sind frei. Rang 6–9 zusätzlich höchstens so oft pro langer Rast, wie Spellslots des Rangs gekauft sind.
+
+  | Rang | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 |
+  |---|---|---|---|---|---|---|---|---|---|
+  | Punkte je Spellslot-Kauf / je Wirken | 2 | 3 | 5 | 6 | 7 | 9 | 10 | 11 | 13 |
+
+  Beispiel: Spellslot Lvl 1–4 je einmal = 16 Punkte, Max-Rang 4. Bestehende Charaktere bekommen den neuen Pool aus
+  ihren Käufen; verbrauchte Punkte über dem Pool werden gekappt, einmal kommt der Hinweis „Your pool is now X points"
+  (App: Meldung, Foundry: Flüsternachricht an den Spielleiter).
 - **Umstellung alter Bögen:** Je Rang mit einem „Learn Spell"-Kauf wird ein Kauf zu „Spellslot". AP werden nicht
   automatisch ausgeglichen; der Bogen meldet einmal die Differenz („AP balance changed by −X"). In Foundry läuft das
   als Weltmigration beim ersten Start mit 1.3.0 (Backup-Hinweis vorher), der Spielleiter bekommt pro Charakter eine
