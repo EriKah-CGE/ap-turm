@@ -1,6 +1,6 @@
 {
   "name": "ap-turm",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "private": true,
   "description": "AP-Turm game system for Foundry VTT v13",
   "type": "module",
