@@ -37,6 +37,7 @@
           <div class="r apt-roll draggable" data-action="rollSkill" data-key="{{key}}" data-drag-roll="skill:{{key}}" title="Roll {{label}} (Shift: advantage, Ctrl: disadvantage, right-click: dialog)"><span class="dot {{#if exp}}exp{{else if prof}}prof{{/if}}"></span><span class="val num">{{mod}}</span><span class="nm">{{label}} <small>{{abbr}}</small>{{#if adv}}<span class="apt-ad a" data-tooltip="{{adv}}">A</span>{{/if}}{{#if dis}}<span class="apt-ad d" data-tooltip="{{dis}}">D</span>{{/if}}</span></div>
         {{/each}}
         </div>
+        <div class="apt-passline"><b>Passive:</b> {{#each passives}}{{#unless @first}} · {{/unless}}<span data-tooltip="{{tip}}">{{label}} <b class="num">{{value}}</b></span>{{/each}}</div>
       </div>
     </div>
 

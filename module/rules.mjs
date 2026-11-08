@@ -214,6 +214,23 @@ export function weaponStats(w,d){
   return {abK,atk,dmg,dmgMod};
 }
 
+/* passive Perception / Insight / Investigation: 10 + skill modifier (proficiency, expertise, ability, exhaustion,
+   feat and item bonuses), +5 with advantage (Adv on Skill purchase or active item), -5 with disadvantage, both cancel */
+export const PASSIVE_SKILLS=["prc","ins","inv"];
+export function passiveScores(skillData,advPicks){
+  const out={};
+  PASSIVE_SKILLS.forEach(k=>{const s=skillData[k];const advSrc=[...((advPicks||[]).includes(k)?["Adv on Skill"]:[]),...(s.adv||[])],disSrc=[...(s.dis||[])];
+    const adj=advSrc.length&&!disSrc.length?5:disSrc.length&&!advSrc.length?-5:0;
+    out[k]={value:10+s.mod+adj,mod:s.mod,adj,adv:advSrc,dis:disSrc};});
+  return out;
+}
+/* "10 + 4 + 5 advantage (Cloak of Elvenkind)" */
+export function passiveTip(p){
+  const src=(l)=>l.length?` (${l.join(", ")})`:"";
+  const tail=p.adj>0?` + 5 advantage${src(p.adv)}`:p.adj<0?` - 5 disadvantage${src(p.dis)}`:(p.adv.length&&p.dis.length?" (advantage and disadvantage cancel out)":"");
+  const flat=p.flat?` ${p.flat<0?"-":"+"} ${Math.abs(p.flat)} custom shop`:"";   /* Foundry only: custom shop "Passive Perception" bonus */
+  return `10 ${p.mod<0?"-":"+"} ${Math.abs(p.mod)}${flat}${tail}`;
+}
 /* ---------- Derived ---------- */
 export function mod(s){return Math.floor((s-10)/2);}
 export function fmtMod(m){return (m>=0?"+":"")+m;}
@@ -263,7 +280,8 @@ export function derived(S){
   const skillData={};for(const k in SKILLS){let abK=SKILLS[k].a;if(k==="itm"&&strIntim)abK="str";const prof=skillProfSet.has(k),exp=skillExpSet.has(k);skillData[k]={prof,exp,mod:mods[abK]+(exp?pb*2:(prof?pb:0))+exhPen+(ifx.skillBon[k]||0),adv:ifx.adv.skills[k]||[],dis:ifx.dis.skills[k]||[]};}
   const saveData={};for(const a in ABILITIES){const prof=profSaves.has(a);saveData[a]={prof,mod:mods[a]+(prof?pb:0)+exhPen+(ifx.saveBon[a]||0),adv:ifx.adv.saves[a]||[],dis:ifx.dis.saves[a]||[]};}
   const init=mods.dex+fb.init+exhPen;
-  const passivePerc=10+skillData.prc.mod;
+  const passive=passiveScores(skillData,S.choices.advSkill);
+  const passivePerc=passive.prc.value,passiveIns=passive.ins.value,passiveInv=passive.inv.value;
   /* Spell purchases (v5): spellslotN = the spell purchase (casting rank N, one known spell, a slot; Turm: N points per slot).
      learnN = "Extra Spell": one more known spell of rank N only. Mode ap: slots of rank N = spellslotN. */
   const slots=[];for(let L=1;L<=9;L++){const tot=S.bought["spellslot"+L]||0;if(tot>0)slots.push({L,total:tot,extra:S.bought["learn"+L]||0});}
@@ -282,7 +300,7 @@ export function derived(S){
   const spellDC=8+pb+spellMod+(S.bought.spellDC||0)+fb.spellDC;
   const spellAtk=pb+spellMod+(S.bought.spellDC||0)+exhPen+fb.spellDC;
   const atkBonus=Math.max(mods.str,mods.dex)+pb+(S.bought.wepPlus1||0)+exhPen+fb.atk;
-  return {earned,level,pb,numMilestones,cantripTier,bonusStatPoints,fin,mods,maxCap,walk,hpSum,hpMax,ac,acNote,profSaves,skillProfSet,skillExpSet,strIntim,skillData,saveData,init,passivePerc,slots,known,spellMod,spellDC,spellAtk,atkBonus,exh,exhPen,fb,spTotal,spUsed,spLeft,spMaxRank,spBreak,arm,armWorn,shield,armStrLack,itemFx:ifx};
+  return {earned,level,pb,numMilestones,cantripTier,bonusStatPoints,fin,mods,maxCap,walk,hpSum,hpMax,ac,acNote,profSaves,skillProfSet,skillExpSet,strIntim,skillData,saveData,init,passivePerc,passiveIns,passiveInv,passive,slots,known,spellMod,spellDC,spellAtk,atkBonus,exh,exhPen,fb,spTotal,spUsed,spLeft,spMaxRank,spBreak,arm,armWorn,shield,armStrLack,itemFx:ifx};
 }
 
 /* ============================================================

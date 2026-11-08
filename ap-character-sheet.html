@@ -297,6 +297,9 @@
   .admark.a{background:#3f7a3a}.admark.d{background:#9a3a20}
   .deflines{margin-top:4px;border-top:1px dotted var(--line-soft);padding-top:3px;font-size:10px;line-height:1.45;color:var(--ink)}
   .deflines b{color:var(--ink-dim);font-weight:700;margin-right:3px}
+  .passline{margin-top:4px;border-top:1px dotted var(--line-soft);padding-top:3px;font-size:11px;color:var(--ink)}
+  .passline>b{color:var(--ink-dim);font-weight:700;margin-right:2px}
+  .passline span[title]{cursor:help}
   .itemrow .eqdot{flex:none;margin-top:3px}
   .itemrow .ifx{display:block;font-size:9.5px;color:var(--green-br)}
   .itemrow .ifx.off{color:var(--ink-dim);text-decoration:line-through}
@@ -471,7 +474,8 @@
     .moon-wm{ display:none !important; }
     .sheet{ gap:6px; }
     .cbox,.abil,.fld,.namebox{ break-inside:avoid; }
-    .cstrip{ grid-template-columns:repeat(12,1fr) !important; gap:3px }
+    .cstrip{ grid-template-columns:repeat(11,1fr) !important; gap:3px }
+    .passline{ font-size:9.5px; margin-top:2px; padding-top:2px }
     .cbox{ padding:3px 2px; min-height:36px }
     .cbox label{ font-size:6.5px; letter-spacing:.02em; gap:2px }
     .cbox label .ic{ width:8px; height:8px }
@@ -537,7 +541,7 @@
     <button class="tbtn" id="btnPdf">🖨 Export PDF</button>
     <button class="tbtn" id="btnExport">⬇ Export JSON</button>
     <button class="tbtn" id="btnImport">⬆ Load</button>
-    <span class="buildtag" title="App-Version">v09-05q</span>
+    <span class="buildtag" title="App-Version">v09-05r</span>
     <input type="file" id="fileInput" accept=".json,application/json,text/plain,text/json" style="display:none">
     <span class="spacer"></span>
     <span class="saved-note" id="savedNote"></span>
@@ -868,6 +872,22 @@ function weaponStats(w,d){
   return {abK,atk,dmg,dmgMod};
 }
 
+/* passive Perception / Insight / Investigation: 10 + skill modifier (proficiency, expertise, ability, exhaustion,
+   feat and item bonuses), +5 with advantage (Adv on Skill purchase or active item), -5 with disadvantage, both cancel */
+const PASSIVE_SKILLS=["prc","ins","inv"];
+function passiveScores(skillData,advPicks){
+  const out={};
+  PASSIVE_SKILLS.forEach(k=>{const s=skillData[k];const advSrc=[...((advPicks||[]).includes(k)?["Adv on Skill"]:[]),...(s.adv||[])],disSrc=[...(s.dis||[])];
+    const adj=advSrc.length&&!disSrc.length?5:disSrc.length&&!advSrc.length?-5:0;
+    out[k]={value:10+s.mod+adj,mod:s.mod,adj,adv:advSrc,dis:disSrc};});
+  return out;
+}
+/* "10 + 4 + 5 advantage (Cloak of Elvenkind)" */
+function passiveTip(p){
+  const src=(l)=>l.length?` (${l.join(", ")})`:"";
+  const tail=p.adj>0?` + 5 advantage${src(p.adv)}`:p.adj<0?` - 5 disadvantage${src(p.dis)}`:(p.adv.length&&p.dis.length?" (advantage and disadvantage cancel out)":"");
+  return `10 ${p.mod<0?"-":"+"} ${Math.abs(p.mod)}${tail}`;
+}
 /* ---------- Derived ---------- */
 function mod(s){return Math.floor((s-10)/2);}
 function fmtMod(m){return (m>=0?"+":"")+m;}
@@ -915,7 +935,8 @@ function derived(){
   const skillData={};for(const k in SKILLS){let abK=SKILLS[k].a;if(k==="itm"&&strIntim)abK="str";const prof=skillProfSet.has(k),exp=skillExpSet.has(k);skillData[k]={prof,exp,mod:mods[abK]+(exp?pb*2:(prof?pb:0))+exhPen+(ifx.skillBon[k]||0),adv:ifx.adv.skills[k]||[],dis:ifx.dis.skills[k]||[]};}
   const saveData={};for(const a in ABILITIES){const prof=profSaves.has(a);saveData[a]={prof,mod:mods[a]+(prof?pb:0)+exhPen+(ifx.saveBon[a]||0),adv:ifx.adv.saves[a]||[],dis:ifx.dis.saves[a]||[]};}
   const init=mods.dex+fb.init+exhPen;
-  const passivePerc=10+skillData.prc.mod;
+  const passive=passiveScores(skillData,S.choices.advSkill);
+  const passivePerc=passive.prc.value,passiveIns=passive.ins.value,passiveInv=passive.inv.value;
   /* Spell purchases (v5): spellslotN = the spell purchase (casting rank N, one known spell, a slot; Turm: N points per slot).
      learnN = "Extra Spell": one more known spell of rank N only. Mode ap: slots of rank N = spellslotN. */
   const slots=[];for(let L=1;L<=9;L++){const tot=S.bought["spellslot"+L]||0;if(tot>0)slots.push({L,total:tot,extra:S.bought["learn"+L]||0});}
@@ -934,7 +955,7 @@ function derived(){
   const spellDC=8+pb+spellMod+(S.bought.spellDC||0)+fb.spellDC;
   const spellAtk=pb+spellMod+(S.bought.spellDC||0)+exhPen+fb.spellDC;
   const atkBonus=Math.max(mods.str,mods.dex)+pb+(S.bought.wepPlus1||0)+exhPen+fb.atk;
-  return {earned,level,pb,numMilestones,cantripTier,bonusStatPoints,fin,mods,maxCap,walk,hpSum,hpMax,ac,acNote,profSaves,skillProfSet,skillExpSet,strIntim,skillData,saveData,init,passivePerc,slots,known,spellMod,spellDC,spellAtk,atkBonus,exh,exhPen,fb,spTotal,spUsed,spLeft,spMaxRank,spBreak,arm,armWorn,shield,armStrLack,itemFx:ifx};
+  return {earned,level,pb,numMilestones,cantripTier,bonusStatPoints,fin,mods,maxCap,walk,hpSum,hpMax,ac,acNote,profSaves,skillProfSet,skillExpSet,strIntim,skillData,saveData,init,passivePerc,passiveIns,passiveInv,passive,slots,known,spellMod,spellDC,spellAtk,atkBonus,exh,exhPen,fb,spTotal,spUsed,spLeft,spMaxRank,spBreak,arm,armWorn,shield,armStrLack,itemFx:ifx};
 }
 /* tooltip of a final ability score: "18 = 16 + 2 Gauntlets of Ogre Power" (cap noted when it bites) */
 function abilityBreakdown(k,d){
@@ -995,6 +1016,8 @@ function renderOverview(){
     +[...fx.senses,...fx.notes].map(x=>`<div class="defline"><b>${escapeHtml(x.src)}</b> ${escapeHtml(x.text)}</div>`).join("");
   const skills=Object.keys(SKILLS).sort((a,b)=>SKILLS[a].l.localeCompare(SKILLS[b].l)).map(k=>{const s=d.skillData[k];const cls=s.exp?'exp':(s.prof?'prof':'');let abK=SKILLS[k].a;if(k==="itm"&&d.strIntim)abK="str";return `<div class="r"><span class="dot ${cls}"></span><span class="val num">${fmtMod(s.mod)}</span><span class="nm">${SKILLS[k].l} <span class="abk">${ABBR[abK]}</span>${adHtml(s)}</span></div>`;}).join("");
 
+  /* passive Perception / Insight / Investigation, tooltip with the calculation */
+  const passLine=`<div class="passline"><b>Passive:</b> ${PASSIVE_SKILLS.map(k=>`<span title="${escapeHtml(passiveTip(d.passive[k]))}">${SKILLS[k].l} <b class="num">${d.passive[k].value}</b></span>`).join(" · ")}</div>`;
   const death=`<div class="deathmini"><div class="drow">${[0,1,2].map(i=>`<span class="pip s ${S.play.deathSucc>i?'on':''}" data-death="succ" data-i="${i+1}"></span>`).join("")}</div><div class="drow">${[0,1,2].map(i=>`<span class="pip f ${S.play.deathFail>i?'on':''}" data-death="fail" data-i="${i+1}"></span>`).join("")}</div></div>`;
   const exh=`<div class="exh">${[1,2,3,4,5,6].map(i=>`<span class="dia ${S.play.exhaustion>=i?'on':''}" data-exh="${i}"></span>`).join("")}</div>`;
   const inspN=Math.max(0,parseInt(S.play.inspiration)||0);
@@ -1010,7 +1033,6 @@ function renderOverview(){
     <div class="cbox"><label>${icon("hp")}HP</label><span class="hpline"><input class="num" type="number" data-bind="play.hpCurrent" value="${hpCur}"><span class="hpmax">/ ${d.hpMax}</span></span></div>
     <div class="cbox"><label>${icon("temphp")}Temp HP</label><input class="num" type="number" data-bind="play.tempHp" value="${S.play.tempHp||0}"></div>
     <div class="cbox"><label>${icon("hd")}Hit Dice</label><span class="cv sm">${d.level}${hitDie().l.includes("+")?"×("+hitDie().l+")":hitDie().l}</span></div>
-    <div class="cbox"><label>${icon("perc")}Passive Perc</label><span class="cv">${d.passivePerc}</span></div>
     <div class="cbox"><label>${icon("death")}Death Saves</label>${death}</div>
     <div class="cbox"><label>${icon("insp")}Inspiration</label>${inspStar}</div>
     <div class="cbox exhbox ${d.exh?'act':''}"><label>${icon("exh")}Exhaustion${d.exh?` <span class="exhpen">${d.exhPen} / -${5*d.exh}ft</span>`:''}</label>${exh}${d.exh>=6?'<span class="exhdead">DEAD</span>':''}</div>
@@ -1120,7 +1142,7 @@ function renderOverview(){
         <div class="box"><div class="box-h">${icon("coin")}Currency${S.mode==="turm"?'<span class="cnt2" title="Umrechnung: 100 KU = 1 BR, 100 BR = 1 SI, 100 SI = 1 GO, 10 GO = 1 ED"> ×100 · GO→ED ×10</span>':""}</div><div class="coins">${(S.mode==="turm"?[["ku","KU","Kupfer (100 = 1 BR)"],["br","BR","Bronze (100 = 1 SI)"],["si","SI","Silber (100 = 1 GO)"],["go","GO","Gold (10 = 1 ED)"],["ed","ED","Edelsteine"]]:[["cp","CP","Copper"],["sp","SP","Silver"],["ep","EP","Electrum"],["gp","GP","Gold"],["pp","PP","Platinum"]]).map(([k,l,t])=>`<div class="coin" title="${t}"><label>${l}</label><input class="num" type="number" data-bind="currency.${k}" value="${S.currency[k]||0}"></div>`).join("")}</div></div>
       </div>
       <div class="col">
-        <div class="box"><div class="box-h">${icon("skills")}Skills</div><div class="rowlist">${skills}</div></div>
+        <div class="box"><div class="box-h">${icon("skills")}Skills</div><div class="rowlist">${skills}</div>${passLine}</div>
       </div>
       <div class="col">
         <div class="box"><div class="box-h">${icon("atk")}Attacks</div><table class="atk"><thead><tr><th class="weq"></th><th>Weapon</th><th class="wpr">Prof</th><th>Atk</th><th>Damage</th><th class="wed"></th></tr></thead><tbody>${wepRows||wepEmpty}</tbody></table>${wepNotes}<button class="addwep" id="addWep">+ Add weapon</button></div>

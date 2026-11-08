@@ -6,7 +6,7 @@
 import { ABILITIES, ABBR, SKILLS, ELEMENTS, DAMAGE_TYPES, DMG_SHORT, CURRENCIES, ARMOR_WEAPON_PROFS, SHOP_DATA, SELECTORS,
   PREREQS, CREATURE_TYPES, FIGHT_STYLES, WEAPONS, ARMORS, CRYSTAL_LIMIT, TOWER_CARRY_LIMIT, WEP_ABIL, FEAT_EXTRA,
   findShopItem, damageTypeChoices, damageTypeLabel, damageTypeColor } from "../config.mjs";
-import { weaponStats, fmtMod, availableAp, totalAp, computeSpent, shopStatus, hitDieMax, eleElement, abilityBreakdown, itemActive, compactEffects, ITEM_BON } from "../rules.mjs";
+import { weaponStats, fmtMod, availableAp, totalAp, computeSpent, shopStatus, hitDieMax, eleElement, abilityBreakdown, itemActive, compactEffects, ITEM_BON, PASSIVE_SKILLS, passiveTip } from "../rules.mjs";
 import { importAppJSONIntoActor } from "../importer.mjs";
 import { downloadActorExport } from "../exporter.mjs";
 import { rollAttack, rollDamage, rollCheck, rollInitiative, castSpell, rollHitDie, rollDeathSave, applyHpDelta } from "../chat.mjs";
@@ -245,6 +245,8 @@ export class ApTurmCharacterSheet extends SheetSizeMixin(HandlebarsApplicationMi
       let abK = SKILLS[k].a; if (k === "itm" && d.strIntim) abK = "str";
       return { key: k, label: SKILLS[k].l, abbr: ABBR[abK], mod: fmtMod(s.mod), prof: s.prof, exp: s.exp, ...adMarks(s) };
     });
+    // "Passive: Perception 14 · Insight 13 · Investigation 8", tooltip "10 + 4 + 5 advantage (Cloak)"
+    const passives = PASSIVE_SKILLS.map(k => ({ label: SKILLS[k].l, value: d.passive[k].value, tip: passiveTip(d.passive[k]) }));
     // +Nd6 in the chosen element (choices.eleDmg / changeEle); missing pick on old data -> hint
     const eleEl = eleElement(S);
     const eleRanks = S.bought.eleDmg || 0;
@@ -390,7 +392,7 @@ export class ApTurmCharacterSheet extends SheetSizeMixin(HandlebarsApplicationMi
       exhPen: d.exh ? `${d.exhPen} / -${5 * d.exh}ft` : "",
       deathSucc, deathFail, exhaustion, inspiration, inspN, downed: (sys.hp.value ?? d.hpMax) <= 0,
       conditionChips: chipContext(actor),
-      abilities, skills, weapons, spells, feats, purchases, turmwissen, spBreak, spPips, highRanks, slots, profs,
+      abilities, skills, passives, weapons, spells, feats, purchases, turmwissen, spBreak, spPips, highRanks, slots, profs,
       eleHint, eleRanks, eleLabel: eleEl ? damageTypeLabel(eleEl) : "", eleColor: damageTypeColor(eleEl),
       lay: sys.resources.lay, sp: sys.resources.sp, pools: sys.resources.pools ?? [],
       customAdv: [...(d.custom?.advSkills ?? []).map(k => SKILLS[k]?.l ?? k), ...(d.custom?.advSaves ?? []).map(k => `${ABBR[k] ?? k} save`)].join(", "),

@@ -2,6 +2,19 @@
 
 Jede Version hat eine Sektion `## x.y.z`; `npm run release -- x.y.z` übernimmt sie als Release-Notes auf GitHub.
 
+## 1.4.0
+
+- **Passive Werte:** Perception, Insight und Investigation = 10 + Fertigkeitsmodifikator (Übung, Expertise, Attribut,
+  Erschöpfung, Feats, Gegenstände); Vorteil (Kauf „Adv on Skill" oder ausgerüsteter Gegenstand) +5, Nachteil −5,
+  beides hebt sich auf. App und Foundry rechnen identisch.
+- Übersicht (App, Druck und Foundry-Charakterbogen): Zeile „Passive: Perception · Insight · Investigation" unter den
+  Skills, Tooltip mit der Rechnung („10 + 4 + 5 advantage (Cloak)"); der Kasten „Passive Perc" in der Leiste entfällt.
+  App-Build v09-05r, Referenzbögen weiter auf einer Druckseite.
+- Foundry: Passive Perception im Token-Tooltip und als verfolgbarer Wert (`passivePerception`) für Charaktere und NPCs.
+  Custom-Shop-Effekte (Skill-Bonus, Übung, Vorteil, „Passive Perception") wirken auf alle drei Werte.
+- NPC-Bogen: Passive Perception als Feld (leer = 10 + Perception bzw. WIS-Modifikator); der Statblock-Import übernimmt
+  ein im Text gefundenes „passive Perception N" direkt.
+
 ## 1.3.0
 
 - Würfelleiste (Dice Tray) direkt unter dem Chat-Eingabefeld für Spieler und Spielleiter: d4–d100 per Klick zur Formel

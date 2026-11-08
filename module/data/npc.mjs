@@ -51,6 +51,7 @@ export class NpcData extends foundry.abstract.TypeDataModel {
       // Skill bonuses as printed: { perception: 11, stealth: 5 } (keys lowercased, no spaces)
       skills: new TypedObjectField(new NumberField({ required: true, nullable: false, integer: true, initial: 0 })),
       senses: str(),
+      passivePerc: nint(),              // passive Perception as printed in the statblock; null = 10 + Perception (or WIS)
       languages: str(),
       conditionImmunities: str(),
       defenseNote: str(),               // qualified defense lines as printed ("... from nonmagical attacks")
@@ -144,7 +145,8 @@ export class NpcData extends foundry.abstract.TypeDataModel {
     for (const k of ABILS) this.saveMods[k] = this.saves[k] ?? this.mods[k];
     this.saveProf = {};
     for (const k of ABILS) this.saveProf[k] = this.saves[k] !== null && this.saves[k] !== this.mods[k];
-    this.passivePerception = 10 + (this.skills.perception ?? this.mods.wis);
+    this.passiveDerived = 10 + (this.skills.perception ?? this.mods.wis);
+    this.passivePerception = this.passivePerc ?? this.passiveDerived;
     // exhaustion from statuses: -2 x level on every d20 (applied in the rolls), -5 ft speed
     this.exhaustion = exhaustionLevel(this.parent?.statuses ?? []);
     this.exhPen = -2 * this.exhaustion;

@@ -94,6 +94,7 @@ function tipContent(token, level) {
   const val = hp.value ?? max;
   const rows = [`<div class="r"><span>HP</span><b>${val} / ${max}${hp.temp ? ` <small>+${hp.temp} temp</small>` : ""}</b></div>`,
     `<div class="r"><span>AC</span><b>${sys.ac ?? "—"}</b></div>`];
+  if (sys.passivePerception !== undefined) rows.push(`<div class="r"><span>Passive Perc.</span><b>${sys.passivePerception}</b></div>`);
   if (actor.type === "npc" && sys.element && ELEMENTS[sys.element]) {
     rows.push(`<div class="r"><span>Element</span><b style="color:${ELEMENTS[sys.element].c}">${esc(ELEMENTS[sys.element].l)}</b></div>`);
   }

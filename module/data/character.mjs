@@ -153,6 +153,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     this.final = d.fin;
     this.ac = d.ac;
     this.init = d.init;
+    this.passivePerception = d.passivePerc;   // token tooltip / trackable value (@passivePerception)
     this.speed = d.walk;
     this.attacks = 1 + (Number(S.bought.extraAttack) || 0);
 

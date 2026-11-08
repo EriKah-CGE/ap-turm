@@ -1115,7 +1115,7 @@ ok("item transfer: stack split and carry limit at the receiver", () => {
   assert.equal(transfer.carryCount(full, { extra: 1 }) > cfg.TOWER_CARRY_LIMIT, true);
 
   // against the app: build tag, tooltip and counting rule of v09-05o
-  assert.match(html, /class="buildtag"[^>]*>v09-05q</);
+  assert.match(html, /class="buildtag"[^>]*>v09-05r</);
   const appTower = new Function("allItems", js.match(/const towerItems=allItems\.filter\([^;]*\);/)[0] + "return towerItems.length;");
   assert.match(js, /Inside the tower: unlimited\. Only \$\{TOWER_CARRY_LIMIT\} tower finds may be carried back in on re-entry \(circlet crystals exempt\)\./);
   const tpl = fs.readFileSync(new URL("../templates/actor/character/inventory.hbs", import.meta.url), "utf8");
@@ -3486,6 +3486,84 @@ await okAsync("items with effects: equipped / attuned, bonuses, proficiency, A/D
   // partial update data stays partial (Foundry runs migrateData on updates too)
   assert.deepEqual(DM.GearData.migrateData({ effects: { bon: { str: 1 } } }), { effects: { bon: { str: 1 } } });
   assert.deepEqual(DM.WeaponData.migrateData({ dtype: "fire" }), { dtype: "fire" });
+});
+
+/* ---------- passive Perception / Insight / Investigation (app v09-05r) ---------- */
+ok("passive scores: 10 + skill mod, +5 advantage, -5 disadvantage, exhaustion, INT for Investigation, app = Foundry", () => {
+  const base = () => {
+    const S = APP.DEFAULTS();
+    S.earnedAp = 150;                                               // PB +4
+    Object.assign(S.abilities, { str: 10, dex: 10, con: 10, int: 8, wis: 14, cha: 10 });
+    S.selectedSkills = ["prc"];
+    return S;
+  };
+  const cloak = (kind, extra = {}) => ({ id: "c" + kind, name: "Cloak " + kind, qty: 1, notes: "", attuned: false, charges: 0, used: 0, recharge: "", origin: "city", equipped: true, effects: { [kind]: { skills: ["prc"] } }, ...extra });
+  const both = (S) => {
+    const a = appDerived(S), b = norm(rules.derived(S));
+    assert.deepEqual(b, a, "derived differs");
+    assert.deepEqual([b.passivePerc, b.passiveIns, b.passiveInv], [a.passivePerc, a.passiveIns, a.passiveInv]);
+    return b;
+  };
+  const S0 = base(); const d0 = both(S0);
+  const mod = 2 + 4;                                                // WIS 14 + proficiency
+  assert.equal(d0.passivePerc, 10 + mod);
+  assert.equal(d0.passiveIns, 10 + 2);                              // WIS, not proficient
+  assert.equal(d0.passiveInv, 10 - 1);                              // INT 8
+  assert.equal(rules.passiveTip(d0.passive.prc), "10 + 6");
+  assert.equal(rules.passiveTip(d0.passive.inv), "10 - 1");
+  // advantage from an equipped item: +5
+  const SA = base(); SA.items = [cloak("adv")]; const dA = both(SA);
+  assert.equal(dA.passivePerc, 10 + mod + 5);
+  assert.equal(rules.passiveTip(dA.passive.prc), "10 + 6 + 5 advantage (Cloak adv)");
+  // unequipped / unattuned items do nothing
+  const SU = base(); SU.items = [cloak("adv", { equipped: false }), cloak("adv", { id: "c2", attunement: true, attuned: false })];
+  assert.equal(both(SU).passivePerc, 10 + mod);
+  // disadvantage: -5
+  const SD = base(); SD.items = [cloak("dis")]; const dD = both(SD);
+  assert.equal(dD.passivePerc, 10 + mod - 5);
+  assert.equal(rules.passiveTip(dD.passive.prc), "10 + 6 - 5 disadvantage (Cloak dis)");
+  // both cancel out
+  const SB = base(); SB.items = [cloak("adv"), cloak("dis")]; const dB = both(SB);
+  assert.equal(dB.passivePerc, 10 + mod);
+  assert.equal(rules.passiveTip(dB.passive.prc), "10 + 6 (advantage and disadvantage cancel out)");
+  // Adv on Skill purchase counts like an item; with an item's disadvantage it cancels
+  const SP = base(); SP.bought.advSkill = 1; SP.choices.advSkill = ["ins"]; const dP = both(SP);
+  assert.equal(dP.passiveIns, 10 + 2 + 5); assert.equal(dP.passivePerc, 10 + mod);
+  assert.equal(rules.passiveTip(dP.passive.ins), "10 + 2 + 5 advantage (Adv on Skill)");
+  // exhaustion 2: -4 on every passive score
+  const SE = base(); SE.play.exhaustion = 2; const dE = both(SE);
+  assert.deepEqual([dE.passivePerc, dE.passiveIns, dE.passiveInv], [d0.passivePerc - 4, d0.passiveIns - 4, d0.passiveInv - 4]);
+  // Investigation uses INT, expertise doubles PB, item skill bonus counts
+  const SI = base(); SI.abilities.int = 16; SI.choices.skillExp = ["inv"]; SI.selectedSkills = ["prc", "inv"];
+  SI.items = [{ ...cloak("adv"), effects: { skillBon: { inv: 1 } } }];
+  assert.equal(both(SI).passiveInv, 10 + 3 + 8 + 1);
+  // ability bonus from a feat reaches the passive score
+  const SF = base(); SF.feats = [{ id: "f", name: "Alert", desc: "", src: "", bon: { wis: 2 } }];
+  assert.equal(both(SF).passivePerc, 10 + 3 + 4);
+  // app: overview line with tooltip, no Passive Perc box any more
+  assert.match(js, /<b>Passive:<\/b>/);
+  assert.ok(!/Passive Perc<\/label>/.test(js));
+});
+
+ok("passive scores: Foundry custom shop recomputes all three; NPC passive Perception from the statblock", () => {
+  const S = APP.DEFAULTS(); S.earnedAp = 150; S.abilities.wis = 14;
+  const entries = [{ id: "c_keen", name: "Keen", category: "Other", costs: [1], prereqs: [], choice: "skill", desc: "",
+    effects: [{ type: "advantage", target: "skill" }, { type: "bonus", target: "skill", key: "chosen", value: 1 }, { type: "bonus", target: "passive", value: 2 }] }];
+  const d = cs.applyCustomEffects(rules.derived(S), S, entries, {});
+  assert.deepEqual([d.passivePerc, d.passiveIns, d.passiveInv], [12, 12, 10]);      // not bought: unchanged
+  S.bought.c_keen = 1; S.choices.c_keen = ["ins"];
+  const e = cs.applyCustomEffects(rules.derived(S), S, entries, {});
+  assert.equal(e.passiveIns, 10 + 2 + 1 + 5);                       // chosen skill bonus + custom advantage
+  assert.equal(e.passivePerc, 10 + 2 + 2);                          // "Passive Perception" bonus
+  assert.equal(rules.passiveTip(e.passive.prc), "10 + 2 + 2 custom shop");
+  assert.equal(rules.passiveTip(e.passive.ins), "10 + 3 + 5 advantage (Adv on Skill)");
+  // statblock: printed value is taken over
+  const p = statblock.parseStatblock("Goblin\nSmall humanoid\nArmor Class 15\nHit Points 7 (2d6)\nSpeed 30 ft.\nSenses darkvision 60 ft., passive Perception 9\nLanguages Common");
+  assert.equal(p.passivePerception, 9);
+  assert.equal(statblock.statblockToUpdate(p).system.passivePerc, 9);
+  const q = statblock.parseStatblock("Goblin\nSmall humanoid\nArmor Class 15\nSenses darkvision 60 ft.");
+  assert.equal(q.passivePerception, null);
+  assert.equal("passivePerc" in statblock.statblockToUpdate(q).system, false);
 });
 
 console.log(`All ${passed} test groups passed.`);

@@ -279,6 +279,8 @@
   .ap-turm .apt-rowlist .val { width: 2.2em; font-weight: 700; }
   .ap-turm .apt-rowlist .nm { flex: 1; }
   .ap-turm .apt-rowlist .nm small { font-size: 8.5px; letter-spacing: .04em; }
+  .ap-turm .apt-passline { margin-top: 4px; padding-top: 3px; border-top: 1px dotted var(--apt-line-soft); font-size: 10.5px; color: var(--apt-ink); }
+  .ap-turm .apt-passline > b { color: var(--apt-ink-dim, var(--apt-ink)); margin-right: 2px; }
   .ap-turm .apt-coins { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; }
   .ap-turm .apt-coin { border: 1px solid var(--apt-field-dk); border-radius: 5px; background: var(--apt-field); padding: 3px 2px; text-align: center; }
   .ap-turm .apt-coin label { display: block; font-size: 7px; letter-spacing: .04em; text-transform: uppercase; color: var(--apt-green); font-weight: 600; }

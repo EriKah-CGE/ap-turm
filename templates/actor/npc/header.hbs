@@ -11,7 +11,7 @@
         <div class="apt-fld"><label>Save DC</label><input type="number" name="system.dc" value="{{system.dc}}" min="0" step="1" placeholder="0"></div>
         <div class="apt-fld"><label>System</label><select name="system.mode">{{#each modeOptions}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}</select></div>
         {{#if isTurm}}<div class="apt-fld"><label>Element</label><select name="system.element" style="{{#if elementColor}}color:{{elementColor}}{{/if}}">{{#each elementOptions}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}</select></div>{{/if}}
-        <div class="apt-fld"><label>Passive Perception</label><span>{{passivePerception}}</span></div>
+        <div class="apt-fld"><label title="Empty = 10 + Perception bonus (or WIS modifier). A statblock import fills in the printed value.">Passive Perception</label><input type="number" name="system.passivePerc" value="{{system.passivePerc}}" placeholder="{{passiveDerived}}" step="1"></div>
         <div class="apt-fld wide2"><label>Skills</label><input type="text" name="skillsText" value="{{skillsText}}" placeholder="Perception +5, Stealth +6"></div>
         <div class="apt-fld wide2"><label>Senses</label><input type="text" name="system.senses" value="{{system.senses}}" placeholder="darkvision 60 ft."></div>
         <div class="apt-fld wide2"><label>Languages</label><input type="text" name="system.languages" value="{{system.languages}}" placeholder="—"></div>

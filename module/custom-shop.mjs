@@ -12,6 +12,7 @@
  * Pure module (tested in Node): no Foundry globals.
  */
 import { SHOP_DATA, PREREQS, SELECTORS, ABILITIES, SKILLS, ARMOR_WEAPON_PROFS } from "./config.mjs";
+import { passiveScores } from "./rules.mjs";
 
 export const CUSTOM_PREFIX = "c_";
 export const FORMAT = "ap-turm-custom-shop";
@@ -329,6 +330,7 @@ export function applyCustomEffects(d, S, entries = installed, { used = {} } = {}
   const custom = { pools: [], dice: [], advSkills: [], advSaves: [], profs: [], features: [] };
   d.custom = custom;
   const vars = { earned: d.earned, level: d.level };
+  let passiveFlat = 0;   // "Passive Perception" bonus
   const addPb = (entry) => { if (!entry.prof) { entry.prof = true; entry.mod += d.pb; } };
   for (const e of entries || []) {
     const n = ranksOf(S, e.id);
@@ -342,8 +344,8 @@ export function applyCustomEffects(d, S, entries = installed, { used = {} } = {}
             for (const k of keys) if (d.saveData[k]) d.saveData[k].mod += ef.value;
           } else if (ef.target === "skill") {
             const keys = ef.key === "chosen" ? picks : Array(n).fill(ef.key);
-            for (const k of keys) if (d.skillData[k]) { d.skillData[k].mod += ef.value; if (k === "prc") d.passivePerc += ef.value; }
-          } else if (ef.target === "passive") d.passivePerc += ef.value * n;
+            for (const k of keys) if (d.skillData[k]) d.skillData[k].mod += ef.value;
+          } else if (ef.target === "passive") passiveFlat += ef.value * n;
           break;
         }
         case "advantage":
@@ -351,7 +353,7 @@ export function applyCustomEffects(d, S, entries = installed, { used = {} } = {}
           break;
         case "prof":
           if (ef.target === "gear") { if (!custom.profs.includes(ef.key)) custom.profs.push(ef.key); }
-          else if (ef.target === "skill") for (const k of picks) { if (d.skillData[k]) { const before = d.skillData[k].prof; addPb(d.skillData[k]); if (!before && k === "prc") d.passivePerc += d.pb; d.skillProfSet?.add?.(k); } }
+          else if (ef.target === "skill") for (const k of picks) { if (d.skillData[k]) { addPb(d.skillData[k]); d.skillProfSet?.add?.(k); } }
           else for (const k of picks) { if (d.saveData[k]) { addPb(d.saveData[k]); d.profSaves?.add?.(k); } }
           break;
         case "pool": {
@@ -379,6 +381,10 @@ export function applyCustomEffects(d, S, entries = installed, { used = {} } = {}
       }
     });
   }
+  // passive scores from the final skill modifiers; custom advantage counts like the Adv on Skill purchase
+  d.passive = passiveScores(d.skillData, [...(S.choices?.advSkill || []), ...custom.advSkills]);
+  d.passive.prc.value += passiveFlat; d.passive.prc.flat = passiveFlat;
+  d.passivePerc = d.passive.prc.value; d.passiveIns = d.passive.ins.value; d.passiveInv = d.passive.inv.value;
   // spell points after the additions: used stays within the new total
   d.spUsed = Math.max(0, Math.min(Number(S.spUsed) || 0, d.spTotal));
   d.spLeft = d.spTotal - d.spUsed;

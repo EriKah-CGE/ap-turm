@@ -105,8 +105,8 @@ Hooks.once("init", () => {
 
   // Token bars / tracked values
   CONFIG.Actor.trackableAttributes = {
-    character: { bar: ["hp", "resources.sp", "resources.lay", "hitDice"], value: ["ac", "level", "pb", "init", "speed"] },
-    npc: { bar: ["hp", "legendary.actions", "legendary.resist"], value: ["ac", "speed", "speedEff", "init"] }
+    character: { bar: ["hp", "resources.sp", "resources.lay", "hitDice"], value: ["ac", "level", "pb", "init", "speed", "passivePerception"] },
+    npc: { bar: ["hp", "legendary.actions", "legendary.resist"], value: ["ac", "speed", "speedEff", "init", "passivePerception"] }
   };
 
   // Conditions: the table's own list (prone, restrained, stunned, unconscious, invisible, poisoned, frightened,

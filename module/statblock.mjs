@@ -138,7 +138,7 @@ export function parseStatblock(text) {
   const res = {
     name: "", typeLine: "", ac: null, acNote: "", hp: { max: null, formula: "" }, speed: null, speeds: "", speedText: "",
     abilities: {}, saves: {}, skills: {}, senses: "", languages: "", conditionImmunities: "", defenseNote: "", headerNotes: "",
-    pb: null, cr: "", dc: null, resistances: [], immunities: [], vulnerabilities: [],
+    pb: null, cr: "", dc: null, passivePerception: null, resistances: [], immunities: [], vulnerabilities: [],
     legendary: { resist: 0, actions: 0 }, entries: [], recognized: [], unparsed: []
   };
   const rawLines = normalizeText(text).split("\n").map(l => l.trim()).filter(Boolean);
@@ -253,6 +253,9 @@ export function parseStatblock(text) {
   // save DC of the NPC: a "spell save DC N" in the text, but only when every mention names the same DC
   const dcs = [...new Set([...normalizeText(text).matchAll(/spell save DC\s*(\d+)/gi)].map(m => toInt(m[1])))];
   if (dcs.length === 1) { res.dc = dcs[0]; rec("dc"); }
+  // "passive Perception 14" (usually in the Senses line) is taken over directly
+  const pp = /\bpassive\s+Perception\s*:?\s*(\d+)/i.exec(normalizeText(text));
+  if (pp) { res.passivePerception = toInt(pp[1]); rec("passive"); }
   return res;
 }
 
@@ -419,6 +422,7 @@ export function statblockToUpdate(parsed) {
   if (has("saves")) sys.saves = Object.fromEntries(ABILS.map(a => [a, parsed.saves[a] ?? null]));
   if (has("skills")) sys.skills = { ...parsed.skills };
   if (has("senses")) sys.senses = parsed.senses;
+  if (has("passive")) sys.passivePerc = parsed.passivePerception;
   if (has("languages")) sys.languages = parsed.languages;
   if (has("conditionImmunities")) sys.conditionImmunities = parsed.conditionImmunities;
   if (has("defenseNote")) sys.defenseNote = parsed.defenseNote;

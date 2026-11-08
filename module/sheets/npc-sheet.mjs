@@ -173,7 +173,7 @@ export class ApTurmNpcSheet extends SheetSizeMixin(HandlebarsApplicationMixin(Ac
       elementColor: damageTypeColor(sys.element),
       hp: sys.hp, hpPct, downed: sys.hp.value <= 0,
       init: fmtMod(sys.init), exhaustion: sys.exhaustion, speedEff: sys.speedEff, conditions: conditions.join(", "), conditionChips: chipContext(actor),
-      skillsText: formatSkills(sys.skills), passivePerception: sys.passivePerception, unassigned: sys.unassigned,
+      skillsText: formatSkills(sys.skills), passivePerception: sys.passivePerception, passiveDerived: sys.passiveDerived, unassigned: sys.unassigned,
       abilities, defenses, defenseChips, legendary, sections,
       items: npcItemRows(actor.items, { isGM: game.user.isGM }), itemsOpen: this.#itemsOpen,
       notesEnriched: await foundry.applications.ux.TextEditor.implementation.enrichHTML(sys.notes, { secrets: actor.isOwner, relativeTo: actor })
