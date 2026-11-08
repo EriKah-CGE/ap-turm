@@ -1,0 +1,22 @@
+<div class="apt-mb-head">
+  {{#if hasSets}}
+  <div class="apt-mb-bar">
+    <button type="button" class="apt-mb-btn {{#if modeTile}}active{{/if}}" data-action="mbMode" data-mode="tile" data-tooltip="AP_TURM.MapBuilder.TileHint"><i class="fa-solid fa-stamp"></i> {{localize "AP_TURM.MapBuilder.Tile"}}</button>
+    <button type="button" class="apt-mb-btn {{#if modeRoom}}active{{/if}}" data-action="mbMode" data-mode="room" data-tooltip="AP_TURM.MapBuilder.RoomTip"><i class="fa-solid fa-vector-square"></i> {{localize "AP_TURM.MapBuilder.Room"}}</button>
+    <button type="button" class="apt-mb-btn {{#if modeCorridor}}active{{/if}}" data-action="mbMode" data-mode="corridor" data-tooltip="AP_TURM.MapBuilder.CorridorTip"><i class="fa-solid fa-route"></i> {{localize "AP_TURM.MapBuilder.Corridor"}}</button>
+    <label class="apt-mb-auto" data-tooltip="AP_TURM.MapBuilder.AutoWallsTip"><input type="checkbox" data-mb="autoWalls" {{checked autoWalls}}> {{localize "AP_TURM.MapBuilder.AutoWalls"}}</label>
+  </div>
+  <div class="apt-mb-bar">
+    <button type="button" class="apt-mb-btn" data-action="mbRotate" data-tooltip="AP_TURM.MapBuilder.RotateTip"><i class="fa-solid fa-rotate-right"></i> {{rot}}°</button>
+    <button type="button" class="apt-mb-btn {{#if flip}}active{{/if}}" data-action="mbMirror" data-tooltip="AP_TURM.MapBuilder.MirrorTip"><i class="fa-solid fa-left-right"></i></button>
+    <button type="button" class="apt-mb-btn" data-action="mbUndo" data-tooltip="AP_TURM.MapBuilder.UndoTip" {{#unless undoCount}}disabled{{/unless}}><i class="fa-solid fa-rotate-left"></i> {{localize "AP_TURM.MapBuilder.Undo"}} ({{undoCount}})</button>
+    <button type="button" class="apt-mb-btn" data-action="mbNewScene"><i class="fa-solid fa-map"></i> {{localize "AP_TURM.MapBuilder.NewScene"}}</button>
+  </div>
+  <select class="apt-mb-set" data-mb="set" aria-label="{{localize 'AP_TURM.MapBuilder.Set'}}">{{#each sets}}<option value="{{id}}" {{#if selected}}selected{{/if}}>{{name}}</option>{{/each}}</select>
+  <nav class="apt-mb-cats">{{#each categories}}<a class="{{#if active}}active{{/if}}" data-action="mbCategory" data-cat="{{id}}">{{name}}</a>{{/each}}</nav>
+  <input type="search" class="apt-mb-search" data-mb="query" value="{{query}}" placeholder="{{localize 'AP_TURM.MapBuilder.Search'}}">
+  {{#unless squareGrid}}<p class="apt-mb-warn">{{localize "AP_TURM.MapBuilder.SquareOnly"}}</p>{{/unless}}
+  {{else}}
+  <p class="apt-mb-warn">{{localize "AP_TURM.MapBuilder.NoSets"}}</p>
+  {{/if}}
+</div>

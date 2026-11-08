@@ -19,7 +19,7 @@ import { execFileSync } from "node:child_process";
 const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Z]:)/, "$1")), "..");
 const ZIP_NAME = "ap-turm.zip";
 /** Top-level entries that go into the zip; everything else (test, tools, docs, scripts, CLAUDE.md, the app, zips) stays out. */
-const INCLUDE = ["system.json", "module", "templates", "styles", "lang", "icons", "README.md", "LICENSE"];
+const INCLUDE = ["system.json", "module", "templates", "styles", "lang", "icons", "tiles", "README.md", "LICENSE"];
 /** Never in the Foundry zip: the character sheet web app served by GitHub Pages (app, entry page, PWA files, app icons). */
 const EXCLUDE = new Set(["ap-character-sheet.html", "index.html", "manifest.webmanifest", "sw.js", ".nojekyll", "icons/app-192.png", "icons/app-512.png"]);
 

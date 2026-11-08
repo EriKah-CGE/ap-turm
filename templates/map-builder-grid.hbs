@@ -1,0 +1,13 @@
+<div class="apt-mb-body">
+  <div class="apt-mb-grid">
+    {{#each tiles}}
+    <figure class="apt-mb-tile {{#if selected}}selected{{/if}}" draggable="true" data-action="mbPick" data-tile="{{id}}" data-tooltip="{{name}}">
+      <img src="{{file}}" alt="" draggable="false" {{#if selected}}style="transform: rotate({{../rot}}deg){{#if ../flip}} scaleX(-1){{/if}}"{{/if}}>
+      <figcaption>{{name}}{{#if size}} <small>{{size}}</small>{{/if}}</figcaption>
+    </figure>
+    {{else}}
+    <p class="apt-mb-empty">{{localize "AP_TURM.MapBuilder.NoTiles"}}</p>
+    {{/each}}
+  </div>
+  <p class="apt-mb-status">{{status}}</p>
+</div>

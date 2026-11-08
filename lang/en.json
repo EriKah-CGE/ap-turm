@@ -152,6 +152,61 @@
         "Landing": "Uncontrolled landing: {result}",
         "Undone": "Undone: {text}"
       }
+    },
+    "MapBuilder": {
+      "Title": "Map Builder",
+      "Tile": "Tile",
+      "Room": "Room",
+      "Corridor": "Corridor",
+      "TileHint": "Stamp the selected tile: click or drag on the map. R rotates, Shift+R rotates back, F mirrors, Esc stops, right-click removes a placed tile.",
+      "RoomTip": "Drag a rectangle on the map (the floor area), then choose floor, wall and door.",
+      "CorridorTip": "Drag from the start to the end of the corridor, then choose width and floor.",
+      "AutoWalls": "Auto walls",
+      "AutoWallsTip": "Create the walls of a tile when it is placed (rotated and mirrored with it).",
+      "RotateTip": "Rotate clockwise (R, Shift+R back)",
+      "MirrorTip": "Mirror (F)",
+      "Undo": "Undo",
+      "UndoTip": "Undo the last step: tiles and the walls they made (Ctrl+Z while this window is open, up to 50 steps).",
+      "NewScene": "New scene from set",
+      "Set": "Tile set",
+      "Search": "Search name or tag",
+      "NoSets": "No tile sets found. Tile sets live in systems/ap-turm/tiles/<set-id>/set.json.",
+      "NoTiles": "No tiles match.",
+      "SquareOnly": "The Map Builder needs a scene with a square grid.",
+      "PickFirst": "Pick a tile in the palette first.",
+      "NothingToUndo": "Map Builder: nothing to undo.",
+      "Error": "Map Builder: the change failed, see the console (F12).",
+      "Mirrored": ", mirrored",
+      "StatusIdle": "Pick a tile, or drag one onto the map. Room and Corridor draw whole areas.",
+      "StatusTile": "{name} · {rot}°{flip}. Click or drag on the map; R / Shift+R rotate, F mirrors, Esc stops, right-click removes.",
+      "StatusRoom": "Room: drag the floor area on the map. Esc stops.",
+      "StatusCorridor": "Corridor: drag from start to end on the map. Esc stops.",
+      "RoomSize": "Floor area: {w} × {h} squares.",
+      "FloorTile": "Floor tile",
+      "WallTile": "Wall tile",
+      "DoorEdge": "Door in side",
+      "NoDoor": "No door",
+      "DoorTile": "Door tile",
+      "WallBecomesDoor": "None (the wall becomes a door)",
+      "RoomHint": "The wall tiles go around the floor, facing the room; their walls run along the edge of the floor.",
+      "Width": "Width (squares)",
+      "CorridorHint": "Walls along both long sides; the two ends stay open. Not in a straight line: first across, then down or up.",
+      "SceneName": "Name",
+      "SceneSize": "Size (squares)",
+      "SceneHint": "Grid size from the set: {size} px per square.",
+      "Build": "Build",
+      "Create": "Create and open",
+      "Cancel": "Cancel",
+      "Edge": {
+        "n": "North",
+        "e": "East",
+        "s": "South",
+        "w": "West"
+      },
+      "Remember": {
+        "Name": "Map Builder: remember last tile",
+        "Hint": "Reopening the Map Builder selects the last tile again, with its rotation and mirroring."
+      }
     }
   }
 }

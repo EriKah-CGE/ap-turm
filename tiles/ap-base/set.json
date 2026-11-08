@@ -1,0 +1,363 @@
+{
+  "id": "ap-base",
+  "name": "AP-Turm Base",
+  "gridSize": 128,
+  "categories": [
+    {
+      "id": "floor",
+      "name": "Floor"
+    },
+    {
+      "id": "wall",
+      "name": "Wall"
+    },
+    {
+      "id": "door",
+      "name": "Door"
+    },
+    {
+      "id": "stairs",
+      "name": "Stairs"
+    },
+    {
+      "id": "props",
+      "name": "Props"
+    }
+  ],
+  "tiles": [
+    {
+      "id": "floor-stone",
+      "name": "Stone floor",
+      "file": "floor-stone.png",
+      "category": "floor",
+      "w": 1,
+      "h": 1,
+      "walls": "none",
+      "tags": [
+        "stone",
+        "dungeon",
+        "flagstone"
+      ]
+    },
+    {
+      "id": "floor-wood",
+      "name": "Wooden floor",
+      "file": "floor-wood.png",
+      "category": "floor",
+      "w": 1,
+      "h": 1,
+      "walls": "none",
+      "tags": [
+        "wood",
+        "planks",
+        "house"
+      ]
+    },
+    {
+      "id": "floor-sand",
+      "name": "Sand",
+      "file": "floor-sand.png",
+      "category": "floor",
+      "w": 1,
+      "h": 1,
+      "walls": "none",
+      "tags": [
+        "sand",
+        "desert",
+        "beach"
+      ]
+    },
+    {
+      "id": "floor-grass",
+      "name": "Grass",
+      "file": "floor-grass.png",
+      "category": "floor",
+      "w": 1,
+      "h": 1,
+      "walls": "none",
+      "tags": [
+        "grass",
+        "outdoor",
+        "meadow"
+      ]
+    },
+    {
+      "id": "floor-water",
+      "name": "Water",
+      "file": "floor-water.png",
+      "category": "floor",
+      "w": 1,
+      "h": 1,
+      "walls": "none",
+      "tags": [
+        "water",
+        "river",
+        "lake"
+      ]
+    },
+    {
+      "id": "floor-lava",
+      "name": "Lava",
+      "file": "floor-lava.png",
+      "category": "floor",
+      "w": 1,
+      "h": 1,
+      "walls": "none",
+      "tags": [
+        "lava",
+        "fire",
+        "volcano"
+      ]
+    },
+    {
+      "id": "wall-straight",
+      "name": "Wall, straight",
+      "file": "wall-straight.png",
+      "category": "wall",
+      "w": 1,
+      "h": 1,
+      "walls": [
+        "n"
+      ],
+      "tags": [
+        "wall",
+        "stone"
+      ]
+    },
+    {
+      "id": "wall-corner",
+      "name": "Wall, corner",
+      "file": "wall-corner.png",
+      "category": "wall",
+      "w": 1,
+      "h": 1,
+      "walls": [
+        "n",
+        "e"
+      ],
+      "tags": [
+        "wall",
+        "corner",
+        "stone"
+      ]
+    },
+    {
+      "id": "wall-end",
+      "name": "Wall, end",
+      "file": "wall-end.png",
+      "category": "wall",
+      "w": 1,
+      "h": 1,
+      "walls": [
+        "n",
+        "e",
+        "w"
+      ],
+      "tags": [
+        "wall",
+        "end",
+        "stone"
+      ]
+    },
+    {
+      "id": "wall-pillar",
+      "name": "Pillar",
+      "file": "wall-pillar.png",
+      "category": "wall",
+      "w": 1,
+      "h": 1,
+      "walls": "box",
+      "tags": [
+        "pillar",
+        "column",
+        "stone"
+      ]
+    },
+    {
+      "id": "door-wood-closed",
+      "name": "Wooden door, closed",
+      "file": "door-wood-closed.png",
+      "category": "door",
+      "w": 1,
+      "h": 1,
+      "walls": "door",
+      "door": "n",
+      "tags": [
+        "door",
+        "wood",
+        "closed"
+      ]
+    },
+    {
+      "id": "door-wood-open",
+      "name": "Wooden door, open",
+      "file": "door-wood-open.png",
+      "category": "door",
+      "w": 1,
+      "h": 1,
+      "walls": "door",
+      "door": "n",
+      "doorState": "open",
+      "tags": [
+        "door",
+        "wood",
+        "open"
+      ]
+    },
+    {
+      "id": "door-portcullis",
+      "name": "Portcullis",
+      "file": "door-portcullis.png",
+      "category": "door",
+      "w": 1,
+      "h": 1,
+      "walls": [
+        "n"
+      ],
+      "wallType": "transparent",
+      "tags": [
+        "portcullis",
+        "gate",
+        "bars",
+        "iron"
+      ]
+    },
+    {
+      "id": "stairs-up",
+      "name": "Stairs up",
+      "file": "stairs-up.png",
+      "category": "stairs",
+      "w": 1,
+      "h": 1,
+      "walls": "none",
+      "tags": [
+        "stairs",
+        "up"
+      ]
+    },
+    {
+      "id": "stairs-down",
+      "name": "Stairs down",
+      "file": "stairs-down.png",
+      "category": "stairs",
+      "w": 1,
+      "h": 1,
+      "walls": "none",
+      "tags": [
+        "stairs",
+        "down"
+      ]
+    },
+    {
+      "id": "prop-crate",
+      "name": "Crate",
+      "file": "prop-crate.png",
+      "category": "props",
+      "w": 1,
+      "h": 1,
+      "walls": "none",
+      "tags": [
+        "crate",
+        "box",
+        "wood"
+      ]
+    },
+    {
+      "id": "prop-barrel",
+      "name": "Barrel",
+      "file": "prop-barrel.png",
+      "category": "props",
+      "w": 1,
+      "h": 1,
+      "walls": "none",
+      "tags": [
+        "barrel",
+        "wood"
+      ]
+    },
+    {
+      "id": "prop-table",
+      "name": "Table",
+      "file": "prop-table.png",
+      "category": "props",
+      "w": 1,
+      "h": 1,
+      "walls": "none",
+      "tags": [
+        "table",
+        "furniture",
+        "wood"
+      ]
+    },
+    {
+      "id": "prop-chest",
+      "name": "Chest",
+      "file": "prop-chest.png",
+      "category": "props",
+      "w": 1,
+      "h": 1,
+      "walls": "none",
+      "tags": [
+        "chest",
+        "treasure",
+        "loot"
+      ]
+    },
+    {
+      "id": "prop-brazier",
+      "name": "Brazier",
+      "file": "prop-brazier.png",
+      "category": "props",
+      "w": 1,
+      "h": 1,
+      "walls": "none",
+      "tags": [
+        "brazier",
+        "fire",
+        "light"
+      ]
+    },
+    {
+      "id": "prop-rubble",
+      "name": "Rubble",
+      "file": "prop-rubble.png",
+      "category": "props",
+      "w": 1,
+      "h": 1,
+      "walls": "none",
+      "tags": [
+        "rubble",
+        "debris",
+        "stone"
+      ]
+    },
+    {
+      "id": "prop-tree",
+      "name": "Tree",
+      "file": "prop-tree.png",
+      "category": "props",
+      "w": 1,
+      "h": 1,
+      "walls": "none",
+      "tags": [
+        "tree",
+        "outdoor",
+        "forest"
+      ]
+    },
+    {
+      "id": "prop-rock",
+      "name": "Rock",
+      "file": "prop-rock.png",
+      "category": "props",
+      "w": 1,
+      "h": 1,
+      "walls": "none",
+      "tags": [
+        "rock",
+        "boulder",
+        "stone"
+      ]
+    }
+  ]
+}

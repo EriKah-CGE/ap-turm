@@ -8,6 +8,7 @@
     "test": "node test/rules.test.mjs",
     "package": "node scripts/package.mjs",
     "handover": "node scripts/handover.mjs",
-    "release": "node tools/release.mjs"
+    "release": "node tools/release.mjs",
+    "tiles": "node tools/make-tiles.mjs"
   }
 }

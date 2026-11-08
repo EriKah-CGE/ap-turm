@@ -201,7 +201,7 @@ Eine Änderung ist erst beim Spielleiter, wenn sie released ist. Darum endet jed
 3. `npm run release -- x.y.z` (`tools/release.mjs`): prüft sauberen Baum, Version > aktuell, Tag frei,
    CHANGELOG-Sektion vorhanden; setzt Version in `system.json`/`package.json`, Download-URL auf
    `releases/download/vx.y.z/ap-turm.zip`, baut `ap-turm.zip` (nur system.json, module/, templates/, styles/, lang/,
-   icons/, README.md, LICENSE), committet „Release vx.y.z", taggt, pusht, `gh release create`.
+   icons/, tiles/, README.md, LICENSE), committet „Release vx.y.z", taggt, pusht, `gh release create`.
 4. Danach `curl -sIL` auf Manifest-URL prüfen; Version im ausgelieferten `system.json` muss stimmen.
 
 `version` und `download` in `system.json` nie von Hand ändern — das macht das Skript. Neue Laufzeit-Ordner

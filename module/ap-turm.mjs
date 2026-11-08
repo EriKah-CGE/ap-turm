@@ -49,12 +49,13 @@ import { registerSpawn, placeCopies, placeCopiesDialog } from "./spawn.mjs";
 import { registerReachRingSetting, registerReachRing, refreshReachRing, reachRingState } from "./reach-ring.mjs";
 import { registerDiceTraySetting, registerDiceTray, diceTray } from "./dice-tray.mjs";
 import { registerTowerSettings, registerTowerHooks, installTowerButton, towerTracker } from "./tower-tracker.mjs";
+import { registerMapBuilder, mapBuilder } from "./map-builder.mjs";
 
 const SYSTEM_ID = "ap-turm";
 
 Hooks.once("init", () => {
   CONFIG.AP_TURM = AP_TURM;
-  game.apturm = { config: AP_TURM, rules, importAppJSON, importAppJSONIntoActor, createActorFromAppExport, importAppExportIntoActor, convertAppExport, exportActor, exportAppData, downloadActorExport, exportNpc, exportNpcData, downloadNpcExport, createNpcFromExport, importNpcIntoActor, isNpcExport, rolls, chat, macros, statblock, loot: { ...loot, importLootTableDialog }, migrateWorld, migrateSpellRule, migrateSpellPoints, conditionBar, refreshConditionBar, award, requestRoll, transfer, library, fx: { playAttackFx, playCastFx, fxAvailable, showHitFeedback }, qol: { breakConcentration, rollNpcInitiative, undoApplied: chat.undoApplied }, jukebox, customShop: { ...customShop, openShopEditor }, overview, openCombatOverview, area, rulesJournal: { ...rulesJournalLogic, ensureRulesJournal, rebuildRulesJournal }, backup, spawn: { placeCopies, placeCopiesDialog }, libraries5e: { ...libraries5e, convert: dnd5eConvert }, reachRing: { refresh: refreshReachRing, state: reachRingState }, diceTray, tower: towerTracker };
+  game.apturm = { config: AP_TURM, rules, importAppJSON, importAppJSONIntoActor, createActorFromAppExport, importAppExportIntoActor, convertAppExport, exportActor, exportAppData, downloadActorExport, exportNpc, exportNpcData, downloadNpcExport, createNpcFromExport, importNpcIntoActor, isNpcExport, rolls, chat, macros, statblock, loot: { ...loot, importLootTableDialog }, migrateWorld, migrateSpellRule, migrateSpellPoints, conditionBar, refreshConditionBar, award, requestRoll, transfer, library, fx: { playAttackFx, playCastFx, fxAvailable, showHitFeedback }, qol: { breakConcentration, rollNpcInitiative, undoApplied: chat.undoApplied }, jukebox, customShop: { ...customShop, openShopEditor }, overview, openCombatOverview, area, rulesJournal: { ...rulesJournalLogic, ensureRulesJournal, rebuildRulesJournal }, backup, spawn: { placeCopies, placeCopiesDialog }, libraries5e: { ...libraries5e, convert: dnd5eConvert }, reachRing: { refresh: refreshReachRing, state: reachRingState }, diceTray, tower: towerTracker, mapBuilder };
   chat.registerSettings();
   registerHitFeedbackSetting();
   registerFxSetting();
@@ -87,6 +88,7 @@ Hooks.once("init", () => {
   registerDiceTray();
   registerTowerSettings();
   registerTowerHooks();
+  registerMapBuilder();
 
   // Actor document class: last net of the data migrations (spell rule), see actor.mjs
   CONFIG.Actor.documentClass = APTActor;

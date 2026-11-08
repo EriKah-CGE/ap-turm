@@ -35,6 +35,7 @@ import * as st from "../module/stash-logic.mjs";
 import * as d5 from "../module/dnd5e-convert.mjs";
 import * as tray from "../module/dice-tray-logic.mjs";
 import * as tower from "../module/tower-tracker-logic.mjs";
+import * as mb from "../module/map-builder-logic.mjs";
 
 /* ---------- load app logic ---------- */
 const html = fs.readFileSync(new URL("../ap-character-sheet.html", import.meta.url), "utf8");
@@ -3627,6 +3628,121 @@ ok("spell points: D&D table for pool and cast cost, app and Foundry identical", 
   // no rank-as-points formula left in the app or rules.mjs
   assert.ok(!js.includes("spTotal+=L*units"));
   assert.ok(!fs.readFileSync(new URL("../module/rules.mjs", import.meta.url), "utf8").includes("spTotal+=L*units"));
+});
+
+/* ---------- Map Builder (map-builder-logic.mjs) ---------- */
+ok("map builder: wall edges rotate and mirror with the tile", () => {
+  assert.deepEqual(mb.transformEdges(["n", "w"], { rot: 90 }), ["e", "n"]);
+  assert.deepEqual(mb.transformEdges(["n", "w"], { flip: true }), ["n", "e"]);
+  assert.deepEqual(mb.transformEdges(["n", "w"], { rot: -90 }), ["w", "s"]);          // Shift+R
+  assert.deepEqual(mb.transformEdges(["n", "w"], { rot: 90, flip: true }), ["e", "s"]); // mirror first, then rotate
+  assert.deepEqual([mb.normalizeRot(-90), mb.normalizeRot(450), mb.normalizeRot(180)], [270, 90, 180]);
+  assert.deepEqual(mb.footprint(2, 1, 90), { w: 1, h: 2 });
+  // 2x1 tile with walls n+w rotated 90: footprint 1x2, walls on its east side (2 segments) and north side (1 segment)
+  const t = { w: 2, h: 1, walls: ["n", "w"] };
+  const segs = mb.tileWallSegments(t, { x: 3, y: 4, rot: 90, flip: false });
+  assert.deepEqual(segs.map(x => x.key).sort(), ["3,4,4,4", "4,4,4,5", "4,5,4,6"].sort());
+  // the document rectangle of a rotated 2x1 tile is centred on its 1x2 footprint
+  assert.deepEqual(mb.tileRect({ x: 3, y: 4, rot: 90 }, 2, 1, 100), { x: 300 - 50, y: 400 + 50, width: 200, height: 100, rotation: 90 });
+  assert.deepEqual(mb.tileRect({ x: 3, y: 4, rot: 0 }, 2, 1, 100), { x: 300, y: 400, width: 200, height: 100, rotation: 0 });
+  assert.deepEqual(mb.anchorCell({ x: 5, y: 5 }, 3, 1, 0), { x: 4, y: 5 });
+});
+
+ok("map builder: shared edges merge, doors in the middle, kinds", () => {
+  const box = { w: 1, h: 1, walls: "box" };
+  const segs = mb.placementsSegments([{ tile: box, x: 0, y: 0, rot: 0 }, { tile: box, x: 1, y: 0, rot: 0 }]);
+  assert.equal(segs.length, 7);
+  assert.equal(segs.filter(x => x.key === "1,0,1,1").length, 1);
+  assert.equal(mb.segKey([1, 1, 1, 0]), mb.segKey([1, 0, 1, 1]));
+  // "door": a door in the middle of the given edge, nothing else
+  const door3 = mb.tileWallSegments({ w: 3, h: 1, walls: "door", door: "s" }, { x: 0, y: 0, rot: 0 });
+  assert.deepEqual(door3.map(x => [x.key, x.kind]), [["1,1,2,1", "door"]]);
+  assert.deepEqual(mb.doorIndices(4), [1, 2]);
+  // list of edges plus a door: the door replaces the middle of that side
+  const both = mb.tileWallSegments({ w: 3, h: 1, walls: ["n", "s"], door: "s" }, { x: 0, y: 0, rot: 0 });
+  assert.deepEqual(both.filter(x => x.kind === "door").map(x => x.key), ["1,1,2,1"]);
+  assert.equal(both.filter(x => x.kind === "wall").length, 5);
+  // portcullis: blocks movement only; open door; a door beats a wall on the same edge
+  assert.equal(mb.tileWallSegments({ w: 1, h: 1, walls: "door", wallType: "transparent", doorState: "open" }, { x: 0, y: 0 })[0].kind, "door-open");
+  assert.equal(mb.tileWallSegments({ w: 1, h: 1, walls: ["n"], wallType: "transparent" }, { x: 0, y: 0 })[0].kind, "transparent");
+  assert.equal(mb.resolveKind(["wall", "door", "transparent"]), "door");
+  assert.equal(mb.resolveKind(["transparent", "wall"]), "wall");
+  assert.deepEqual(mb.wallSpec({ walls: "none" }), { walls: [], door: null });
+  assert.deepEqual(mb.wallSpec({ walls: "bogus" }), { walls: [], door: null });
+});
+
+ok("map builder: room 5x4 and corridor", () => {
+  const floor = { id: "f", w: 1, h: 1, walls: "none", category: "floor" };
+  const wall = { id: "w", w: 1, h: 1, walls: ["n"], category: "wall" };
+  const door = { id: "d", w: 1, h: 1, walls: "door", door: "n", category: "door" };
+  const rect = mb.normalizeRect({ x: 6, y: 5 }, { x: 2, y: 2 });
+  assert.deepEqual(rect, { x: 2, y: 2, w: 5, h: 4 });
+  const lay = mb.roomLayout(rect, { door: "s" });
+  assert.equal(lay.floors.length, 20);
+  assert.equal(lay.ring.length, 22);                       // (5+2) x (4+2) - 20
+  const pl = mb.roomPlacements(rect, { floor, wall, door: "s", doorTile: door });
+  const segs = mb.placementsSegments(pl);
+  // the 18 unit edges around the floor carry the walls; one of them (middle of the south side) is the door
+  assert.equal(segs.length, 18);
+  assert.deepEqual(segs.filter(x => x.kind === "door").map(x => x.key), ["4,6,5,6"]);
+  assert.equal(segs.filter(x => x.kind === "wall").length, 17);
+  assert.equal(pl.filter(p => p.tile === floor).length, 20);
+  assert.equal(pl.filter(p => p.tile === door).length, 1);
+  // without a door tile the wall tile there gets the door; without a door 18 walls
+  assert.equal(mb.placementsSegments(mb.roomPlacements(rect, { floor, wall, door: "e" })).filter(x => x.kind === "door").length, 1);
+  assert.equal(mb.placementsSegments(mb.roomPlacements(rect, { floor, wall })).filter(x => x.kind === "wall").length, 18);
+  // every segment lies on the outline of the floor rectangle
+  for (const x of segs) { const [x1, y1, x2, y2] = x.c; assert.ok((y1 === y2 && (y1 === 2 || y1 === 6)) || (x1 === x2 && (x1 === 2 || x1 === 7)), x.key); }
+
+  // straight corridor (2,3) -> (5,3), width 2: columns 2-5, rows 3-4; walls only along the long sides
+  const cells = mb.corridorCells({ x: 2, y: 3 }, { x: 5, y: 3 }, 2);
+  assert.deepEqual(cells, [{ x: 2, y: 3 }, { x: 3, y: 3 }, { x: 4, y: 3 }, { x: 5, y: 3 }, { x: 2, y: 4 }, { x: 3, y: 4 }, { x: 4, y: 4 }, { x: 5, y: 4 }]);
+  const cl = mb.corridorLayout({ x: 2, y: 3 }, { x: 5, y: 3 }, 2);
+  assert.deepEqual(cl.map(c => c.edges.join("")), ["n", "n", "n", "n", "s", "s", "s", "s"]);
+  const cs = mb.placementsSegments(mb.corridorPlacements({ x: 2, y: 3 }, { x: 5, y: 3 }, 2, floor));
+  assert.equal(cs.length, 8);
+  // vertical, reversed direction
+  assert.deepEqual(mb.corridorCells({ x: 1, y: 4 }, { x: 1, y: 2 }, 1), [{ x: 1, y: 2 }, { x: 1, y: 3 }, { x: 1, y: 4 }]);
+  assert.deepEqual(mb.corridorLayout({ x: 1, y: 4 }, { x: 1, y: 2 }, 1).map(c => c.edges.join("")), ["ew", "ew", "ew"]);
+  // L: (0,0) -> (3,3) width 1: (0..3,0) then (3,1..3); open at the west end and the south end
+  const L = mb.corridorLayout({ x: 0, y: 0 }, { x: 3, y: 3 }, 1);
+  assert.deepEqual(L.map(c => [c.x, c.y]), [[0, 0], [1, 0], [2, 0], [3, 0], [3, 1], [3, 2], [3, 3]]);
+  assert.deepEqual(L.map(c => c.edges.join("")), ["ns", "ns", "ns", "ne", "ew", "ew", "ew"]);
+  // width 2 L going up: no gap at the corner
+  const up = mb.corridorCells({ x: 0, y: 5 }, { x: 4, y: 1 }, 2);
+  assert.ok(up.some(c => c.x === 5 && c.y === 6));
+});
+
+ok("map builder: tile sets, search, undo limit, starter set", () => {
+  const { set, errors } = mb.validateSet({ id: "x", name: "X", gridSize: 100, categories: [{ id: "floor", name: "Floor" }],
+    tiles: [{ id: "a", name: "Stone", file: "a.png", category: "floor", w: 1, h: 1, walls: "none", tags: ["dungeon"] },
+      { id: "b", name: "Broken", file: "b.png", category: "nope" }, { id: "a", name: "Dup", file: "c.png", category: "floor" }] }, "systems/ap-turm/tiles/x");
+  assert.deepEqual(set.tiles.map(t => [t.id, t.file]), [["a", "systems/ap-turm/tiles/x/a.png"]]);
+  assert.equal(errors.length, 2);
+  assert.equal(mb.validateSet({ id: "x", name: "X", gridSize: 0, categories: [], tiles: [] }, "f").set, null);
+  assert.equal(mb.validateSet("nope", "f").set, null);
+  assert.deepEqual(mb.filterTiles(set, { query: "DUNG" }).map(t => t.id), ["a"]);
+  assert.deepEqual(mb.filterTiles(set, { category: "wall" }), []);
+  assert.equal(mb.isFloor(set.tiles[0]), true);
+  assert.equal(mb.isFloor({ category: "props" }), false);
+  const stack = []; for (let i = 0; i < 60; i++) mb.pushHistory(stack, i);
+  assert.deepEqual([stack.length, stack[0], stack.at(-1)], [50, 10, 59]);
+
+  // the shipped starter set: valid, every file present and a 256 px per cell PNG, all categories filled
+  const dir = new URL("../tiles/ap-base/", import.meta.url);
+  const json = JSON.parse(fs.readFileSync(new URL("set.json", dir), "utf8"));
+  const r = mb.validateSet(json, "systems/ap-turm/tiles/ap-base");
+  assert.deepEqual(r.errors, []);
+  assert.deepEqual(r.set.categories.map(c => c.id), ["floor", "wall", "door", "stairs", "props"]);
+  for (const c of r.set.categories) assert.ok(r.set.tiles.some(t => t.category === c.id), c.id);
+  assert.equal(r.set.tiles.length, 23);
+  for (const t of r.set.tiles) {
+    const buf = fs.readFileSync(new URL(t.file.replace("systems/ap-turm/tiles/ap-base/", ""), dir));
+    assert.equal(buf.toString("latin1", 1, 4), "PNG", t.id);
+    assert.deepEqual([buf.readUInt32BE(16), buf.readUInt32BE(20)], [256 * t.w, 256 * t.h], t.id);
+  }
+  // the release zip ships the tiles
+  assert.ok(/const INCLUDE = \[[^\]]*"tiles"/.test(fs.readFileSync(new URL("../tools/release.mjs", import.meta.url), "utf8")));
 });
 
 console.log(`All ${passed} test groups passed.`);

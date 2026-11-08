@@ -530,6 +530,71 @@ Statblock, z. B. „reach 10 ft."). Nur das zuletzt ausgewählte Token zeichnet.
 ring* (Standard an). Eine Reichweite ungleich 5 wird beim App-Export mitgeschrieben und beim Import
 wieder gelesen.
 
+## Map Builder (Spielleiter, ab 1.4.0)
+
+Karten aus Kacheln zusammensetzen, ohne jede Wand von Hand zu ziehen. Knopf **Map Builder** in den Szenen-Steuerungen
+unter *Tiles* (nur Spielleiter; die Szene braucht ein quadratisches Raster).
+
+- **Palette:** Set-Auswahl, Kategorie-Reiter, Suchfeld (Name und Tags, sucht über alle Kategorien), Vorschaubilder.
+- **Setzen:** Vorschaubild auf die Szene ziehen (halbtransparente Vorschau am Raster) oder anklicken und dann auf der
+  Szene klicken; Ziehen mit gedrückter Maustaste füllt fortlaufend Felder (Stempelmodus, die Kachel bleibt gewählt).
+  **R** dreht um 90°, **Shift+R** zurück, **F** spiegelt, **Esc** beendet das Werkzeug; Rechtsklick auf eine gesetzte
+  Kachel entfernt sie. Drehen/Spiegeln wirkt auch per Knopf im Fenster; während eines Drag aus der Palette nimmt der
+  Browser keine Tasten an, die Drehung vorher einstellen. Boden-Kacheln liegen unter allem anderen.
+- **Auto walls** (Schalter oben): Beim Setzen entstehen die Wände der Kachel, gedreht und gespiegelt wie die Kachel.
+  Türen werden Türen, das Fallgitter eine Wand, die nur Bewegung sperrt (Sicht und Licht gehen durch). Liegt auf einer
+  Kante schon eine Map-Builder-Wand, wird sie geteilt statt doppelt angelegt (Tür schlägt Wand, Wand schlägt Gitter).
+  Wird eine Kachel entfernt, verschwinden nur die Wände, die keine andere Kachel mehr braucht – auch beim Löschen mit
+  Entf oder Foundrys eigenem Rückgängig.
+- **Room:** Rechteck (die Bodenfläche) aufziehen, dann Boden-, Wand- und Türkachel und die Seite der Tür wählen. Die
+  Wandkacheln laufen außen um den Boden, die Wände entlang der Bodenkante; die Tür sitzt mittig in der gewählten Seite.
+  Wandkacheln haben ihre Wand an der Nordkante (wie „Wall, straight") und werden zum Raum hin gedreht.
+- **Corridor:** von Start bis Ende ziehen, Breite und Boden wählen; Wände an beiden Längsseiten, die Enden bleiben
+  offen. Liegen Start und Ende nicht in einer Linie: erst waagrecht, dann senkrecht.
+- **Undo** (Knopf oder Strg+Z bei offenem Fenster): die letzten 50 Schritte, jeweils Kacheln samt ihrer Wände; ein
+  Zug im Stempelmodus, ein Raum oder ein Gang ist ein Schritt.
+- **New scene from set:** leere Szene (Standard 30 × 30 Felder) mit der Rastergröße des Sets, wird sofort geöffnet.
+- Client-Einstellung **Map Builder: remember last tile** (Standard an): beim nächsten Öffnen ist die letzte Kachel mit
+  Drehung wieder gewählt (Werkzeug „Tile" aktiviert den Stempel).
+- Foundrys eigene Tile-Auswahl bleibt unverändert, solange kein Map-Builder-Werkzeug aktiv ist.
+
+### Eigene Kachel-Sets
+
+Ein Set ist ein Ordner mit einer `set.json` und den Bildern. Gelesen werden beim Start (Spielleiter) alle Ordner unter
+`systems/ap-turm/tiles/` und, falls vorhanden, unter `Data/ap-turm-tiles/`. **Eigene Sets gehören nach
+`Data/ap-turm-tiles/<set-id>/`** – der Systemordner wird bei jedem System-Update ersetzt. Fehlerhafte Sets werden
+übersprungen und einmal in der Konsole (F12) gemeldet, einzelne fehlerhafte Kacheln ebenso.
+
+```
+Data/ap-turm-tiles/
+  meine-hoehle/
+    set.json
+    boden-fels.png
+    tropfstein.png
+```
+
+```json
+{
+  "id": "meine-hoehle",
+  "name": "Meine Höhle",
+  "gridSize": 128,
+  "categories": [{ "id": "floor", "name": "Floor" }, { "id": "props", "name": "Props" }],
+  "tiles": [
+    { "id": "boden-fels", "name": "Fels", "file": "boden-fels.png", "category": "floor", "w": 1, "h": 1, "walls": "none", "tags": ["cave", "rock"] },
+    { "id": "tropfstein", "name": "Tropfstein", "file": "tropfstein.png", "category": "props", "w": 1, "h": 1, "walls": "box", "tags": ["cave"] }
+  ]
+}
+```
+
+- `gridSize`: Rastergröße in Pixel für „New scene from set". Auf Szenen mit anderem Raster werden die Kacheln skaliert.
+- `w` / `h`: Größe in Rasterfeldern (Standard 1). `file`: Pfad relativ zum Set-Ordner (oder ein voller Pfad).
+- `walls`: `"none"`, `"box"` (ringsum), `"door"` (Tür mittig in der Kante `door`, Standard `"n"`) oder eine Liste der
+  Kanten `["n","e","s","w"]` (mit `door` zusätzlich eine Tür mittig in dieser Kante). Kanten gelten für die
+  ungedrehte Kachel; Norden ist oben.
+- optional: `door` (`"n"`/`"e"`/`"s"`/`"w"`), `doorState: "open"` (Tür startet offen), `wallType: "transparent"`
+  (sperrt nur Bewegung, z. B. Gitter), `layer: "floor"` oder `"object"` (Standard: Kategorie `floor` = Boden), `tags`.
+- Das Startset `ap-base` erzeugt `npm run tiles` (`tools/make-tiles.mjs`, alles im Skript gezeichnet, 256 × 256 px).
+
 ## Zauber- und Monster-Kompendien (Import aus dnd5e)
 
 Zauber und Kreaturen aus dnd5e-Kompendien auf der eigenen Festplatte, **inhaltlich unverändert** übernommen: keine
@@ -654,6 +719,8 @@ Unter *Configure Controls* → *AP-Turm* einstellbar; in Textfeldern greifen sie
 | Zustandsleiste ein/aus | — | alle (außer die Leiste ist auf Spielleiter beschränkt) |
 | Award AP | — | Spielleiter |
 | Request Roll | — | Spielleiter |
+| Map Builder: Kachel drehen / zurückdrehen / spiegeln / Werkzeug beenden | R / Shift+R / F / Esc | Spielleiter, nur bei offenem Map Builder |
+| Map Builder: Rückgängig (50 Schritte) | Strg+Z | Spielleiter, nur bei offenem Map Builder |
 
 Spielleiter-Kürzel tauchen bei Spielern in *Configure Controls* nicht auf und tun für sie nichts, auch keine Meldung.
 
@@ -724,6 +791,7 @@ npm test         # Node-Tests: Regeln gegen die HTML-App, Import/Export-Rundlauf
 npm run package  # baut ap-turm-v<version>.zip (ohne test, docs, tools, node_modules)
 npm run handover # Übergabeordner Data/ap-turm-handover (System-Zip, Bibliotheken-Zip, PDF, HANDOVER.txt)
 npm run release -- x.y.z  # GitHub-Release, siehe Release-Ablauf
+npm run tiles    # erzeugt das Kachel-Startset tiles/ap-base neu (PNGs + set.json)
 ```
 
 `ap-character-sheet.html` ist die Quelle der Wahrheit für Regeln und Formeln; die Tests laden sie und

@@ -14,6 +14,19 @@ Jede Version hat eine Sektion `## x.y.z`; `npm run release -- x.y.z` übernimmt 
   Custom-Shop-Effekte (Skill-Bonus, Übung, Vorteil, „Passive Perception") wirken auf alle drei Werte.
 - NPC-Bogen: Passive Perception als Feld (leer = 10 + Perception bzw. WIS-Modifikator); der Statblock-Import übernimmt
   ein im Text gefundenes „passive Perception N" direkt.
+- **Zauberpunkte nach der D&D-Tabelle (Regelkorrektur, Turm-Modus):** Rang 1 = 2, 2 = 3, 3 = 5, 4 = 6, 5 = 7, 6 = 9,
+  7 = 10, 8 = 11, 9 = 13 Punkte – je Spellslot-Kauf in den Pool und je Wirken als Kosten (Cantrips frei, Rang 6–9
+  weiter zusätzlich pro langer Rast begrenzt). Bisher galt Rang = Punkte. Aufschlüsselung „Rank 3: 1 × 5 = 5", Kosten
+  hinter jedem Zauber, im Zauberbogen und auf der Chat-Karte; Regel-Journal mit Tabelle. App: Knopf „Cast" je Zauber
+  (Build v09-05s). Bestehende Charaktere: Pool aus den Käufen, verbrauchte Punkte über dem Pool werden gekappt, einmal
+  der Hinweis „Your pool is now X points" (App: Meldung, Foundry: Flüsternachricht an den Spielleiter). AP-Preise
+  unverändert.
+- **Map Builder (Spielleiter):** Karten aus Kacheln bauen – Palette mit Sets, Kategorien und Suche; Ziehen auf die Szene
+  oder Stempeln/Füllen am Raster, Drehen (R, Shift+R), Spiegeln (F), Rechtsklick entfernt. Automatische Wände inkl.
+  Türen und Fallgitter, gedreht/gespiegelt mit der Kachel, geteilte Kanten nur einmal, beim Entfernen mit weg.
+  Werkzeuge Room und Corridor, Undo für 50 Schritte (Strg+Z), „New scene from set", Einstellung „remember last tile".
+  Startset „ap-base" (23 Kacheln, selbst gezeichnet von `tools/make-tiles.mjs`); eigene Sets unter
+  `Data/ap-turm-tiles/<set-id>/set.json`.
 
 ## 1.3.0
 
