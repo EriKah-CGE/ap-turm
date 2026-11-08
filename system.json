@@ -2,7 +2,7 @@
   "id": "ap-turm",
   "title": "AP-Turm",
   "description": "Homebrew AP point-buy system based on D&D 5e. Progression from earned AP (level, proficiency bonus, milestones, cantrip rank), a shop paid from the AP budget, and the Turm campaign mode with spell points, 20 elements, crystal circlet, Turmwissen, hit-die ladder and its own currencies. Imports character sheets from the AP app and exports them back; NPCs with a statblock parser, loot table import and the 2024 exhaustion ladder.",
-  "version": "1.4.1",
+  "version": "1.4.2",
   "compatibility": {
     "minimum": "13",
     "verified": "13.351"
@@ -14,7 +14,7 @@
   ],
   "url": "https://github.com/EriKah-CGE/ap-turm",
   "manifest": "https://github.com/EriKah-CGE/ap-turm/releases/latest/download/system.json",
-  "download": "https://github.com/EriKah-CGE/ap-turm/releases/download/v1.4.1/ap-turm.zip",
+  "download": "https://github.com/EriKah-CGE/ap-turm/releases/download/v1.4.2/ap-turm.zip",
   "esmodules": [
     "module/ap-turm.mjs"
   ],
