@@ -2,6 +2,11 @@
 
 Jede Version hat eine Sektion `## x.y.z`; `npm run release -- x.y.z` übernimmt sie als Release-Notes auf GitHub.
 
+## 1.4.1
+
+- Neue Charaktere bekommen ein Spieler-Token wie in dnd5e: Sicht an, mit dem Actor verknüpft, freundlich. Gilt beim
+  Anlegen und beim Import aus der App; Kompendium-Charaktere und bestehende Actors bleiben unverändert.
+
 ## 1.4.0
 
 - **Passive Werte:** Perception, Insight und Investigation = 10 + Fertigkeitsmodifikator (Übung, Expertise, Attribut,

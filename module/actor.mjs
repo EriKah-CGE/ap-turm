@@ -13,4 +13,18 @@ export class APTActor extends foundry.documents.Actor {
     migrateActorSpellRule(source);
     return super.migrateData(source);
   }
+
+  /**
+   * New characters get a player token like dnd5e: vision on, linked to the actor, friendly. Only on creation;
+   * actors from a compendium keep their stored token, existing actors are untouched.
+   * @override
+   */
+  async _preCreate(data, options, user) {
+    if ((await super._preCreate(data, options, user)) === false) return false;
+    if (this._stats?.compendiumSource?.startsWith("Compendium.")) return;
+    if (this.type !== "character") return;
+    this.updateSource({
+      prototypeToken: { sight: { enabled: true }, actorLink: true, disposition: CONST.TOKEN_DISPOSITIONS.FRIENDLY }
+    });
+  }
 }
